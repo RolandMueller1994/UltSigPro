@@ -1,0 +1,7 @@
+UltimateSignalProcessing (UltSigPro) help message.
+
+Usage -> ultsigpro [options ... ]
+
+Options
+  --help      Display this message
+  --console   Start ultsigpro in a new console
