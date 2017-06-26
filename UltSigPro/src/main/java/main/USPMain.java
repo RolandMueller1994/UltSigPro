@@ -3,11 +3,14 @@ package main;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
+import java.util.Locale;
+
+import javax.management.AttributeNotFoundException;
 
 import gui.USPGui;
+import i18n.LanguageResourceHandler;
+import logging.CommonLogger;
 import resourceframework.GlobalResourceProvider;
-import resourceframework.ResourceProviderException;
 import startup.ArgParser;
 
 /**
@@ -27,6 +30,7 @@ public class USPMain {
 	public static void main(String[] args) {
 
 		String current;
+		String argParserMessage = null;
 		try {
 			GlobalResourceProvider resProv = GlobalResourceProvider.getInstance();
 
@@ -36,7 +40,12 @@ public class USPMain {
 
 			// Parse arguments
 			ArgParser argParser = new ArgParser();
-			argParser.parse(args);
+			
+			try {
+				argParser.parse(args, true);				
+			} catch (IllegalArgumentException | AttributeNotFoundException ex) {
+				argParserMessage = ex.getMessage();
+			}
 
 			// Create and register logging directory
 			current = current + File.separator + "logging";
@@ -46,33 +55,59 @@ public class USPMain {
 				logDir.mkdir();
 			}
 			resProv.registerResource("loggingPath", current);
-
+			
+			//Setup the LanguageResourceHandler
+			LanguageResourceHandler.setCurrentLanguage(Locale.GERMAN);
+			LanguageResourceHandler.setDefaultLanguage(Locale.GERMAN);
+			LanguageResourceHandler.getInstance();
+			
 			// Check if help is required
-			if (resProv.checkRegistered("help")) {
+			if (resProv.checkRegistered("help") || argParserMessage != null) {
 				File helpFile = new File(
 						resProv.getResource("workDir") + File.separator + "help" + File.separator + "message.txt");
 				FileReader reader = new FileReader(helpFile);
 				BufferedReader bufReader = new BufferedReader(reader);
+				
+				if(argParserMessage != null) {
+					System.out.println(argParserMessage + System.lineSeparator());
+				}
+				
 				String message;
 				while ((message = bufReader.readLine()) != null) {
 					System.out.println(message);
 				}
 				bufReader.close();
 			} else {
-				// Startup the GUI
-				USPGui gui = new USPGui();
-				gui.buildGUI();
 
-				System.out.println(resProv.getResource("workDir"));
+				if (resProv.checkRegistered("console")) {
+					String os = System.getProperty("os.name");
+					System.out.println(os);
+					// Check os
+					if (os.equals("Linux")) {
+						// Linux os
+						Runtime.getRuntime().exec("x-terminal-emulator --disable-factory -e ultsigpro");
+					} else {
+						// Windows os
+						// TODO
+					}
+				} else {
+					// Startup the GUI
+					USPGui gui = new USPGui();
+					gui.buildGUI();
+
+					System.out.println(resProv.getResource("workDir"));
+				}
 			}
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ResourceProviderException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
-			e.printStackTrace();
+			CommonLogger.getInstance().logException(e);
 		} finally {
+			try {
+				// Remove when GUI builds
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			System.out.println("Exit");
 		}
 	}

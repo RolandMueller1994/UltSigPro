@@ -1,0 +1,2 @@
+console boolean
+help boolean
