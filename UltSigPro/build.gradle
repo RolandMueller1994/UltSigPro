@@ -6,6 +6,17 @@
  * user guide available at https://docs.gradle.org/3.5/userguide/java_library_plugin.html
  */
 
+buildscript {
+    dependencies {
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+    }
+}
+
 // Apply the java-library plugin to add support for Java Library
 apply plugin: 'java-library'
 
@@ -15,6 +26,8 @@ allprojects {
 	    // Use jcenter for resolving your dependencies.
 	    // You can declare any Maven/Ivy/file repository here.
 	    jcenter()
+	    mavenLocal()
+	    mavenCentral()
 	    
 	    maven { url "https://jitpack.io" }
 	}
@@ -35,7 +48,16 @@ dependencies {
 	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: '0.2.6'
 
 	// https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-	//compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.8.0.201706111038-r'
-	
+	//compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.8.0.201706111038-r'	
+}
+
+apply plugin: 'javafx-gradle-plugin'
+
+jfx {
+    // minimal requirement for jfxJar-task
+    mainClass = 'main.USPMain'
+    
+    // minimal requirement for jfxNative-task
+    vendor = 'roland'
 }
 
