@@ -94,21 +94,13 @@ public class USPMain {
 				} else {
 					// Startup the GUI
 					USPGui gui = new USPGui();
-					gui.buildGUI();
-
-					System.out.println(resProv.getResource("workDir"));
+					gui.buildGUI(args);
 				}
 			}
 
 		} catch (Exception e) {
 			CommonLogger.getInstance().logException(e);
 		} finally {
-			try {
-				// Remove when GUI builds
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 			System.out.println("Exit");
 		}
 	}
