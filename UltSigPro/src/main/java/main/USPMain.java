@@ -40,9 +40,9 @@ public class USPMain {
 
 			// Parse arguments
 			ArgParser argParser = new ArgParser();
-			
+
 			try {
-				argParser.parse(args, true);				
+				argParser.parse(args, true);
 			} catch (IllegalArgumentException | AttributeNotFoundException ex) {
 				argParserMessage = ex.getMessage();
 			}
@@ -55,23 +55,23 @@ public class USPMain {
 				logDir.mkdir();
 			}
 			resProv.registerResource("loggingPath", current);
-			
-			//Setup the LanguageResourceHandler
+
+			// Setup the LanguageResourceHandler
 			LanguageResourceHandler.setCurrentLanguage(Locale.GERMAN);
 			LanguageResourceHandler.setDefaultLanguage(Locale.GERMAN);
 			LanguageResourceHandler.getInstance();
-			
+
 			// Check if help is required
 			if (resProv.checkRegistered("help") || argParserMessage != null) {
 				File helpFile = new File(
 						resProv.getResource("workDir") + File.separator + "help" + File.separator + "message.txt");
 				FileReader reader = new FileReader(helpFile);
 				BufferedReader bufReader = new BufferedReader(reader);
-				
-				if(argParserMessage != null) {
+
+				if (argParserMessage != null) {
 					System.out.println(argParserMessage + System.lineSeparator());
 				}
-				
+
 				String message;
 				while ((message = bufReader.readLine()) != null) {
 					System.out.println(message);
@@ -88,7 +88,8 @@ public class USPMain {
 						Runtime.getRuntime().exec("x-terminal-emulator --disable-factory -e ultsigpro");
 					} else {
 						// Windows os
-						// TODO
+						Runtime.getRuntime().exec("cmd /c start java -jar " + resProv.getResource("workDir")
+								+ File.separator + "ultsigpro.jar");
 					}
 				} else {
 					// Startup the GUI
