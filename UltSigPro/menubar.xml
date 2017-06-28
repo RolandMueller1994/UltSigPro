@@ -4,6 +4,16 @@
 	<menu>
 		<title>filemenutitle</title>
 		<class>gui.menubar.FileMenuItem</class>
+		<separator/>
+		<menu>
+			<title>submenu</title>
+			<class>gui.menubar.HelpMenuItem</class>
+			<menu>
+				<title>submenu2</title>
+				<class>gui.menubar.HelpMenuItem</class>
+			</menu>
+		</menu>
+		<class>gui.menubar.HelpMenuItem</class>
 	</menu>
 	<menu>
 		<title>pluginmenutitle</title>
@@ -11,6 +21,6 @@
 	</menu>
 	<menu>
 		<title>helpmenutitle</title>
-		<class>gui.menubar.HelpMenuItem</class>
+		<class></class>
 	</menu>
 </menubar>

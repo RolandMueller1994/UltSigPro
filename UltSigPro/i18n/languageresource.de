@@ -3,3 +3,6 @@ filemenutitle=Datei
 pluginmenutitle=Plugins
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
+
+gui.menubar.FileMenuItem.title=Datei
+gui.menubar.HelpMenuItem.title=Hilfe
