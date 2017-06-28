@@ -5,4 +5,8 @@
 		<title>helpmenutitle</title>
 		<class>gui.menubar.HelpMenuItem</class>
 	</menu>
+	<menu>
+		<title>filemenutitle</title>
+		<class>gui.menubar.FileMenuItem</class>
+	</menu>
 </menubar>
