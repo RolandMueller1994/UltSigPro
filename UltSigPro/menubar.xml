@@ -2,11 +2,15 @@
 
 <menubar>
 	<menu>
-		<title>helpmenutitle</title>
-		<class>gui.menubar.HelpMenuItem</class>
-	</menu>
-	<menu>
 		<title>filemenutitle</title>
 		<class>gui.menubar.FileMenuItem</class>
+	</menu>
+	<menu>
+		<title>pluginmenutitle</title>
+		<class></class>
+	</menu>
+	<menu>
+		<title>helpmenutitle</title>
+		<class>gui.menubar.HelpMenuItem</class>
 	</menu>
 </menubar>

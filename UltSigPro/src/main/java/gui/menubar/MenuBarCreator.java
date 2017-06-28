@@ -34,23 +34,28 @@ public class MenuBarCreator {
 		NodeList nodeList = document.getElementsByTagName("menubar");
 		
 		for(int i=0; i<nodeList.getLength(); i++) {
-			Node menuNode = nodeList.item(i);
+			Node menuBarNode = nodeList.item(i);
 			
 			// Read all menu tags in tag menubar
-			if(menuNode.getNodeType() == Node.ELEMENT_NODE) {
-				Element menuElement = (Element) menuNode;
+			if(menuBarNode.getNodeType() == Node.ELEMENT_NODE) {
+				Element menuBarElement = (Element) menuBarNode;
 				
-				// Get menu title
-				NodeList titleNodeList = menuElement.getElementsByTagName("title");
-				Element titleElement = (Element) titleNodeList.item(0);
-				menuBar.getMenus().add(new Menu(LanguageResourceHandler.getInstance().getLocalizedText(titleElement.getTextContent())));
+				NodeList menuNodeList = menuBarElement.getElementsByTagName("menu");
 				
-				// Get list of class entrys
-				NodeList classNodeList = menuElement.getElementsByTagName("class");
-				
-				for(int j=0; j<classNodeList.getLength(); j++) {
-					Element classElement = (Element) classNodeList.item(j);
-					System.out.println(classElement.getTextContent());
+				for(int j=0; j<menuNodeList.getLength(); j++) {
+					Element menuElement = (Element) menuNodeList.item(j);
+					// Get menu title
+					NodeList titleNodeList = menuElement.getElementsByTagName("title");
+					Element titleElement = (Element) titleNodeList.item(0);
+					menuBar.getMenus().add(new Menu(LanguageResourceHandler.getInstance().getLocalizedText(titleElement.getTextContent())));
+					
+					// Get list of class entrys
+					NodeList classNodeList = menuElement.getElementsByTagName("class");
+					
+					for(int a=0; a<classNodeList.getLength(); a++) {
+						Element classElement = (Element) classNodeList.item(a);
+						System.out.println(classElement.getTextContent());
+					}
 				}
 			}
 		}
