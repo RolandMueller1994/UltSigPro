@@ -1,11 +1,26 @@
 helpmenutitle=Hilfe
 filemenutitle=Datei
 pluginmenutitle=Plugins
+configmenutitle=Konfiguration
+
+yes=Ja
+no=Nein
+ok=Ok
+cancel=Abbrechen
+add=+
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
 
 gui.menubar.FileMenuItem.title=Datei
 gui.menubar.HelpMenuItem.title=Hilfe
+
+gui.menubar.AddChannelMenuItem.title=Kanal hinzufügen
+gui.menubar.AddChannelMenuItem.addChannelTitle=Neuen Kanal hinzufügen
+
+gui.menubar.AddChannelMenuItem$AddChannelDialog.title=Neuen Kanal hinzufügen
+gui.menubar.AddChannelMenuItem$AddChannelDialog.titleLabel=Name
+gui.menubar.AddChannelMenuItem$AddChannelDialog.inputLabel=Eingänge
+gui.menubar.AddChannelMenuItem$AddChannelDialog.outputLabel=Ausgänge
 
 gui.menubar.AboutMenuItem.title=Über USP
 gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro

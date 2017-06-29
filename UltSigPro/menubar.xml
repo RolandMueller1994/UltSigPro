@@ -4,23 +4,18 @@
 	<menu>
 		<title>filemenutitle</title>
 		<class>gui.menubar.FileMenuItem</class>
-		<separator/>
-		<menu>
-			<title>submenu</title>
-			<class>gui.menubar.HelpMenuItem</class>
-			<menu>
-				<title>submenu2</title>
-				<class>gui.menubar.HelpMenuItem</class>
-			</menu>
-		</menu>
-		<class>gui.menubar.HelpMenuItem</class>
 	</menu>
 	<menu>
 		<title>pluginmenutitle</title>
 		<class></class>
 	</menu>
 	<menu>
+		<title>configmenutitle</title>
+		<class>gui.menubar.AddChannelMenuItem</class>
+	</menu>
+	<menu>
 		<title>helpmenutitle</title>
-		<class></class>
+		<class>gui.menubar.HelpMenuItem</class>
+		<class>gui.menubar.AboutMenuItem</class>
 	</menu>
 </menubar>
