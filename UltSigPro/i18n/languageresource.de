@@ -6,3 +6,8 @@ gui.USPGui.title=UltSigPro Ultimate Signal Processing
 
 gui.menubar.FileMenuItem.title=Datei
 gui.menubar.HelpMenuItem.title=Hilfe
+
+gui.menubar.AboutMenuItem.title=Über USP
+gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro
+gui.menubar.AboutMenuItem.infoAlertHeader=Allgemeine Informationen über UltSigPro
+gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPluginfähige Umgebung zur Simulation von Signalverarbeitungsmodulen.
