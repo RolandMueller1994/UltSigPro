@@ -91,7 +91,7 @@ public class InputAdministrator {
 
 			DataLine.Info info = new DataLine.Info(TargetDataLine.class, null);
 			TargetDataLine line = null;
-			AudioFormat audioFormat = new AudioFormat(44100, 16, 1, true, false);
+			AudioFormat audioFormat = new AudioFormat(44100, 16, 1, true, true);
 			try {
 				line = (TargetDataLine) getRegisteredDevice(deviceName).getLine(info);
 				line.open(audioFormat);
@@ -140,15 +140,12 @@ public class InputAdministrator {
 								for (shiftCounter = 0; shiftCounter < bytesRead; shiftCounter = shiftCounter + 2) {
 									for (int i = 0; i < 2; i++) {
 										shiftBuffer = shiftBuffer << 8;
-										shiftBuffer = shiftBuffer | data[shiftCounter+i];
+										shiftBuffer = shiftBuffer | Byte.toUnsignedInt(data[shiftCounter+i]);
 									}
-									System.out.println("***" + shiftBuffer);
 									shiftBuffer = shiftBuffer << 16;
-									System.out.println(shiftBuffer);
 									shiftBuffer = shiftBuffer >> 16;
 									intBuffer.add(shiftBuffer);
 									System.out.println(shiftBuffer);
-									System.out.println(intBuffer.get(shiftCounter/2));
 									shiftBuffer = 0;
 								}
 							}
@@ -168,7 +165,7 @@ public class InputAdministrator {
 			recordThread.start();
 		}
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(200);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
