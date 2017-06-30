@@ -79,7 +79,7 @@ public class SoundInputDevice {
 	 * 
 	 * @return All sound input devices as String.
 	 */
-	public List<String> getAllSoundInputDevicesString() {
+	public List<String> getAllSoundInputDevicesString() { // TODO hashmap static
 
 		return allSoundInputDevicesList;
 	}
@@ -103,21 +103,21 @@ public class SoundInputDevice {
 	 * @param deviceSelection
 	 *            Selection made by user.
 	 */
-	public void setSelectedInputDevice(int deviceSelection) {
+/*	public void setSelectedInputDevice(int deviceSelection) {
 
 		// Selection made by user through the pull down menu
 		if (this.selectedDeviceNumber != deviceSelection) {
 			Mixer mixer = AudioSystem.getMixer(allSoundDevices[deviceSelection]);
-			/*
+			
 			 * if (targetLine != null) closeDataLine();
-			 */
+			 
 			this.selectedDeviceNumber = deviceSelection;
 			this.selectedInputDevice = mixer;
 			this.selectedInputDeviceName = allSoundDevices[deviceSelection].getName();
 			// reserveSoundInputDevice();
 			InputAdministrator.getInputAdminstrator().setRegisteredDevice(selectedInputDeviceName, mixer);
 		}
-	}
+	}*/
 
 	/**
 	 * Opens a line to the selected sound input device.
