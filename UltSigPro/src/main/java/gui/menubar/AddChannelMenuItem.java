@@ -18,6 +18,7 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import resourceframework.ResourceProviderException;
@@ -64,6 +65,8 @@ public class AddChannelMenuItem extends MenuItem {
 		private static final String INPUT_LABEL = "inputLabel";
 		private static final String OUTPUT_LABEL = "outputLabel";
 		
+		private static final double IN_OUT_WIDTH = 70;
+		
 		private List<ChoiceBox<String>> inputBoxes = new LinkedList<> ();
 		private List<ChoiceBox<String>> outputBoxes = new LinkedList<> ();
 		
@@ -93,10 +96,13 @@ public class AddChannelMenuItem extends MenuItem {
 			gridPane.add(inputPane, 0, 1, 2, 1);
 			gridPane.add(outputPane, 0, 2, 2, 1);
 			
+			inputPane.getColumnConstraints().add(0, new ColumnConstraints(IN_OUT_WIDTH));
+			outputPane.getColumnConstraints().add(0, new ColumnConstraints(IN_OUT_WIDTH));
+			
 			gridPane.setMaxWidth(Double.MAX_VALUE);
 			gridPane.setMaxHeight(Double.MAX_VALUE);
 			
-			gridPane.setHgrow(titleTextField, Priority.ALWAYS);
+			GridPane.setHgrow(titleTextField, Priority.ALWAYS);
 			
 			dialogPane = getDialogPane();
 			dialogPane.setContent(gridPane);
@@ -108,7 +114,7 @@ public class AddChannelMenuItem extends MenuItem {
 		private GridPane getInputPane() {
 			inputPane = new GridPane();
 			
-			inputPane.setPadding(new Insets(5));
+			//inputPane.setPadding(new Insets(5));
 			inputPane.setHgap(5);
 			inputPane.setVgap(5);
 			
@@ -133,6 +139,7 @@ public class AddChannelMenuItem extends MenuItem {
 					gridPane.getChildren().remove(inputPane);
 					inputPane = getInputPane();
 					gridPane.add(inputPane, 0, 1, 2, 1);
+					inputPane.getColumnConstraints().add(0, new ColumnConstraints(IN_OUT_WIDTH));
 					dialogPane.getScene().getWindow().sizeToScene();
 				}
 				
@@ -145,7 +152,7 @@ public class AddChannelMenuItem extends MenuItem {
 		private GridPane getOutputPane() {
 			outputPane = new GridPane();			
 			
-			outputPane.setPadding(new Insets(5));
+			//outputPane.setPadding(new Insets(5));
 			outputPane.setHgap(5);
 			outputPane.setVgap(5);
 			
@@ -170,6 +177,7 @@ public class AddChannelMenuItem extends MenuItem {
 					gridPane.getChildren().remove(outputPane);
 					outputPane = getOutputPane();
 					gridPane.add(outputPane, 0, 2, 2, 1);
+					outputPane.getColumnConstraints().add(0, new ColumnConstraints(IN_OUT_WIDTH));
 					dialogPane.getScene().getWindow().sizeToScene();
 				}
 				
