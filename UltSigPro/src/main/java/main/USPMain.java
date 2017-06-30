@@ -9,6 +9,7 @@ import javax.management.AttributeNotFoundException;
 
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
+import inputHandler.TestKlasse;
 import logging.CommonLogger;
 import resourceframework.GlobalResourceProvider;
 import startup.ArgParser;
@@ -95,13 +96,14 @@ public class USPMain {
 					// Startup the GUI
 					USPGui gui = new USPGui();
 					gui.buildGUI();
-
+					TestKlasse.startTest();
 					System.out.println(resProv.getResource("workDir"));
 				}
 			}
 
 		} catch (Exception e) {
 			CommonLogger.getInstance().logException(e);
+			throw new RuntimeException(e);
 		} finally {
 			try {
 				// Remove when GUI builds

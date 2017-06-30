@@ -1,0 +1,29 @@
+17:24:36
+com.sun.media.sound.DirectAudioDeviceProvider$DirectAudioDeviceInfo cannot be cast to javax.sound.sampled.Mixer
+[Ljava.lang.StackTraceElement;@5f184fc6
+
+17:26:10
+com.sun.media.sound.DirectAudioDeviceProvider$DirectAudioDeviceInfo cannot be cast to javax.sound.sampled.Mixer
+[Ljava.lang.StackTraceElement;@5f184fc6
+
+17:27:00
+com.sun.media.sound.DirectAudioDeviceProvider$DirectAudioDeviceInfo cannot be cast to javax.sound.sampled.Mixer
+[Ljava.lang.StackTraceElement;@5f184fc6
+
+18:05:36
+Line unsupported: interface TargetDataLine
+[Ljava.lang.StackTraceElement;@5b480cf9
+
+18:05:45
+Line unsupported: interface TargetDataLine
+[Ljava.lang.StackTraceElement;@5b480cf9
+
+21:27:08
+[Ljava.lang.StackTraceElement;@6f496d9f
+
+21:30:02
+[Ljava.lang.StackTraceElement;@723279cf
+
+21:38:50
+[Ljava.lang.StackTraceElement;@723279cf
+
