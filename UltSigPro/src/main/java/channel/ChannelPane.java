@@ -1,5 +1,7 @@
 package channel;
 
+import java.util.Collection;
+
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
@@ -28,18 +30,19 @@ public class ChannelPane extends TitledPane {
 	private BorderPane centralPane = new BorderPane();
 	private ChannelConfig config;
 	
-	private boolean play = false;
+	private boolean play;
 	private InputPane inputPane;
 	private OutputPane outputPane;
 	private WaveFormPane waveFormPane;
+	private String name;
 	
 	private ContextMenu contextMenu;
 	
 	public ChannelPane(ChannelConfig config) throws ResourceProviderException {
 		super.setText(config.getName());
 		super.setContent(centralPane);
-
-		inputPane = new InputPane();
+		name = config.getName();
+		inputPane = new InputPane(config.getInputDevices());
 		outputPane = new OutputPane();
 		waveFormPane = new WaveFormPane();
 		
@@ -64,6 +67,18 @@ public class ChannelPane extends TitledPane {
 		contextMenu.getItems().add(deleteMenuItem);
 		
 		super.setContextMenu(contextMenu);
+		
+		setPlay(false);
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void setPlay(boolean play) {
+		this.play = play;
+		inputPane.setEditable(!play);
+		outputPane.setEditable(!play);
 	}
 	
 	private void deleteThisChannel() {
@@ -76,13 +91,17 @@ public class ChannelPane extends TitledPane {
 		private Button addButton;
 		private Button removeButton;	
 		
-		public InputPane() {
+		public InputPane(Collection<String> inputDevices) {
 			addButton = new Button("+");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			removeButton = new Button("-");
 			removeButton.setMaxWidth(Double.MAX_VALUE);
 			table = new ListView<> ();
 			table.setPrefSize(200, 100);
+			
+			for(String cur : inputDevices) {
+				table.getItems().add(cur);
+			}
 			
 			GridPane gridPane = new GridPane();
 			gridPane.setPadding(new Insets(5));
@@ -103,6 +122,11 @@ public class ChannelPane extends TitledPane {
 			gridPane.getColumnConstraints().addAll(cc, cc);
 			
 			super.getChildren().add(gridPane);
+		}
+		
+		private void setEditable(boolean b) {
+			addButton.setDisable(!b);
+			removeButton.setDisable(!b);
 		}
 		
 	}
@@ -140,6 +164,11 @@ public class ChannelPane extends TitledPane {
 			gridPane.getColumnConstraints().addAll(cc, cc);
 			
 			super.getChildren().add(gridPane);
+		}
+		
+		private void setEditable(boolean b) {
+			addButton.setDisable(!b);
+			removeButton.setDisable(!b);
 		}
 	}
 	

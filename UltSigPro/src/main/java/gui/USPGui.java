@@ -1,5 +1,7 @@
 package gui;
 
+import java.util.Iterator;
+
 import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.menubar.MenuBarCreator;
@@ -7,6 +9,7 @@ import i18n.LanguageResourceHandler;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
@@ -37,6 +40,7 @@ public class USPGui extends Application {
 	private static VBox channelBox;
 	
 	private String[] args;
+	private boolean play = false;
 	
 	/**
 	 * This method must be called at startup. The GUI will be set up.
@@ -63,8 +67,11 @@ public class USPGui extends Application {
 
 			@Override
 			public void handle(MouseEvent event) {
-				
-				
+				play = true;
+				Iterator<Node> iter = channelBox.getChildren().iterator();
+				while(iter.hasNext()) {
+					((ChannelPane) iter.next()).setPlay(true);
+				}
 			}
 			
 		});
@@ -75,10 +82,14 @@ public class USPGui extends Application {
 
 			@Override
 			public void handle(MouseEvent event) {
-				
-				
+				play = false;
+				Iterator<Node> iter = channelBox.getChildren().iterator();
+				while(iter.hasNext()) {
+					((ChannelPane) iter.next()).setPlay(false);
+				}
 			}		
 		});
+		
 		stopMenu.setGraphic(stopLabel);
 		
 		buttonMenu.getMenus().addAll(startMenu, stopMenu);
@@ -114,6 +125,17 @@ public class USPGui extends Application {
 	
 	public static void deleteChannel(ChannelPane pane) {
 		channelBox.getChildren().remove(pane);
+	}
+	
+	public static boolean checkIfPresent(String name) {
+		Iterator<Node> iter = channelBox.getChildren().iterator();
+		
+		while(iter.hasNext()) {
+			if(((ChannelPane) iter.next()).getName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 }

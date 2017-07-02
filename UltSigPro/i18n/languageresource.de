@@ -11,6 +11,7 @@ no=Nein
 ok=Ok
 cancel=Abbrechen
 add=+
+remove=-
 delete=Löschen
 play=Play
 stop=Stop
@@ -27,6 +28,8 @@ gui.menubar.AddChannelMenuItem$AddChannelDialog.title=Neuen Kanal hinzufügen
 gui.menubar.AddChannelMenuItem$AddChannelDialog.titleLabel=Name
 gui.menubar.AddChannelMenuItem$AddChannelDialog.inputLabel=Eingänge
 gui.menubar.AddChannelMenuItem$AddChannelDialog.outputLabel=Ausgänge
+gui.menubar.AddChannelMenuItem$AddChannelDialog.warning=Name spezifizieren!
+gui.menubar.AddChannelMenuItem$AddChannelDialog.presentWarning=Name bereits vorhanden!
 
 gui.menubar.AboutMenuItem.title=Über USP
 gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro

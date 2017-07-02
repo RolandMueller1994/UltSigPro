@@ -2,15 +2,20 @@ package gui.menubar;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Observable;
 import java.util.Optional;
+import java.util.Set;
 
 import channel.ChannelConfig;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
+import inputHandler.InputAdministrator;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
@@ -20,6 +25,7 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -31,6 +37,7 @@ public class AddChannelMenuItem extends MenuItem {
 	private static final String ADD_CHANNEL_TITLE = "addChannelTitle";
 	
 	private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+	private InputAdministrator inputAdmin = InputAdministrator.getInputAdminstrator();
 	
 	private DialogPane dialogPane;
 	private AddChannelDialog dialog;
@@ -39,6 +46,8 @@ public class AddChannelMenuItem extends MenuItem {
 	
 	public AddChannelMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(AddChannelMenuItem.class, TITLE));
+		
+		inputAdmin.collectSoundInputDevices();
 		
 		super.setOnAction(new EventHandler<ActionEvent> () {
 
@@ -66,6 +75,8 @@ public class AddChannelMenuItem extends MenuItem {
 		private static final String OUTPUT_LABEL = "outputLabel";
 		
 		private static final double IN_OUT_WIDTH = 70;
+		private static final String WARNING = "warning";
+		private static final String PRESENT_WARNING = "presentWarning";
 		
 		private List<ChoiceBox<String>> inputBoxes = new LinkedList<> ();
 		private List<ChoiceBox<String>> outputBoxes = new LinkedList<> ();
@@ -79,7 +90,7 @@ public class AddChannelMenuItem extends MenuItem {
 			
 			gridPane = new GridPane();
 			
-			Label titleLabel = new Label(lanHandler.getLocalizedText(AddChannelDialog.class, TITLE_LABEL) + ":");
+			Label titleLabel = new Label(lanHandler.getLocalizedText(AddChannelDialog.class, TITLE_LABEL) + ": *");
 			titleTextField = new TextField();
 			
 			inputBoxes.add(new ChoiceBox<String>());
@@ -110,10 +121,33 @@ public class AddChannelMenuItem extends MenuItem {
 
 			dialogPane.getButtonTypes().add(ButtonType.OK);
 			dialogPane.getButtonTypes().add(ButtonType.CANCEL);
+			
+			Button btOk = (Button) dialogPane.lookupButton(ButtonType.OK);
+			btOk.addEventFilter(ActionEvent.ACTION, e -> {
+				if(titleTextField.getText().isEmpty()) {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, WARNING));
+					alert.showAndWait();
+					e.consume();
+				} else if(USPGui.checkIfPresent(titleTextField.getText())) {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, PRESENT_WARNING));
+					alert.showAndWait();
+					e.consume();
+				}
+			});
 		}
 		
 		public ChannelConfig getConfig() {
-			return new ChannelConfig(titleTextField.getText(), null, null);
+			List<String> inputDevices = new LinkedList<> ();
+			
+			for(ChoiceBox<String> choiceBox : inputBoxes) {
+				String cur;
+				if((cur = choiceBox.getSelectionModel().getSelectedItem()) != null) {
+					inputDevices.add(cur);
+				}
+			}
+			return new ChannelConfig(titleTextField.getText(), inputDevices, null);
 		}
 		
 		private GridPane getInputPane() {
@@ -132,10 +166,14 @@ public class AddChannelMenuItem extends MenuItem {
 				GridPane.setHgrow(choiceBox, Priority.ALWAYS);
 				choiceBox.setMaxWidth(Double.MAX_VALUE);
 				inputPane.add(choiceBox, 1, i);
+				choiceBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 				i++;
 			}
 			
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			GridPane.getHgrow(removeButton);
+			removeButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent> () {
 
 				@Override
@@ -149,6 +187,22 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 				
 			});
+			removeButton.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					inputBoxes.remove(inputBoxes.size() - 1);
+					gridPane.getChildren().remove(inputPane);
+					inputPane = getInputPane();
+					gridPane.add(inputPane, 0, 1, 2, 1);
+					inputPane.getColumnConstraints().add(0, new ColumnConstraints(IN_OUT_WIDTH));
+					dialogPane.getScene().getWindow().sizeToScene();
+				}
+				
+			});
+			if(inputBoxes.size() > 1) {
+				inputPane.add(removeButton, 2, 1);
+			} 
 			inputPane.add(addButton, 2, 0);
 			
 			return inputPane;
@@ -170,10 +224,14 @@ public class AddChannelMenuItem extends MenuItem {
 				GridPane.setHgrow(choiceBox, Priority.ALWAYS);
 				choiceBox.setMaxWidth(Double.MAX_VALUE);
 				outputPane.add(choiceBox, 1, i);
+				choiceBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 				i++;
 			}
 			
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			GridPane.getHgrow(removeButton);
+			removeButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent> () {
 
 				@Override
@@ -187,7 +245,9 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 				
 			});
-			
+			if(outputBoxes.size() > 1) {
+				outputPane.add(removeButton, 2, 1);
+			} 
 			outputPane.add(addButton, 2, 0);
 			
 			return outputPane;
