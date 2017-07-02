@@ -13,7 +13,7 @@ import javax.sound.sampled.TargetDataLine;
  * wave-file, ...). Automatically opens a line to the requested mixer. However,
  * does not start to send data yet, but waits for a request of the
  * {@linkplain InputAdministrator} to send data.
- * 
+ * TODO delete this class? 
  * 
  * @author Kone
  * 

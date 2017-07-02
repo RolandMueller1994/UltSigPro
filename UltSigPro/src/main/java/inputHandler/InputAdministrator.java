@@ -14,11 +14,10 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 
 /**
- * Administrates which {@linkplain SoundInputDevice} sends data and receives
- * their data. Then converts the received bytes to integer and distributes it to
- * the different signal processing paths as requested by them. The hashmap of
- * subscribed devices correspond the requested input devices by the
- * {@linkplain Channel}.
+ * Administrates which input devices are available and requests their sampled
+ * data, if any {@linkplain Channel} has subscribed them. Then opens a
+ * {@linkplain TargetDataLine} to the {@linkplain Mixer}, converts the received
+ * bytes to integer and distributes it to the different signal processing paths.
  * 
  * @author Kone
  *
@@ -44,6 +43,9 @@ public class InputAdministrator {
 	private InputAdministrator() {
 	}
 
+	/**
+	 * Collects all sound devices and filters the results for input devices.
+	 */
 	public void collectSoundInputDevices() {
 
 		Mixer mixer;
@@ -61,22 +63,39 @@ public class InputAdministrator {
 		}
 	}
 
+	/**
+	 * 
+	 * @return A set of strings with all sound input devices.
+	 */
 	public Set<String> getInputDevices() {
 		return allSoundInputDevices.keySet();
 	}
 
-	public Mixer getSubscribedDevice(String name) {
-		return subscribedDevices.get(name);
-	}
-
+	/**
+	 * Returns which devices are subscribed. Adding/Removing of values to this
+	 * HashMap is handled by the {@linkplain Channel} class.
+	 * 
+	 * @return A key set of all subscribed devices.
+	 */
 	public Set<String> getSubscribedDevicesName() {
 		return subscribedDevices.keySet();
 	}
 
+	/**
+	 * 
+	 * @return A HashMap of all open {@linkplain TargetDataLine}s.
+	 */
 	public HashMap<String, TargetDataLine> getTargetDataLines() {
 		return targetDataLines;
 	}
 
+	/**
+	 * Removes the subscription of the device and closes its
+	 * {@linkplain TargetDataLine}.
+	 * 
+	 * @param name
+	 *            The name of the device.
+	 */
 	public void removeSubscribedDevice(String name) {
 		subscribedDevices.remove(name);
 		targetDataLines.get(name).stop();
@@ -84,6 +103,14 @@ public class InputAdministrator {
 		targetDataLines.remove(name);
 	}
 
+	/**
+	 * Checks first if the device is already subscribed. In the case of a new
+	 * device it opens a {@linkplain TargetDataLine} with predefined values for
+	 * sampling rate, bits per sample, ... .
+	 * 
+	 * @param deviceName
+	 *            Name of the new subscribed device.
+	 */
 	public void setSubscribedDevices(String deviceName) {
 
 		if (!subscribedDevices.containsKey(deviceName)) {
@@ -111,6 +138,10 @@ public class InputAdministrator {
 		}
 	}
 
+	/**
+	 * Collects the sampled bytes of all subscribed target data lines and
+	 * converts it to integer values. 
+	 */
 	public void startListening() {
 
 		for (Map.Entry<String, TargetDataLine> entry : targetDataLines.entrySet()) {
@@ -134,7 +165,7 @@ public class InputAdministrator {
 						// fixed size is read, the read()-call will block until
 						// the requested data are available. This would cause
 						// latency.
-						// TODO Optimize sleep time after reading (line 148)
+						// TODO Optimize sleep time after reading
 						byte[] data = new byte[line.available()];
 						int bytesRead = line.read(data, 0, data.length);
 						int byteBuffer = 0, shiftCounter = 0;
