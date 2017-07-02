@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import channel.ChannelConfig;
+import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -48,9 +50,7 @@ public class AddChannelMenuItem extends MenuItem {
 				Optional<ButtonType> result = dialog.showAndWait();
 				
 				if(result.isPresent() && result.get() == ButtonType.OK) {
-					System.out.println(true);
-				} else {
-					System.out.println(false);
+					USPGui.addChannel(dialog.getConfig());
 				}
 			}
 			
@@ -69,6 +69,7 @@ public class AddChannelMenuItem extends MenuItem {
 		
 		private List<ChoiceBox<String>> inputBoxes = new LinkedList<> ();
 		private List<ChoiceBox<String>> outputBoxes = new LinkedList<> ();
+		private TextField titleTextField;
 		
 		private GridPane gridPane;
 		
@@ -79,7 +80,7 @@ public class AddChannelMenuItem extends MenuItem {
 			gridPane = new GridPane();
 			
 			Label titleLabel = new Label(lanHandler.getLocalizedText(AddChannelDialog.class, TITLE_LABEL) + ":");
-			TextField titleTextField = new TextField();
+			titleTextField = new TextField();
 			
 			inputBoxes.add(new ChoiceBox<String>());
 			outputBoxes.add(new ChoiceBox<String> ());
@@ -109,6 +110,10 @@ public class AddChannelMenuItem extends MenuItem {
 
 			dialogPane.getButtonTypes().add(ButtonType.OK);
 			dialogPane.getButtonTypes().add(ButtonType.CANCEL);
+		}
+		
+		public ChannelConfig getConfig() {
+			return new ChannelConfig(titleTextField.getText(), null, null);
 		}
 		
 		private GridPane getInputPane() {

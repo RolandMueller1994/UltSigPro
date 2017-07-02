@@ -8,6 +8,9 @@ no=Nein
 ok=Ok
 cancel=Abbrechen
 add=+
+delete=Löschen
+play=Play
+stop=Stop
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
 
