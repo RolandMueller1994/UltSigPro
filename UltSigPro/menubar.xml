@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<menubar>
+	<menu>
+		<title>filemenutitle</title>
+		<class>gui.menubar.FileMenuItem</class>
+	</menu>
+	<menu>
+		<title>pluginmenutitle</title>
+		<class></class>
+	</menu>
+	<menu>
+		<title>configmenutitle</title>
+		<class>gui.menubar.AddChannelMenuItem</class>
+	</menu>
+	<menu>
+		<title>helpmenutitle</title>
+		<class>gui.menubar.HelpMenuItem</class>
+		<class>gui.menubar.AboutMenuItem</class>
+	</menu>
+</menubar>

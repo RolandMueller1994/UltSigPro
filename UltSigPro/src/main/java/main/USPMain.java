@@ -58,9 +58,12 @@ public class USPMain {
 			resProv.registerResource("loggingPath", current);
 
 			// Setup the LanguageResourceHandler
+			// TODO Read configured language
 			LanguageResourceHandler.setCurrentLanguage(Locale.GERMAN);
 			LanguageResourceHandler.setDefaultLanguage(Locale.GERMAN);
 			LanguageResourceHandler.getInstance();
+			
+			Locale.setDefault(Locale.GERMAN);
 
 			// Check if help is required
 			if (resProv.checkRegistered("help") || argParserMessage != null) {
@@ -95,9 +98,10 @@ public class USPMain {
 				} else {
 					// Startup the GUI
 					USPGui gui = new USPGui();
-					gui.buildGUI();
-					TestKlasse.startTest();
+					gui.buildGUI(args);
+					//TestKlasse.startTest();
 					System.out.println(resProv.getResource("workDir"));
+
 				}
 			}
 
@@ -105,12 +109,6 @@ public class USPMain {
 			CommonLogger.getInstance().logException(e);
 			throw new RuntimeException(e);
 		} finally {
-			try {
-				// Remove when GUI builds
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
 			System.out.println("Exit");
 		}
 	}
