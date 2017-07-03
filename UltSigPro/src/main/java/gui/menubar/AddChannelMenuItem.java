@@ -1,5 +1,6 @@
 package gui.menubar;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -81,6 +82,11 @@ public class AddChannelMenuItem extends MenuItem {
 		private static final String TITLE_LABEL = "titleLabel";
 		private static final String INPUT_LABEL = "inputLabel";
 		private static final String OUTPUT_LABEL = "outputLabel";
+		private static final String INOUT_ALERT = "inOutAlert";
+		private static final String IN_ALERT = "inAlert";
+		private static final String OUT_ALERT = "outAlert";
+		private static final String INOUT_ALERT_TITLE = "inOutAlertTitle";
+		private static final String INOUT_ALERT_HEADER = "inOutAlertHeader";
 
 		private static final double IN_OUT_WIDTH = 70;
 		private static final String WARNING = "warning";
@@ -137,6 +143,8 @@ public class AddChannelMenuItem extends MenuItem {
 					alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, WARNING));
 					alert.showAndWait();
 					e.consume();
+				} else if(checkForDuplicates()) {
+					e.consume();
 				} else if (USPGui.checkIfPresent(titleTextField.getText())) {
 					Alert alert = new Alert(AlertType.WARNING);
 					alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, PRESENT_WARNING));
@@ -144,6 +152,51 @@ public class AddChannelMenuItem extends MenuItem {
 					e.consume();
 				}
 			});
+		}
+		
+		private boolean checkForDuplicates() {
+			HashSet<String> devices = new HashSet<> ();
+			
+			boolean inputDuplicate = false;
+			boolean outputDuplicate = false;
+			
+			for(ChoiceBox<String> box : inputBoxes) {
+				String cur = box.getSelectionModel().getSelectedItem();
+				if(devices.contains(cur)) {
+					inputDuplicate = true;
+					break;
+				}
+				devices.add(cur);
+			}
+			
+			devices.clear();
+			for(ChoiceBox<String> box : outputBoxes) {
+				String cur = box.getSelectionModel().getSelectedItem();
+				if(devices.contains(cur)) {
+					outputDuplicate = true;
+					break;
+				}
+				devices.add(cur);
+			}
+			
+			if(!inputDuplicate && !outputDuplicate) {
+				return false;
+			} else {
+				String alertText;
+				if(inputDuplicate && outputDuplicate) {
+					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, INOUT_ALERT);
+				} else if(inputDuplicate) {
+					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, IN_ALERT);
+				} else {
+					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, OUT_ALERT);
+				}
+				Alert alert = new Alert(AlertType.WARNING);
+				alert.setTitle(lanHandler.getLocalizedText(AddChannelDialog.class, INOUT_ALERT_TITLE));
+				alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, INOUT_ALERT_HEADER));
+				alert.setContentText(alertText);
+				alert.showAndWait();
+				return true;
+			}
 		}
 
 		public ChannelConfig getConfig() {

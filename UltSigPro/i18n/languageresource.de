@@ -30,6 +30,11 @@ gui.menubar.AddChannelMenuItem$AddChannelDialog.inputLabel=Eingänge
 gui.menubar.AddChannelMenuItem$AddChannelDialog.outputLabel=Ausgänge
 gui.menubar.AddChannelMenuItem$AddChannelDialog.warning=Name spezifizieren!
 gui.menubar.AddChannelMenuItem$AddChannelDialog.presentWarning=Name bereits vorhanden!
+gui.menubar.AddChannelMenuItem$AddChannelDialog.inOutAlert=Duplikate bei Eingängen und Ausgängen!
+gui.menubar.AddChannelMenuItem$AddChannelDialog.inAlert=Duplikate bei Eingängen!
+gui.menubar.AddChannelMenuItem$AddChannelDialog.outAlert=Duplikate bei den Ausgängen!
+gui.menubar.AddChannelMenuItem$AddChannelDialog.inOutAlertTitle=Kanalkonfiguration
+gui.menubar.AddChannelMenuItem$AddChannelDialog.inOutAlertHeader=Duplikate in der Konfiguration!
 
 gui.menubar.AboutMenuItem.title=Über USP
 gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro
