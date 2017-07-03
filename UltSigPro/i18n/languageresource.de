@@ -40,3 +40,13 @@ gui.menubar.AboutMenuItem.title=Über USP
 gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro
 gui.menubar.AboutMenuItem.infoAlertHeader=Allgemeine Informationen über UltSigPro
 gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPluginfähige Umgebung zur Simulation von Signalverarbeitungsmodulen.
+
+channel.ChannelPane$AddRemoveDialog.inputAddTitle=Eingang hinzufügen
+channel.ChannelPane$AddRemoveDialog.inputRemoveTitle=Eingang entfernen
+channel.ChannelPane$AddRemoveDialog.outputAddTitle=Ausgang hinzufügen
+channel.ChannelPane$AddRemoveDialog.outputRemoveTitle=Ausgang entfernen
+channel.ChannelPane$AddRemoveDialog.emptyAlertTitle=Auswahl
+channel.ChannelPane$AddRemoveDialog.emptyAlertHeader=Es muss ein Device gewählt werden!
+channel.ChannelPane$AddRemoveDialog.duplicateAlertTitle=Auswahl
+channel.ChannelPane$AddRemoveDialog.duplicateAlertHeader=Das ausgewählte Device ist bereits vorhanden!
+channel.ChannelPane$AddRemoveDialog.deviceLabel=Device: *
