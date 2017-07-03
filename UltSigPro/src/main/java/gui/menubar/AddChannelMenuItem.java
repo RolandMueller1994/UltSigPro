@@ -173,8 +173,7 @@ public class AddChannelMenuItem extends MenuItem {
 			GridPane.setHgrow(firstBox, Priority.ALWAYS);
 			firstBox.setMaxWidth(Double.MAX_VALUE);
 			inputPane.add(firstBox, 1, 0);
-			// TODO Get items from output handler
-			// firstBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
+			firstBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
@@ -185,7 +184,6 @@ public class AddChannelMenuItem extends MenuItem {
 				@Override
 				public void handle(ActionEvent event) {
 					ChoiceBox<String> box = new ChoiceBox<>();
-					// TODO Get items from output handler
 					box.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 					inputBoxes.add(box);
 					GridPane.setHgrow(box, Priority.ALWAYS);
@@ -233,7 +231,8 @@ public class AddChannelMenuItem extends MenuItem {
 			GridPane.setHgrow(firstBox, Priority.ALWAYS);
 			firstBox.setMaxWidth(Double.MAX_VALUE);
 			outputPane.add(firstBox, 1, 0);
-			firstBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
+			// TODO Get items from output handler
+			//firstBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
@@ -244,7 +243,8 @@ public class AddChannelMenuItem extends MenuItem {
 				@Override
 				public void handle(ActionEvent event) {
 					ChoiceBox<String> box = new ChoiceBox<>();
-					box.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
+					// TODO Get items from output handler
+					//box.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 					outputBoxes.add(box);
 					GridPane.setHgrow(box, Priority.ALWAYS);
 					box.setMaxWidth(Double.MAX_VALUE);
