@@ -46,7 +46,8 @@ public class ChannelPane extends TitledPane {
 
 	private BorderPane centralPane = new BorderPane();
 	private ChannelConfig config;
-
+	private Channel channel;
+	
 	private boolean play;
 	private InputPane inputPane;
 	private OutputPane outputPane;
@@ -68,6 +69,7 @@ public class ChannelPane extends TitledPane {
 	public ChannelPane(@Nonnull ChannelConfig config) throws ResourceProviderException {
 		super.setText(config.getName());
 		super.setContent(centralPane);
+		this.config = config;
 		name = config.getName();
 		inputPane = new InputPane(config.getInputDevices());
 		outputPane = new OutputPane();
@@ -95,6 +97,8 @@ public class ChannelPane extends TitledPane {
 
 		super.setContextMenu(contextMenu);
 
+		channel = new Channel(config);
+		
 		setPlay(false);
 	}
 
@@ -115,12 +119,15 @@ public class ChannelPane extends TitledPane {
 	 *            True if the channel should start play, false else.
 	 */
 	public void setPlay(boolean play) {
+		contextMenu.getItems().get(0).setDisable(play);
 		this.play = play;
 		inputPane.setEditable(!play);
 		outputPane.setEditable(!play);
+		channel.setPlay(play);
 	}
 
 	private void deleteThisChannel() {
+		channel.delete();
 		USPGui.deleteChannel(this);
 	}
 
@@ -201,11 +208,13 @@ public class ChannelPane extends TitledPane {
 		public void addInput(String device) {
 			table.getItems().add(device);
 			config.addInputDevice(device);
+			channel.addInputDevice(device);
 		}
 
 		public void removeInput(String device) {
 			table.getItems().remove(device);
-			config.addOutputDevice(device);
+			config.removeInputDevice(device);
+			channel.removeInputDevice(device);
 		}
 	}
 
@@ -271,10 +280,12 @@ public class ChannelPane extends TitledPane {
 
 		public void addOutput(String device) {
 			table.getItems().add(device);
+			config.addOutputDevice(device);
 		}
 
 		public void removeOutput(String device) {
 			table.getItems().remove(device);
+			config.removeOutputDevice(device);
 		}
 
 		private void addDevice() {

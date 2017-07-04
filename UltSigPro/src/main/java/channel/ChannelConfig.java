@@ -84,6 +84,10 @@ public class ChannelConfig {
 	public void addInputDevice(@Nonnull String device) {
 		inputDevices.add(device);
 	}
+	
+	public void removeInputDevice(@Nonnull String device) {
+		inputDevices.remove(device);
+	}
 
 	/**
 	 * Get the output devices.
@@ -94,7 +98,7 @@ public class ChannelConfig {
 	public Collection<String> getOutputDevices() {
 		return outputDevices;
 	}
-
+	
 	/**
 	 * Adds the given device to the input device list.
 	 * 
@@ -103,6 +107,10 @@ public class ChannelConfig {
 	 */
 	public void addOutputDevice(@Nonnull String device) {
 		outputDevices.add(device);
+	}
+	
+	public void removeOutputDevice(@Nonnull String device) {
+		outputDevices.remove(device);
 	}
 
 }

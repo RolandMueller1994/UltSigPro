@@ -4,42 +4,40 @@ import java.util.Set;
 
 import inputHandler.InputAdministrator;
 
-public class Channel {
+public class Channel implements InputDataListener {
 
-	/**
-	 * 
-	 * @return All available input devices for recording.
-	 */
-	public Set<String> getInputDevices() {
-		return InputAdministrator.getInputAdminstrator().getInputDevices();
+	private InputAdministrator inputAdmin;
+	private boolean play = false;
+	private String name;
+	
+	public Channel (ChannelConfig config) {
+		this.name = config.getName();
+		inputAdmin = InputAdministrator.getInputAdminstrator();
+		inputAdmin.registerInputDataListener(this, config.getInputDevices());
 	}
 
-	/**
-	 * TODO Just for testing at the moment. Maybe delete it later.
-	 * 
-	 * @return
-	 */
-	public Set<String> getSubscribedDevices() {
-		return InputAdministrator.getInputAdminstrator().getSubscribedDevicesName();
+	@Override
+	public void putData(int[] data) {
+		
+		for(int i=0; i<data.length; i++) {
+			System.out.println(name + ": "+ data[i]);
+		}
+		
 	}
-
-	/**
-	 * Deletes the entry in the list of subscribed devices and closes the line.
-	 * 
-	 * @param deviceName
-	 *            which has to be removed
-	 */
-	public void removeSubscription(String deviceName) {
-		InputAdministrator.getInputAdminstrator().removeSubscribedDevice(deviceName);
+	
+	public void addInputDevice(String device) {
+		inputAdmin.addDeviceToInputDataListener(this, device);
 	}
-
-	/**
-	 * Creates an entry in the list of subscribed devices and opens a line.
-	 * 
-	 * @param deviceName
-	 *            which will be subscribed
-	 */
-	public void setSubscription(String deviceName) {
-		InputAdministrator.getInputAdminstrator().setSubscribedDevices(deviceName);
+	
+	public void removeInputDevice(String device) {
+		inputAdmin.removeDeviceFromInputDataListener(this, device);
+	}
+	
+	public void delete() {
+		inputAdmin.removeInputDataListener(this);
+	}
+	
+	public void setPlay(boolean play) {
+		play = false;
 	}
 }

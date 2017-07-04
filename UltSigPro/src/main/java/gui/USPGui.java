@@ -6,6 +6,7 @@ import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.menubar.MenuBarCreator;
 import i18n.LanguageResourceHandler;
+import inputHandler.InputAdministrator;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -72,6 +73,7 @@ public class USPGui extends Application {
 				while(iter.hasNext()) {
 					((ChannelPane) iter.next()).setPlay(true);
 				}
+				InputAdministrator.getInputAdminstrator().startListening();
 			}
 			
 		});
@@ -87,6 +89,7 @@ public class USPGui extends Application {
 				while(iter.hasNext()) {
 					((ChannelPane) iter.next()).setPlay(false);
 				}
+				InputAdministrator.getInputAdminstrator().stopListening();
 			}		
 		});
 		
