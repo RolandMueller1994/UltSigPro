@@ -13,6 +13,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
 
+import channel.Channel;
+
 /**
  * Administrates which input devices are available and requests their sampled
  * data, if any {@linkplain Channel} has subscribed them. Then opens a

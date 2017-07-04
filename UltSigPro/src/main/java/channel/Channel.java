@@ -1,6 +1,8 @@
-package inputHandler;
+package channel;
 
 import java.util.Set;
+
+import inputHandler.InputAdministrator;
 
 public class Channel {
 

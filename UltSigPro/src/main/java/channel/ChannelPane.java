@@ -3,7 +3,7 @@ package channel;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.commons.math3.genetics.Fitness;
+import javax.annotation.Nonnull;
 
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
@@ -11,7 +11,6 @@ import inputHandler.InputAdministrator;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -26,8 +25,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -37,6 +34,12 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import resourceframework.ResourceProviderException;
 
+/**
+ * Root for channel gui and the channel itself.
+ * 
+ * @author roland
+ *
+ */
 public class ChannelPane extends TitledPane {
 
 	private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
@@ -52,7 +55,17 @@ public class ChannelPane extends TitledPane {
 
 	private ContextMenu contextMenu;
 
-	public ChannelPane(ChannelConfig config) throws ResourceProviderException {
+	/**
+	 * Creates a new ChannelPane with the given {@link ChannelConfig}. A
+	 * {@link Channel} will be created. This channel will register as listener
+	 * at the {@link InputAdministrator} for the given devices.
+	 * 
+	 * @param config
+	 *            The current {@link ChannelConfig}. Must not be null.
+	 * @throws ResourceProviderException
+	 *             If a problem with the {@link LanguageResourceHandler} occurs.
+	 */
+	public ChannelPane(@Nonnull ChannelConfig config) throws ResourceProviderException {
 		super.setText(config.getName());
 		super.setContent(centralPane);
 		name = config.getName();
@@ -85,10 +98,22 @@ public class ChannelPane extends TitledPane {
 		setPlay(false);
 	}
 
+	/**
+	 * The name of this channel
+	 * 
+	 * @return The name as {@link String}. Won't be null.
+	 */
+	@Nonnull
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Triggers the channel to play.
+	 * 
+	 * @param play
+	 *            True if the channel should start play, false else.
+	 */
 	public void setPlay(boolean play) {
 		this.play = play;
 		inputPane.setEditable(!play);
@@ -175,10 +200,12 @@ public class ChannelPane extends TitledPane {
 
 		public void addInput(String device) {
 			table.getItems().add(device);
+			config.addInputDevice(device);
 		}
 
 		public void removeInput(String device) {
 			table.getItems().remove(device);
+			config.addOutputDevice(device);
 		}
 	}
 
@@ -191,23 +218,23 @@ public class ChannelPane extends TitledPane {
 		public OutputPane() {
 			addButton = new Button("+");
 			addButton.setMaxWidth(Double.MAX_VALUE);
-			addButton.setOnAction(new EventHandler<ActionEvent> () {
+			addButton.setOnAction(new EventHandler<ActionEvent>() {
 
 				@Override
 				public void handle(ActionEvent event) {
 					addDevice();
 				}
-				
+
 			});
 			removeButton = new Button("-");
 			removeButton.setMaxWidth(Double.MAX_VALUE);
-			removeButton.setOnAction(new EventHandler<ActionEvent> () {
+			removeButton.setOnAction(new EventHandler<ActionEvent>() {
 
 				@Override
 				public void handle(ActionEvent event) {
 					removeDevice();
 				}
-				
+
 			});
 			table = new ListView<>();
 			table.setPrefSize(200, 100);
@@ -249,7 +276,7 @@ public class ChannelPane extends TitledPane {
 		public void removeOutput(String device) {
 			table.getItems().remove(device);
 		}
-		
+
 		private void addDevice() {
 			AddRemoveDialog dialog = new AddRemoveDialog(false, true);
 			dialog.showAndWait();
@@ -291,9 +318,9 @@ public class ChannelPane extends TitledPane {
 
 			dialogPane.getButtonTypes().add(ButtonType.APPLY);
 			dialogPane.getButtonTypes().add(ButtonType.CANCEL);
-			
+
 			dialogPane.setPrefWidth(270);
-			
+
 			choiceBox = new ChoiceBox<String>();
 
 			if (input && add) {
