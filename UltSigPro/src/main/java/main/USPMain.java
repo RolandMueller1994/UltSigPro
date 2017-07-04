@@ -99,7 +99,7 @@ public class USPMain {
 					// Startup the GUI
 					USPGui gui = new USPGui();
 					gui.buildGUI(args);
-					//TestKlasse.startTest();
+					TestKlasse.startTest();
 					System.out.println(resProv.getResource("workDir"));
 
 				}

@@ -33,6 +33,7 @@ public class InputAdministrator {
 	private static boolean stopped = false;
 
 	public static InputAdministrator getInputAdminstrator() {
+		
 		if (inputAdministrator == null) {
 			inputAdministrator = new InputAdministrator();
 			allSoundInputDevices = new HashMap<>();
@@ -98,11 +99,11 @@ public class InputAdministrator {
 	 * @param name
 	 *            The name of the device.
 	 */
-	public void removeSubscribedDevice(String name) {
-		subscribedDevices.remove(name);
-		targetDataLines.get(name).stop();
-		targetDataLines.get(name).close();
-		targetDataLines.remove(name);
+	public void removeSubscribedDevice(String deviceName) {
+		subscribedDevices.remove(deviceName);
+		targetDataLines.get(deviceName).stop();
+		targetDataLines.get(deviceName).close();
+		targetDataLines.remove(deviceName);
 	}
 
 	/**
