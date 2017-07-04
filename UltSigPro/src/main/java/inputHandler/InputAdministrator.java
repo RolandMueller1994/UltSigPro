@@ -46,6 +46,7 @@ public class InputAdministrator {
 	
 	
 	public static InputAdministrator getInputAdminstrator() {
+		
 		if (inputAdministrator == null) {
 			inputAdministrator = new InputAdministrator();
 			allSoundInputDevices = new HashMap<>();
@@ -123,7 +124,7 @@ public class InputAdministrator {
 		targetDataLines.get(name).close();
 		targetDataLines.remove(name);
 	}
-
+	
 	/**
 	 * Checks first if the device is already subscribed. In the case of a new
 	 * device it opens a {@linkplain TargetDataLine} with predefined values for
@@ -206,7 +207,6 @@ public class InputAdministrator {
 									for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 										if(count == i) {
 											try {
-												// Nullpointerexception
 												intBuffers.add(i, queue.poll(25, TimeUnit.MILLISECONDS));
 											} catch (InterruptedException e) {
 												// TODO Auto-generated catch block
