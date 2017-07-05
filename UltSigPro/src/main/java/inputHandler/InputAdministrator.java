@@ -251,7 +251,7 @@ public class InputAdministrator {
 					
 					for(InputDataListener listener : distributionQueue.keySet()) {
 						LinkedBlockingQueue<LinkedList<Integer>> queue = distributionQueue.get(listener).get(device);
-						if(queue != null) {
+						if(queue != null) {						
 							queues.add(queue);
 						}
 					}
@@ -261,7 +261,8 @@ public class InputAdministrator {
 					System.out.println("Started recording on: " + line);
 					System.out.println(line.getFormat());
 					//List<Integer> intBuffer = new LinkedList<>();
-					LinkedList<Integer> intBuffer;
+					LinkedList<LinkedList<Integer>> intBuffers = new LinkedList<> ();
+					
 					while (!stopped) {
 						// We will only read the current available data. If a
 						// fixed size is read, the read()-call will block until
@@ -272,23 +273,33 @@ public class InputAdministrator {
 						int bytesRead = line.read(data, 0, data.length);
 						int byteBuffer = 0, shiftCounter = 0;
 						if (bytesRead != 0) {
-							intBuffer = new LinkedList<>();
-							//intBuffer = new int[bytesRead/2];
-							synchronized (intBuffer) {
-								for (shiftCounter = 0; shiftCounter < bytesRead; shiftCounter = shiftCounter + 2) {
-									for (int i = 0; i < 2; i++) {
-										byteBuffer = byteBuffer << 8;
-										byteBuffer = byteBuffer | Byte.toUnsignedInt(data[shiftCounter + i]);
-									}
-									byteBuffer = byteBuffer << 16;
-									byteBuffer = byteBuffer >> 16;
-									intBuffer.add(byteBuffer);
-									//intBuffer[shiftCounter/2] = byteBuffer;
-									byteBuffer = 0;
-								}
+							
+							intBuffers.clear();
+							for(int i=0; i<queues.size(); i++) {
+								intBuffers.add(new LinkedList<> ());
 							}
+							
+							//intBuffer = new int[bytesRead/2];
+
+							for (shiftCounter = 0; shiftCounter < bytesRead; shiftCounter = shiftCounter + 2) {
+								for (int i = 0; i < 2; i++) {
+									byteBuffer = byteBuffer << 8;
+									byteBuffer = byteBuffer | Byte.toUnsignedInt(data[shiftCounter + i]);
+								}
+								byteBuffer = byteBuffer << 16;
+								byteBuffer = byteBuffer >> 16;
+								
+								for(LinkedList<Integer> intBuffer : intBuffers) {
+									intBuffer.add(byteBuffer);
+								}
+								//intBuffer[shiftCounter/2] = byteBuffer;
+								byteBuffer = 0;
+							}
+							
+							int i=0;
 							for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
-								queue.offer(intBuffer);
+								queue.offer(intBuffers.get(i));
+								i++;
 							}
 						}
 						try {
