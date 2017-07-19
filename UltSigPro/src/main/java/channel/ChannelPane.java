@@ -2,6 +2,7 @@ package channel;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.annotation.Nonnull;
 
@@ -43,8 +44,10 @@ import resourceframework.ResourceProviderException;
 public class ChannelPane extends TitledPane {
 
 	private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
-
-	private BorderPane centralPane = new BorderPane();
+	private ChannelWaveChart waveChart = new ChannelWaveChart();
+	
+	//private BorderPane centralPane = new BorderPane();
+	private GridPane centralPane = new GridPane();
 	private ChannelConfig config;
 	private Channel channel;
 	
@@ -74,10 +77,12 @@ public class ChannelPane extends TitledPane {
 		inputPane = new InputPane(config.getInputDevices());
 		outputPane = new OutputPane();
 		waveFormPane = new WaveFormPane();
-
-		centralPane.setLeft(inputPane);
-		centralPane.setRight(outputPane);
-		centralPane.setCenter(waveFormPane);
+		
+		centralPane.add(inputPane, 0, 0);
+		centralPane.add(outputPane, 2, 0);
+		centralPane.add(waveChart.getWaveChart(), 1, 0);
+		
+		GridPane.setHgrow(waveChart.getWaveChart(), Priority.ALWAYS);
 
 		centralPane.setPrefWidth(Double.MAX_VALUE);
 
@@ -97,9 +102,13 @@ public class ChannelPane extends TitledPane {
 
 		super.setContextMenu(contextMenu);
 
-		channel = new Channel(config);
+		channel = new Channel(this, config);
 		
 		setPlay(false);
+	}
+	
+	public void insertWaveChartData(LinkedList<Double> data) {
+		waveChart.insertData(data);
 	}
 
 	/**
@@ -124,6 +133,7 @@ public class ChannelPane extends TitledPane {
 		inputPane.setEditable(!play);
 		outputPane.setEditable(!play);
 		channel.setPlay(play);
+		waveChart.setPlay(play);
 	}
 
 	private void deleteThisChannel() {
@@ -300,10 +310,17 @@ public class ChannelPane extends TitledPane {
 	}
 
 	private class WaveFormPane extends Pane {
-
+		
 		public WaveFormPane() {
-			setBackground(new Background(new BackgroundFill(javafx.scene.paint.Color.DARKGRAY, null, new Insets(5))));
-			setPadding(new Insets(5));
+			//setBackground(new Background(new BackgroundFill(javafx.scene.paint.Color.DARKGRAY, null, new Insets(5))));
+			//setPadding(new Insets(5));
+			
+			GridPane pane = new GridPane();
+			
+			waveChart = new ChannelWaveChart();
+			pane.add(waveChart.getWaveChart(), 0, 1);
+			GridPane.setHgrow(waveChart.getWaveChart(), Priority.ALWAYS);
+			getChildren().add(waveChart.getWaveChart());
 		}
 
 	}

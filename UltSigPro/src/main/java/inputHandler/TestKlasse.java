@@ -19,9 +19,9 @@ public class TestKlasse {
 		System.out.println("Subscribed Devices: " + InputAdministrator.getInputAdminstrator().getSubscribedDevicesName());
 		System.out.println("Open Lines: " + InputAdministrator.getInputAdminstrator().getTargetDataLines());
 		InputAdministrator.getInputAdminstrator().startListening();*/
-		OutputAdministrator.getOutputAdministrator().collectSoundOutputDevices();
-		System.out.println("Output devices: " + OutputAdministrator.getOutputAdministrator().getOutputDevices());
-		OutputAdministrator.getOutputAdministrator().setSelectedDevice("Primärer Soundtreiber");
-		System.out.println("Selected devices: " + OutputAdministrator.getOutputAdministrator().getSourceDataLines());
+		//OutputAdministrator.getOutputAdministrator().collectSoundOutputDevices();
+		//System.out.println("Output devices: " + OutputAdministrator.getOutputAdministrator().getOutputDevices());
+		//OutputAdministrator.getOutputAdministrator().setSelectedDevice("Primï¿½rer Soundtreiber");
+		//System.out.println("Selected devices: " + OutputAdministrator.getOutputAdministrator().getSourceDataLines());
 	}
 }

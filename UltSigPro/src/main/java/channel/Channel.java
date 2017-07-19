@@ -2,6 +2,7 @@ package channel;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.Set;
 
 import inputHandler.InputAdministrator;
@@ -11,34 +12,40 @@ public class Channel implements InputDataListener {
 	private InputAdministrator inputAdmin;
 	private boolean play = false;
 	private String name;
-	private FileWriter writer;
+	private ChannelPane pane;
 	
-	public Channel (ChannelConfig config) {
+	private int remaining = 0;
+	int distanz = (int) (44100/440);
+	
+	public Channel (ChannelPane pane, ChannelConfig config) {
 		this.name = config.getName();
+		this.pane = pane;
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
-		
-		try {
-			writer = new FileWriter(name + ".values");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 	}
 
 	@Override
 	public void putData(int[] data) {
 		
-		for(int i=0; i<data.length; i++) {
-			try {
-				writer.append(name + new Integer(data[i]).toString() + System.lineSeparator());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		LinkedList<Double> waveChartData = new LinkedList<> ();
+		
+		int pos = 0;
+		
+		if(distanz-remaining < data.length) {
+			waveChartData.add(((double) data[distanz-remaining])/(double) Short.MAX_VALUE);
+			pos = distanz-remaining;
+			
+			while(pos + distanz < data.length) {
+				waveChartData.add(((double) data[pos + distanz])/(double) Short.MAX_VALUE);
+				pos = pos + distanz;
 			}
+			remaining = data.length - pos;			
+		} else {
+			remaining = remaining + (data.length - pos);
 		}
 		
+		
+		pane.insertWaveChartData(waveChartData);
 	}
 	
 	public void addInputDevice(String device) {
@@ -56,6 +63,7 @@ public class Channel implements InputDataListener {
 	public void setPlay(boolean play) {
 		
 		play = false;
+		remaining = 0;
 		
 	}
 }
