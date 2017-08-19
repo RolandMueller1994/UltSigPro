@@ -1,7 +1,7 @@
-package inputHandler;
+package inputhandler;
 
-import OutputHandler.OutputAdministrator;
 import channel.Channel;
+import outputhandler.OutputAdministrator;
 
 public class TestKlasse {
 

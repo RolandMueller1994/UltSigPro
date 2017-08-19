@@ -1,4 +1,4 @@
-package inputHandler;
+package inputhandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;

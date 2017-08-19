@@ -9,7 +9,7 @@ import javax.management.AttributeNotFoundException;
 
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import inputHandler.TestKlasse;
+import inputhandler.TestKlasse;
 import logging.CommonLogger;
 import resourceframework.GlobalResourceProvider;
 import startup.ArgParser;

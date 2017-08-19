@@ -6,7 +6,7 @@ import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.menubar.MenuBarCreator;
 import i18n.LanguageResourceHandler;
-import inputHandler.InputAdministrator;
+import inputhandler.InputAdministrator;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;

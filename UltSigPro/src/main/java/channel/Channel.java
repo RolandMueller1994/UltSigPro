@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Set;
 
-import inputHandler.InputAdministrator;
+import inputhandler.InputAdministrator;
 
 public class Channel implements InputDataListener {
 

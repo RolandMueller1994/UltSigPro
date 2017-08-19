@@ -1,4 +1,4 @@
-package OutputHandler;
+package outputhandler;
 
 import java.util.HashMap;
 

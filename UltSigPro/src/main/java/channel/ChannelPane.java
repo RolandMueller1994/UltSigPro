@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import inputHandler.InputAdministrator;
+import inputhandler.InputAdministrator;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
