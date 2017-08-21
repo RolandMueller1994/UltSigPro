@@ -80,9 +80,9 @@ public class ChannelPane extends TitledPane {
 		
 		centralPane.add(inputPane, 0, 0);
 		centralPane.add(outputPane, 2, 0);
-		centralPane.add(waveChart.getWaveChart(), 1, 0);
+		centralPane.add(waveChart, 1, 0);
 		
-		GridPane.setHgrow(waveChart.getWaveChart(), Priority.ALWAYS);
+		GridPane.setHgrow(waveChart, Priority.ALWAYS);
 
 		centralPane.setPrefWidth(Double.MAX_VALUE);
 
@@ -318,9 +318,9 @@ public class ChannelPane extends TitledPane {
 			GridPane pane = new GridPane();
 			
 			waveChart = new ChannelWaveChart();
-			pane.add(waveChart.getWaveChart(), 0, 1);
-			GridPane.setHgrow(waveChart.getWaveChart(), Priority.ALWAYS);
-			getChildren().add(waveChart.getWaveChart());
+			pane.add(waveChart, 0, 1);
+			GridPane.setHgrow(waveChart, Priority.ALWAYS);
+			getChildren().add(waveChart);
 		}
 
 	}

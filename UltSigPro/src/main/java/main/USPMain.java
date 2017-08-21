@@ -11,6 +11,7 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.TestKlasse;
 import logging.CommonLogger;
+import plugins.PluginManager;
 import resourceframework.GlobalResourceProvider;
 import startup.ArgParser;
 
@@ -56,6 +57,9 @@ public class USPMain {
 				logDir.mkdir();
 			}
 			resProv.registerResource("loggingPath", current);
+			
+			// Initialize plugin manager
+			PluginManager.getInstance();
 
 			// Setup the LanguageResourceHandler
 			// TODO Read configured language

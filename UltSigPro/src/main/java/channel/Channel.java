@@ -15,7 +15,7 @@ public class Channel implements InputDataListener {
 	private ChannelPane pane;
 	
 	private int remaining = 0;
-	int distanz = (int) (44100/440);
+	int distanz = (int) (44100/44);
 	
 	public Channel (ChannelPane pane, ChannelConfig config) {
 		this.name = config.getName();
