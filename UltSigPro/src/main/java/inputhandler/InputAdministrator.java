@@ -42,6 +42,7 @@ public class InputAdministrator {
 	private static final int distributionSize = 100;
 	
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<> ();
+	// Map: Listener -> Device -> Queue for distribution (Listener will read from this queue) -> Data packages
 	private HashMap<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<> ();
 	
 	
@@ -115,7 +116,6 @@ public class InputAdministrator {
 	public void removeSubscribedDevice(String name) {
 		for(InputDataListener listener : distributionMap.keySet()) {
 			if(distributionMap.get(listener).contains(name)) {
-				System.out.println("Device still present!");
 				return;
 			}
 		}
@@ -168,10 +168,12 @@ public class InputAdministrator {
 
 		stopped = false;
 		
+		// Start a distribution task for every listener
 		for(Map.Entry<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue.entrySet()) {
 			
 			Collection<LinkedBlockingQueue<LinkedList<Integer>>> queues = entry.getValue().values();
 			
+			// Remove all old data packages
 			for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 				queue.clear();
 			}
@@ -197,16 +199,23 @@ public class InputAdministrator {
 					int size = queues.size();
 					
 					while(!stopped) {
+						// Create a new array for distribution
 						int[] data = new int[distributionSize];
+						// Add all sources which shall be send to the listener
 						for(int a=0; a<distributionSize; a++) {
 							int value = 0;
+							// Loop over all input devices for this listener
 							for(i=0; i<size; i++) {
+								// Check if buffer from data source is empty -> get the next one
 								if(intBuffers.get(i).size() == 0) {
 									int count = 0;
+									// Delete the buffer
 									intBuffers.remove(i);
+									// Search the device to get the next package
 									for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 										if(count == i) {
 											try {
+												// Read the next package from source -> wait till present if no data available
 												intBuffers.add(i, queue.poll(25, TimeUnit.MILLISECONDS));
 											} catch (InterruptedException e) {
 												// TODO Auto-generated catch block
@@ -217,8 +226,10 @@ public class InputAdministrator {
 										count++;
 									}
 								}
+								// Add the values from each source
 								value += intBuffers.get(i).removeFirst();
 							}
+							// Insert value into package for listener
 							data[a] = value;
 						}
 						entry.getKey().putData(data);
