@@ -2,7 +2,9 @@ package plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import logging.CommonLogger;
@@ -27,32 +29,32 @@ public class PluginManager {
 	private String commonDir;
 	private File sigproDirFile;
 	private File commonDirFile;
-	
+
 	private static PluginManager instance;
-	
+
 	public static PluginManager getInstance() {
-		if(instance == null) {
+		if (instance == null) {
 			instance = new PluginManager();
 		}
 		return instance;
 	}
-	
+
 	private PluginManager() {
 		try {
 			String workDir = (String) GlobalResourceProvider.getInstance().getResource("workDir");
 			sigproDir = workDir + File.separator + "sigproplugins";
 			commonDir = workDir + File.separator + "commonplugins";
-			
+
 			sigproDirFile = new File(sigproDir);
-			if(!sigproDirFile.isDirectory()) {
+			if (!sigproDirFile.isDirectory()) {
 				sigproDirFile.mkdir();
 			}
-			
+
 			commonDirFile = new File(commonDir);
-			if(!commonDirFile.isDirectory()) {
+			if (!commonDirFile.isDirectory()) {
 				commonDirFile.mkdir();
 			}
-			
+
 			registerPlugins("common");
 			registerPlugins("sigpro");
 		} catch (ResourceProviderException e) {
@@ -60,22 +62,22 @@ public class PluginManager {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private void registerPlugins(String categorie) {
-		if(categorie.equals("common")) {
+		if (categorie.equals("common")) {
 			executeRegisterPlugins(commonDirFile, "common");
-		} else if(categorie.equals("sigpro")) {
+		} else if (categorie.equals("sigpro")) {
 			executeRegisterPlugins(sigproDirFile, "sigpro");
 		}
 	}
-	
+
 	private void executeRegisterPlugins(File dir, String loader) {
 		File[] files = dir.listFiles();
-		for(int i=0; i<files.length; i++) {
+		for (int i = 0; i < files.length; i++) {
 			try {
-				if(loader.equals("sigpro")) {
-					sigproLoader.registerPlugin(files[i].toPath());					
-				} else if(loader.equals("common")) {
+				if (loader.equals("sigpro")) {
+					sigproLoader.registerPlugin(files[i].toPath());
+				} else if (loader.equals("common")) {
 					commonLoader.registerPlugin(files[i].toPath());
 				}
 			} catch (IllegalArgumentException e) {
@@ -85,7 +87,7 @@ public class PluginManager {
 			}
 		}
 	}
-	
+
 	/**
 	 * Method to get all available signal processing plugins
 	 * 
@@ -174,5 +176,75 @@ public class PluginManager {
 	 */
 	public CommonPlugin getCommonPlugin(String name) throws InstantiationException, IllegalAccessException {
 		return commonLoader.getPlugin(name);
+	}
+
+	/**
+	 * Copies a given file into the plugin directory and registers the plugin at
+	 * the registers it at the plugin loader.
+	 * 
+	 * @param path
+	 *            The path to the source file.
+	 * @throws IOException
+	 *             if an error occurs within the file handling.
+	 * @throws ClassNotFoundException
+	 *             if the class can't be found
+	 * @throws ClassCastException
+	 *             if the class in the .jar file doesn't implement
+	 *             {@link SigproPlugin}
+	 * @throws IllegalArgumentException
+	 *             if the given path doesn't point to a char file
+	 */
+	public void importSigproPlugin(Path path)
+			throws IOException, ClassNotFoundException, ClassCastException, IllegalArgumentException {
+		File sourceFile = path.toFile();
+
+		String fileName = sourceFile.getName();
+
+		if (!fileName.substring(fileName.lastIndexOf(".")).equals(".jar")) {
+			throw new IllegalArgumentException("File to register a plugin isn't a jar file");
+		}
+
+		File destFile = new File(sigproDir + File.separator + fileName);
+
+		Path destPath = destFile.toPath();
+
+		Files.copy(path, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+		registerSigproPlugin(destPath);
+	}
+
+	/**
+	 * Copies a given file into the plugin directory and registers the plugin at
+	 * the registers it at the plugin loader.
+	 * 
+	 * @param path
+	 *            The path to the source file.
+	 * @throws IOException
+	 *             if an error occurs within the file handling.
+	 * @throws ClassNotFoundException
+	 *             if the class can't be found
+	 * @throws ClassCastException
+	 *             if the class in the .jar file doesn't implement
+	 *             {@link CommonPlugin}
+	 * @throws IllegalArgumentException
+	 *             if the given path doesn't point to a char file
+	 */
+	public void importCommonPlugin(Path path)
+			throws IOException, ClassNotFoundException, ClassCastException, IllegalArgumentException {
+		File sourceFile = path.toFile();
+
+		String fileName = sourceFile.getName();
+
+		if (!fileName.substring(fileName.lastIndexOf(".")).equals(".jar")) {
+			throw new IllegalArgumentException("File to register a plugin isn't a jar file");
+		}
+
+		File destFile = new File(commonDir + File.separator + fileName);
+
+		Path destPath = destFile.toPath();
+
+		Files.copy(path, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+		registerCommonPlugin(destPath);
 	}
 }
