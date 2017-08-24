@@ -15,7 +15,7 @@ public class Channel implements InputDataListener {
 	private ChannelPane pane;
 	
 	private int remaining = 0;
-	int distanz = (int) (44100/44);
+	int distance = (int) (44100/44);
 	
 	public Channel (ChannelPane pane, ChannelConfig config) {
 		this.name = config.getName();
@@ -31,13 +31,13 @@ public class Channel implements InputDataListener {
 		
 		int pos = 0;
 		
-		if(distanz-remaining < data.length) {
-			waveChartData.add(((double) data[distanz-remaining])/(double) Short.MAX_VALUE);
-			pos = distanz-remaining;
+		if(distance-remaining < data.length) {
+			waveChartData.add(((double) data[distance-remaining])/(double) Short.MAX_VALUE);
+			pos = distance-remaining;
 			
-			while(pos + distanz < data.length) {
-				waveChartData.add(((double) data[pos + distanz])/(double) Short.MAX_VALUE);
-				pos = pos + distanz;
+			while(pos + distance < data.length) {
+				waveChartData.add(((double) data[pos + distance])/(double) Short.MAX_VALUE);
+				pos = pos + distance;
 			}
 			remaining = data.length - pos;			
 		} else {
