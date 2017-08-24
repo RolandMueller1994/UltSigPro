@@ -32,6 +32,11 @@ public class PluginManager {
 
 	private static PluginManager instance;
 
+	/**
+	 * Create a singleton instance of this class
+	 * 
+	 * @return the singleton instance
+	 */
 	public static PluginManager getInstance() {
 		if (instance == null) {
 			instance = new PluginManager();

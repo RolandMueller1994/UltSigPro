@@ -50,3 +50,10 @@ channel.ChannelPane$AddRemoveDialog.emptyAlertHeader=Es muss ein Device gewählt
 channel.ChannelPane$AddRemoveDialog.duplicateAlertTitle=Auswahl
 channel.ChannelPane$AddRemoveDialog.duplicateAlertHeader=Das ausgewählte Device ist bereits vorhanden!
 channel.ChannelPane$AddRemoveDialog.deviceLabel=Device: *
+
+
+plugins.PluginManagerMenuItem.title=Plugin-Verwaltung
+
+plugins.PluginManagerMenuItem$PluginManagerDialog.title=Plugin-Verwaltung
+plugins.PluginManagerMenuItem$PluginManagerDialog.common=Allgemeine Plugins
+plugins.PluginManagerMenuItem$PluginManagerDialog.sigpro=Signalverarbeitungs Plugins

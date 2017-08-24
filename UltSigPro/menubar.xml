@@ -7,7 +7,7 @@
 	</menu>
 	<menu>
 		<title>pluginmenutitle</title>
-		<class></class>
+		<class>plugins.PluginManagerMenuItem</class>
 	</menu>
 	<menu>
 		<title>configmenutitle</title>

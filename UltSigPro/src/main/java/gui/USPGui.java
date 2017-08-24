@@ -38,6 +38,8 @@ public class USPGui extends Application {
 	
 	private static final String TITLE = "title";
 	
+	public static Stage stage;
+	
 	private static VBox channelBox;
 	
 	private String[] args;
@@ -53,6 +55,8 @@ public class USPGui extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		
+		stage = primaryStage;
 		
 		LanguageResourceHandler languageRes = LanguageResourceHandler.getInstance();
 		
