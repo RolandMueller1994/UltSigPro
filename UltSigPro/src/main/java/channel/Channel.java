@@ -6,10 +6,12 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import inputhandler.InputAdministrator;
+import outputhandler.OutputAdministrator;
 
-public class Channel implements InputDataListener {
+public class Channel implements InputDataListener, OutputDataSpeaker {
 
 	private InputAdministrator inputAdmin;
+	private OutputAdministrator outputAdmin;
 	private boolean play = false;
 	private String name;
 	private ChannelPane pane;
@@ -22,6 +24,15 @@ public class Channel implements InputDataListener {
 		this.pane = pane;
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
+		outputAdmin = OutputAdministrator.getOutputAdministrator();
+		outputAdmin.registerOutputDataSpeaker(this, config.getOutputDevices());
+	}
+	
+	@Override
+	public int[] fetchData() {
+		// passes data from channel to outputadmin
+		int[] data = new int[1];
+		return data;
 	}
 
 	@Override
@@ -54,6 +65,14 @@ public class Channel implements InputDataListener {
 	
 	public void removeInputDevice(String device) {
 		inputAdmin.removeDeviceFromInputDataListener(this, device);
+	}
+	
+	public void addOutputDevice(String device) {
+		outputAdmin.addDeviceToOutputDataSpeaker(this, device);
+	}
+	
+	public void removeOutputDevice(String device) {
+		outputAdmin.removeDeviceFromOutputDataSpeaker(this, device);
 	}
 	
 	public void delete() {
