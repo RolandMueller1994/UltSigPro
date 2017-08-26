@@ -2,11 +2,13 @@ package plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Optional;
 
 import gui.USPGui;
 import gui.menubar.AddChannelMenuItem;
 import i18n.LanguageResourceHandler;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -110,8 +112,94 @@ public class PluginManagerMenuItem extends MenuItem {
 			GridPane.setHgrow(commonScrollPane, Priority.ALWAYS);
 			GridPane.setHgrow(sigproScrollPane, Priority.ALWAYS);
 			
+			removeCommonButton.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					ObservableList<String> selectionList = commonList.getSelectionModel().getSelectedItems();
+					Iterator<String> iter = selectionList.iterator();
+					while(iter.hasNext()) {
+						PluginManager.getInstance().removeCommonPlugin(iter.next());
+					}
+					initializeCommonList();
+				}
+				
+			});
+			
+			removeSigproButton.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					ObservableList<String> selectionList = sigproList.getSelectionModel().getSelectedItems();
+					Iterator<String> iter = selectionList.iterator();
+					while(iter.hasNext()) {
+						PluginManager.getInstance().removeSigproPlugin(iter.next());
+					}
+					initializeSigprolist();
+				}
+				
+			});
+			
+			addCommonButton.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					FileChooser fileChooser = new FileChooser();
+					
+					File plugin = fileChooser.showOpenDialog(USPGui.stage);
+					
+					try {
+						PluginManager.getInstance().importCommonPlugin(plugin.toPath());
+					} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					initializeCommonList();
+				}
+				
+			});
+			
+			addSigproButton.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					FileChooser fileChooser = new FileChooser();
+					
+					File plugin = fileChooser.showOpenDialog(USPGui.stage);
+					
+					try {
+						PluginManager.getInstance().importSigproPlugin(plugin.toPath());;
+					} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					initializeSigprolist();
+				}
+				
+			});
+			
+			initializeCommonList();
+			initializeSigprolist();
+			
 			dialogPane.setContent(gridPane);
 		}
+		
+		private void initializeCommonList() {
+			commonList.getItems().clear();
+			for(String plugin : PluginManager.getInstance().getAvailableCommonPlugins()) {
+				commonList.getItems().add(plugin);
+			}
+		}
+		
+		private void initializeSigprolist() {
+			sigproList.getItems().clear();
+			for(String plugin : PluginManager.getInstance().getAvailableSigproPlugins()) {
+				sigproList.getItems().add(plugin);
+			}
+		}
+		
 		
 	}
 	

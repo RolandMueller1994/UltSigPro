@@ -252,4 +252,44 @@ public class PluginManager {
 
 		registerCommonPlugin(destPath);
 	}
+
+	/**
+	 * Removes the plugin with the given name from the {@link PluginLoader} and
+	 * deletes the corresponding .jar file. <br/>
+	 * Instances of the delete plugin can be used further on.
+	 * 
+	 * @param name
+	 *            the name of the plugin to delete
+	 */
+	public void removeCommonPlugin(String name) {
+		commonLoader.removePlugin(name);
+		File[] commonFiles = commonDirFile.listFiles();
+
+		for (int i = 0; i < commonFiles.length; i++) {
+			String fileName = commonFiles[i].getName().substring(0, commonFiles[i].getName().indexOf("."));
+			if (fileName.equals(name)) {
+				commonFiles[i].delete();
+			}
+		}
+	}
+
+	/**
+	 * Removes the plugin with the given name from the {@link PluginLoader} and
+	 * deletes the corresponding .jar file. <br/>
+	 * Instances of the delete plugin can be used further on.
+	 * 
+	 * @param name
+	 *            the name of the plugin to delete
+	 */
+	public void removeSigproPlugin(String name) {
+		sigproLoader.removePlugin(name);
+		File[] sigproFiles = sigproDirFile.listFiles();
+
+		for (int i = 0; i < sigproFiles.length; i++) {
+			String fileName = sigproFiles[i].getName().substring(0, sigproFiles[i].getName().indexOf("."));
+			if (fileName.equals(name)) {
+				sigproFiles[i].delete();
+			}
+		}
+	}
 }
