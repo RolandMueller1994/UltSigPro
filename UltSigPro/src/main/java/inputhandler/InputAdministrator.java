@@ -41,6 +41,7 @@ public class InputAdministrator {
 	
 	private static final int distributionSize = 100;
 	
+	// TODO check necessity of distributionMap
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<> ();
 	// Map: Listener -> Device -> Queue for distribution (Listener will read from this queue) -> Data packages
 	private HashMap<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<> ();
