@@ -1,5 +1,6 @@
 package gui;
 
+import java.util.HashMap;
 import java.util.Iterator;
 
 import channel.ChannelConfig;
@@ -10,6 +11,7 @@ import inputhandler.InputAdministrator;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Accordion;
@@ -19,6 +21,9 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -41,6 +46,8 @@ public class USPGui extends Application {
 	public static Stage stage;
 	
 	private static VBox channelBox;
+	private static TabPane pluginPane;
+	private static HashMap<String, Tab> tabMap = new HashMap<> ();
 	
 	private String[] args;
 	private boolean play = false;
@@ -108,11 +115,15 @@ public class USPGui extends Application {
 		pane.setTop(vBox);
 		
 		// Build Channels
+		SplitPane centerSplit = new SplitPane();
+		centerSplit.setOrientation(Orientation.VERTICAL);
+		pluginPane = new TabPane();
 		ScrollPane channelScroll = new ScrollPane();
 		channelScroll.setFitToWidth(true);
 		channelBox = new VBox();
 		channelScroll.setContent(channelBox);
-		pane.setCenter(channelScroll);
+		centerSplit.getItems().addAll(pluginPane, channelScroll);
+		pane.setCenter(centerSplit);
 		
 		Scene scene = new Scene(pane);
 		primaryStage.setScene(scene);
@@ -125,6 +136,9 @@ public class USPGui extends Application {
 	public static void addChannel(ChannelConfig config) {
 		try {
 			channelBox.getChildren().add(new ChannelPane(config));
+			Tab curTab = new Tab(config.getName());
+			tabMap.put(config.getName(), curTab);
+			pluginPane.getTabs().add(curTab);
 		} catch (ResourceProviderException e) {
 			CommonLogger.getInstance().logException(e);
 		}
@@ -132,6 +146,8 @@ public class USPGui extends Application {
 	
 	public static void deleteChannel(ChannelPane pane) {
 		channelBox.getChildren().remove(pane);
+		Tab curTab = tabMap.remove(pane.getName());
+		pluginPane.getTabs().remove(curTab);
 	}
 	
 	public static boolean checkIfPresent(String name) {
