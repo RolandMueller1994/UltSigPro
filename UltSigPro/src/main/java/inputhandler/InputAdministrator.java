@@ -155,7 +155,7 @@ public class InputAdministrator {
 			}
 
 			if (line != null) {
-				line.start();
+				//line.start();
 				targetDataLines.put(deviceName, line);
 			}
 		}
@@ -217,7 +217,10 @@ public class InputAdministrator {
 										if(count == i) {
 											try {
 												// Read the next package from source -> wait till present if no data available
-												intBuffers.add(i, queue.poll(25, TimeUnit.MILLISECONDS));
+												LinkedList<Integer> dataPackage = queue.poll(25, TimeUnit.MILLISECONDS);
+												if(dataPackage != null) {
+													intBuffers.add(i, dataPackage);													
+												}
 											} catch (InterruptedException e) {
 												// TODO Auto-generated catch block
 												e.printStackTrace();
