@@ -25,6 +25,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -40,6 +41,7 @@ public class AddChannelMenuItem extends MenuItem {
 
 	private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 	private InputAdministrator inputAdmin = InputAdministrator.getInputAdminstrator();
+	private OutputAdministrator outputAdmin = OutputAdministrator.getOutputAdministrator();
 
 	private DialogPane dialogPane;
 	private AddChannelDialog dialog;
@@ -57,6 +59,7 @@ public class AddChannelMenuItem extends MenuItem {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(AddChannelMenuItem.class, TITLE));
 
 		inputAdmin.collectSoundInputDevices();
+		outputAdmin.collectSoundOutputDevices();
 
 		super.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -143,7 +146,7 @@ public class AddChannelMenuItem extends MenuItem {
 					alert.setHeaderText(lanHandler.getLocalizedText(AddChannelDialog.class, WARNING));
 					alert.showAndWait();
 					e.consume();
-				} else if(checkForDuplicates()) {
+				} else if (checkForDuplicates()) {
 					e.consume();
 				} else if (USPGui.checkIfPresent(titleTextField.getText())) {
 					Alert alert = new Alert(AlertType.WARNING);
@@ -153,39 +156,39 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 			});
 		}
-		
+
 		private boolean checkForDuplicates() {
-			HashSet<String> devices = new HashSet<> ();
-			
+			HashSet<String> devices = new HashSet<>();
+
 			boolean inputDuplicate = false;
 			boolean outputDuplicate = false;
-			
-			for(ChoiceBox<String> box : inputBoxes) {
+
+			for (ChoiceBox<String> box : inputBoxes) {
 				String cur = box.getSelectionModel().getSelectedItem();
-				if(devices.contains(cur)) {
+				if (devices.contains(cur)) {
 					inputDuplicate = true;
 					break;
 				}
 				devices.add(cur);
 			}
-			
+
 			devices.clear();
-			for(ChoiceBox<String> box : outputBoxes) {
+			for (ChoiceBox<String> box : outputBoxes) {
 				String cur = box.getSelectionModel().getSelectedItem();
-				if(devices.contains(cur)) {
+				if (devices.contains(cur)) {
 					outputDuplicate = true;
 					break;
 				}
 				devices.add(cur);
 			}
-			
-			if(!inputDuplicate && !outputDuplicate) {
+
+			if (!inputDuplicate && !outputDuplicate) {
 				return false;
 			} else {
 				String alertText;
-				if(inputDuplicate && outputDuplicate) {
+				if (inputDuplicate && outputDuplicate) {
 					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, INOUT_ALERT);
-				} else if(inputDuplicate) {
+				} else if (inputDuplicate) {
 					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, IN_ALERT);
 				} else {
 					alertText = lanHandler.getLocalizedText(AddChannelDialog.class, OUT_ALERT);
@@ -201,6 +204,7 @@ public class AddChannelMenuItem extends MenuItem {
 
 		public ChannelConfig getConfig() {
 			List<String> inputDevices = new LinkedList<>();
+			List<String> outputDevices = new LinkedList<>();
 
 			for (ChoiceBox<String> choiceBox : inputBoxes) {
 				String cur;
@@ -208,7 +212,15 @@ public class AddChannelMenuItem extends MenuItem {
 					inputDevices.add(cur);
 				}
 			}
-			return new ChannelConfig(titleTextField.getText(), inputDevices, null);
+
+			for (ChoiceBox<String> choiceBox : outputBoxes) {
+				String cur;
+				if ((cur = choiceBox.getSelectionModel().getSelectedItem()) != null) {
+					outputDevices.add(cur);
+				}
+			}
+
+			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices);
 		}
 
 		private GridPane getInputPane() {
@@ -285,7 +297,7 @@ public class AddChannelMenuItem extends MenuItem {
 			firstBox.setMaxWidth(Double.MAX_VALUE);
 			outputPane.add(firstBox, 1, 0);
 			// TODO Get items from output handler
-			//firstBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
+			firstBox.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
@@ -296,8 +308,7 @@ public class AddChannelMenuItem extends MenuItem {
 				@Override
 				public void handle(ActionEvent event) {
 					ChoiceBox<String> box = new ChoiceBox<>();
-					// TODO Get items from output handler
-					//box.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
+					box.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
 					outputBoxes.add(box);
 					GridPane.setHgrow(box, Priority.ALWAYS);
 					box.setMaxWidth(Double.MAX_VALUE);

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.sound.sampled.AudioFormat;
@@ -59,8 +60,8 @@ public class OutputAdministrator {
 		}
 	}
 
-	public HashMap<String, Mixer> getOutputDevices() {
-		return allSoundOutputDevices;
+	public Set<String> getOutputDevices() {
+		return allSoundOutputDevices.keySet();
 	}
 
 	public HashMap<String, Mixer> getSelectedDevices() {

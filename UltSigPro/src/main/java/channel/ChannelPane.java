@@ -33,6 +33,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -342,6 +343,7 @@ public class ChannelPane extends TitledPane {
 		private static final String DEVICE_LABEL = "deviceLabel";
 
 		private InputAdministrator inputAdmin = InputAdministrator.getInputAdminstrator();
+		private OutputAdministrator outputAdmin = OutputAdministrator.getOutputAdministrator();
 		private ChoiceBox<String> choiceBox;
 		private String selected;
 
@@ -356,14 +358,16 @@ public class ChannelPane extends TitledPane {
 			choiceBox = new ChoiceBox<String>();
 
 			if (input && add) {
+				inputAdmin.collectSoundInputDevices();
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, INPUT_ADD_TITLE));
 				choiceBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
 			} else if (input) {
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, INPUT_REMOVE_TITLE));
 				choiceBox.setItems(inputPane.getTable().getItems());
 			} else if (add) {
+				outputAdmin.collectSoundOutputDevices();
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_ADD_TITLE));
-				// TODO Get devices from output handler
+				choiceBox.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
 			} else {
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_REMOVE_TITLE));
 				choiceBox.setItems(inputPane.getTable().getItems());
