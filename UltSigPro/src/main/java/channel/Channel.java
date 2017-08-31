@@ -25,13 +25,18 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
 		outputAdmin = OutputAdministrator.getOutputAdministrator();
-		outputAdmin.registerOutputDataSpeaker(this, config.getOutputDevices());
+		outputAdmin.registerOutputDevices(this, config.getOutputDevices());
 	}
 	
 	@Override
-	public int[] fetchData() {
-		// passes data from channel to outputadmin
-		int[] data = new int[1];
+	public LinkedList<Integer> fetchData() {
+		// passes data from channel to OutputAdmin
+		LinkedList<Integer> data = new LinkedList<> ();
+		
+		//TODO replace sinus values with real sound values
+		for (double i = 0; i<628; i+=2) {
+			data.add((int) (1000*(Math.sin(i/100))));
+		}
 		return data;
 	}
 
@@ -68,7 +73,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	}
 	
 	public void addOutputDevice(String device) {
-		outputAdmin.addDeviceToOutputDataSpeaker(this, device);
+		outputAdmin.addSoundOutputDeviceToSpeaker(this, device);
 	}
 	
 	public void removeOutputDevice(String device) {

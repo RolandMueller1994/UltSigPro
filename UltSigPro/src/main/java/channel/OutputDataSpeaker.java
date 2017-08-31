@@ -1,6 +1,8 @@
 package channel;
 
+import java.util.LinkedList;
+
 public interface OutputDataSpeaker {
 
-	int[] fetchData();
+	LinkedList<Integer> fetchData();
 }
