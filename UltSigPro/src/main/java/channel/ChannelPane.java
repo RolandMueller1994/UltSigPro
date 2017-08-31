@@ -75,7 +75,7 @@ public class ChannelPane extends TitledPane {
 		this.config = config;
 		name = config.getName();
 		inputPane = new InputPane(config.getInputDevices());
-		outputPane = new OutputPane();
+		outputPane = new OutputPane(config.getOutputDevices());
 		waveFormPane = new WaveFormPane();
 		
 		centralPane.add(inputPane, 0, 0);
@@ -234,7 +234,7 @@ public class ChannelPane extends TitledPane {
 		private Button addButton;
 		private Button removeButton;
 
-		public OutputPane() {
+		public OutputPane(Collection<String> outputDevices) {
 			addButton = new Button("+");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -257,6 +257,10 @@ public class ChannelPane extends TitledPane {
 			});
 			table = new ListView<>();
 			table.setPrefSize(200, 100);
+			
+			for (String cur : outputDevices) {
+				table.getItems().add(cur);
+			}
 
 			GridPane gridPane = new GridPane();
 			gridPane.setPadding(new Insets(5));
