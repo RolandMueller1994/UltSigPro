@@ -208,8 +208,10 @@ public class ChannelPane extends TitledPane {
 		}
 
 		private void removeDevice() {
-			AddRemoveDialog dialog = new AddRemoveDialog(true, false);
-			dialog.showAndWait();
+			if(!table.getItems().isEmpty()) {
+				AddRemoveDialog dialog = new AddRemoveDialog(true, false);
+				dialog.showAndWait();				
+			}
 		}
 
 		public ListView<String> getTable() {
@@ -309,8 +311,10 @@ public class ChannelPane extends TitledPane {
 		}
 
 		private void removeDevice() {
-			AddRemoveDialog dialog = new AddRemoveDialog(false, false);
-			dialog.showAndWait();
+			if(!table.getItems().isEmpty()) {
+				AddRemoveDialog dialog = new AddRemoveDialog(false, false);
+				dialog.showAndWait();				
+			}
 		}
 	}
 
@@ -370,7 +374,7 @@ public class ChannelPane extends TitledPane {
 				choiceBox.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
 			} else {
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_REMOVE_TITLE));
-				choiceBox.setItems(inputPane.getTable().getItems());
+				choiceBox.setItems(outputPane.getTable().getItems());
 			}
 
 			Label deviceLabel = new Label(lanHandler.getLocalizedText(AddRemoveDialog.class, DEVICE_LABEL));
