@@ -21,6 +21,13 @@ import javax.sound.sampled.TargetDataLine;
 
 import channel.Channel;
 import channel.InputDataListener;
+import gui.USPGui;
+import i18n.LanguageResourceHandler;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextArea;
+import resourceframework.ResourceProviderException;
 
 /**
  * Administrates which input devices are available and requests their sampled
@@ -38,6 +45,10 @@ public class InputAdministrator {
 	private static HashMap<String, Mixer> subscribedDevices;
 	private static HashMap<String, TargetDataLine> targetDataLines;
 	private static boolean stopped = false;
+	
+	private static final String ALERT_TITLE = "alertTitle";
+	private static final String ALERT_HEADER = "alertHeader";
+	private static final String ALERT_TEXT = "alertText";
 	
 	private static final int distributionSize = 100;
 	
@@ -155,7 +166,6 @@ public class InputAdministrator {
 			}
 
 			if (line != null) {
-				//line.start();
 				targetDataLines.put(deviceName, line);
 			}
 		}
@@ -203,43 +213,67 @@ public class InputAdministrator {
 						// Create a new array for distribution
 						int[] data = new int[distributionSize];
 						// Add all sources which shall be send to the listener
-						for(int a=0; a<distributionSize; a++) {
-							int value = 0;
-							// Loop over all input devices for this listener
-							for(i=0; i<size; i++) {
-								// Check if buffer from data source is empty -> get the next one
-								if(intBuffers.get(i).size() == 0) {
-									int count = 0;
-									// Delete the buffer
-									intBuffers.remove(i);
-									// Search the device to get the next package
-									for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
-										if(count == i) {
-											try {
-												// Read the next package from source -> wait till present if no data available
-												LinkedList<Integer> dataPackage = queue.poll(25, TimeUnit.MILLISECONDS);
-												if(dataPackage != null) {
-													intBuffers.add(i, dataPackage);													
+						try {
+							for(int a=0; a<distributionSize; a++) {
+								int value = 0;
+								// Loop over all input devices for this listener
+								for(i=0; i<size; i++) {
+									// Check if buffer from data source is empty -> get the next one
+									if(intBuffers.get(i).size() == 0) {
+										int count = 0;
+										// Delete the buffer
+										intBuffers.remove(i);
+										// Search the device to get the next package
+										for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
+											if(count == i) {
+												try {
+													// Read the next package from source -> wait till present if no data available
+													intBuffers.add(i, queue.poll(100, TimeUnit.MILLISECONDS));
+												} catch (InterruptedException e) {
+													// TODO Auto-generated catch block
+													e.printStackTrace();
 												}
-											} catch (InterruptedException e) {
-												// TODO Auto-generated catch block
-												e.printStackTrace();
+												break;
 											}
-											break;
+											count++;
 										}
-										count++;
 									}
+									// Add the values from each source
+									value += intBuffers.get(i).removeFirst();
 								}
-								// Add the values from each source
-								value += intBuffers.get(i).removeFirst();
+								// Insert value into package for listener
+								data[a] = value;
 							}
-							// Insert value into package for listener
-							data[a] = value;
+							entry.getKey().putData(data);
+						} catch (NullPointerException ex) {
+							if(!stopped) {
+								USPGui.stopExternally();
+								Platform.runLater(new Runnable () {
+									
+									@Override
+									public void run() {
+										Alert alert = new Alert(AlertType.ERROR);
+										try {
+											alert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_TITLE));
+											alert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_HEADER));
+											
+											TextArea contentText = new TextArea(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_TEXT));
+											contentText.setEditable(false);
+											contentText.setWrapText(true);
+											
+											alert.getDialogPane().setContent(contentText);
+										} catch (ResourceProviderException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+										alert.show();
+									}
+									
+								});								
+							}
 						}
-						entry.getKey().putData(data);
 					}
 				}
-				
 			});
 			distributionThread.start();
 		}

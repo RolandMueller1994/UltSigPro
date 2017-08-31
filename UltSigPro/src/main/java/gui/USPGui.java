@@ -50,7 +50,7 @@ public class USPGui extends Application {
 	private static HashMap<String, Tab> tabMap = new HashMap<> ();
 	
 	private String[] args;
-	private boolean play = false;
+	private static boolean play = false;
 	
 	/**
 	 * This method must be called at startup. The GUI will be set up.
@@ -58,6 +58,12 @@ public class USPGui extends Application {
 	public void buildGUI(String[] args) {
 		this.args = args;
 		launch(args);
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		// TODO ask the user for confirmation to stop
+		stopPlay();
 	}
 
 	@Override
@@ -95,12 +101,7 @@ public class USPGui extends Application {
 
 			@Override
 			public void handle(MouseEvent event) {
-				play = false;
-				Iterator<Node> iter = channelBox.getChildren().iterator();
-				while(iter.hasNext()) {
-					((ChannelPane) iter.next()).setPlay(false);
-				}
-				InputAdministrator.getInputAdminstrator().stopListening();
+				stopPlay();
 			}		
 		});
 		
@@ -159,6 +160,19 @@ public class USPGui extends Application {
 			}
 		}
 		return false;
+	}
+	
+	public static void stopExternally() {
+		stopPlay();
+	}
+	
+	private static void stopPlay() {
+		play = false;
+		Iterator<Node> iter = channelBox.getChildren().iterator();
+		while(iter.hasNext()) {
+			((ChannelPane) iter.next()).setPlay(false);
+		}
+		InputAdministrator.getInputAdminstrator().stopListening();
 	}
 	
 }

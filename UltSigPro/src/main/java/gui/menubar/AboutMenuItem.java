@@ -33,10 +33,7 @@ public class AboutMenuItem extends MenuItem {
 					alert.setTitle(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_TITLE));
 					alert.setHeaderText(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_HEADER));
 					
-					
-					String text = lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_CONTENT);
 					TextArea contentText = new TextArea(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_CONTENT));
-					//TextArea contentText = new TextArea("line1\nline2\n");
 					contentText.setEditable(false);
 					contentText.setWrapText(true);
 					

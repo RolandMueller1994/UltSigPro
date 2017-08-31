@@ -57,3 +57,7 @@ plugins.PluginManagerMenuItem.title=Plugin-Verwaltung
 plugins.PluginManagerMenuItem$PluginManagerDialog.title=Plugin-Verwaltung
 plugins.PluginManagerMenuItem$PluginManagerDialog.common=Allgemeine Plugins
 plugins.PluginManagerMenuItem$PluginManagerDialog.sigpro=Signalverarbeitungs Plugins
+
+inputhandler.InputAdministrator.alertTitle=Lesefehler
+inputhandler.InputAdministrator.alertHeader=Es ist ein Fehler beim Lesen der Eingangsdaten aufgetreten. Signalverarbeitung beendet.
+inputhandler.InputAdministrator.alertText=Kontrollieren Sie die Konfiguration und stellen sie sicher, dass keine weitere USP-Instanz geöffnet ist, oder eine andere Applikation auf die Hardware zugreift.
