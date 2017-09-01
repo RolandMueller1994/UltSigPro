@@ -84,6 +84,7 @@ public class OutputAdministrator {
 				return;
 			}
 		}
+		
 		selectedDevices.remove(deviceName);
 		sourceDataLines.get(deviceName).stop();
 		sourceDataLines.get(deviceName).close();
@@ -116,8 +117,8 @@ public class OutputAdministrator {
 
 			// Clears all old data of every single LinkedBlockingQueue of this
 			// SoundOutputDevice
-			for (LinkedBlockingQueue<LinkedList<Integer>> queue : listQueue) {
-				queue.clear();
+			for (String stream : outputStream.keySet()) {
+				outputStream.get(stream).clear();
 			}
 
 			Thread distributionThread = new Thread(new Runnable() {
@@ -138,10 +139,8 @@ public class OutputAdministrator {
 						// Channel), if there are values left to convert into
 						// bytes. fetch data if necessary
 						i = 0;
-						System.out.println("hallo");
 						for (LinkedList<Integer> intBuffer : intBuffers) {
 							if (intBuffer.isEmpty()) {
-								System.out.println("empty buffer");
 								j = 0;
 
 								// search for the needed speaker
@@ -161,7 +160,7 @@ public class OutputAdministrator {
 							// sum up all first values from each channel
 							channelSum += intBuffers.get(i).removeFirst();
 						}
-
+						
 						try {
 							outputStream.get(entry.getKey()).put(channelSum);
 						} catch (InterruptedException e) {
@@ -183,40 +182,21 @@ public class OutputAdministrator {
 
 					while (!stopped) {
 
-						LinkedList<Integer> intBuffer = new LinkedList<>();
-						int intSample = 0;
-
-						// fetches 200 integer values from outputStream and
-						// writes it to intBuffer
-						while (intBuffer.size() < 2 * byteBufferSize) {
-							try {
-								intBuffer.add(outputStream.get(entry.getKey()).take());
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-
-						// TODO Ich würde hier größere Arrays nehmen, die in
-						// einer Schleife aufbauen und anschließend einen
-						// API-Aufruf machen. Das verhindert viele
-						// Betriebssystemaufrufe, die eine hohe Systemlast
-						// verursachen. Man könnte hier die Länge des
-						// intBuffers
-						// verwenden
+						int i = 0, intSample = 0;
 						byte[] byteBuffer = new byte[byteBufferSize];
-						// TODO Das wird so auch nicht funktionieren, da hier
-						// aus zwei Samples ein Sample gebaut wird. Es müssen,
-						// jedoch aus jedem Sample zwei Bytes geholt werden.
-						// Zusätzlich sollte bei einer LinkedList remove
-						// anstatt
-						// get verwendet werden, da sonst keine Daten entfernt
-						// werden und immer die gleichen Daten verwendet werden.
-						// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
-						// byteBuffer 	------ : ------ :   2*i  : 2*i+1
-						for (int i = 0; i < byteBufferSize; i++) {
-							intSample = intBuffer.removeFirst();
-							byteBuffer[2*i] = (byte) (intSample & 0xFF00);
+						
+						// fetches 50 integer values from outputStream and
+						// writes it to intBuffer
+						while (i < byteBufferSize/2) {							
+							
+							intSample = outputStream.get(entry.getKey()).remove();
+							
+							// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
+							// byteBuffer 	------ : ------ :   2*i  : 2*i+1
+							byteBuffer[2*i] = (byte) ((intSample & 0xFF00) >> 8);
 							byteBuffer[2*i+1] = (byte) (intSample & 0xFF);
+							
+							i++;
 						}
 						line.write(byteBuffer, 0, byteBuffer.length);
 					}
@@ -236,7 +216,6 @@ public class OutputAdministrator {
 		if (!selectedDevices.containsKey(deviceName)) {
 
 			selectedDevices.put(deviceName, allSoundOutputDevices.get(deviceName));
-
 			DataLine.Info info = new DataLine.Info(SourceDataLine.class, null);
 			SourceDataLine line = null;
 
@@ -272,6 +251,7 @@ public class OutputAdministrator {
 			if (!distributionQueue.containsKey(device)) {
 				distributionQueue.put(device,
 						new HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>());
+				outputStream.put(device, new LinkedBlockingQueue<Integer>());
 			}
 			distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
 		}
@@ -290,13 +270,14 @@ public class OutputAdministrator {
 		// SoundOutputDevice
 		if (!distributionQueue.containsKey(device)) {
 			distributionQueue.put(device, new HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>());
+			outputStream.put(device, new LinkedBlockingQueue<Integer>());
 		}
 		distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
 		setSelectedDevice(device);
 	}
 
 	/**
-	 * Is called, when a single Channel/OutputDataSpeaker gets deleted. Removes
+	 * Is called, when a single SoundOutputDevice gets deleted. Removes
 	 * the entry of the channel from distributionQueue.
 	 * 
 	 * @param speaker
@@ -311,6 +292,7 @@ public class OutputAdministrator {
 		// no more longer any data from any speaker
 		if (distributionQueue.get(device).isEmpty()) {
 			distributionQueue.remove(device);
+			outputStream.remove(device);
 		}
 	}
 
@@ -322,7 +304,6 @@ public class OutputAdministrator {
 	 */
 	public synchronized void removeOutputDevices(OutputDataSpeaker speaker) {
 		for (String device : distributionQueue.keySet()) {
-
 			// Search for all SoundOutputDevices with a queue to this speaker
 			if (distributionQueue.get(device).containsKey(speaker)) {
 				removeSelectedDevice(device);
@@ -333,6 +314,7 @@ public class OutputAdministrator {
 				// no more longer any data from any speaker
 				if (distributionQueue.get(device).isEmpty()) {
 					distributionQueue.remove(device);
+					outputStream.remove(device);
 				}
 			}
 		}
