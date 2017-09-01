@@ -31,6 +31,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import logging.CommonLogger;
+import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -173,6 +174,7 @@ public class USPGui extends Application {
 			((ChannelPane) iter.next()).setPlay(false);
 		}
 		InputAdministrator.getInputAdminstrator().stopListening();
+		OutputAdministrator.getOutputAdministrator().stopPlayback();
 	}
 	
 }
