@@ -35,7 +35,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		
 		//TODO replace sinus values with real sound values
 		for (double i = 0; i<628; i+=2) {
-			data.add((int) (1000*(Math.sin(i/100))));
+			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
 		}
 		return data;
 	}

@@ -26,10 +26,11 @@ public class OutputAdministrator {
 	private static boolean stopped = false;
 
 	private long latency = 20;
+	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
-	LinkedBlockingQueue<Integer> outputStream = new LinkedBlockingQueue<>();
+	HashMap<String, LinkedBlockingQueue<Integer>> outputStream = new HashMap<>();
 
 	public static OutputAdministrator getOutputAdministrator() {
 
@@ -100,7 +101,6 @@ public class OutputAdministrator {
 		try {
 			Thread.sleep(latency);
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
@@ -130,60 +130,41 @@ public class OutputAdministrator {
 					// contains the sampled values from the input
 					ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<>(listQueue.size());
 
-					// i iterates over every Channel connected with this
-					// SoundOutputDevice. Waits at the first time longer to
-					// poll data from the Channels
-					int i = 0;
-					for (LinkedBlockingQueue<LinkedList<Integer>> queue : listQueue) {
-						try {
-							intBuffers.add(i, queue.poll(10000, TimeUnit.MILLISECONDS));
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						i++;
-					}
+					int i = 0, j = 0, channelSum = 0;
 
 					while (!stopped) {
 
-						// outputSpeakerQueue.keySet() fetches data from every
-						// Channel
-						for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
-							intBuffers.add(i, speaker.fetchData());
+						// check every intBuffer (every integer stream from
+						// Channel), if there are values left to convert into
+						// bytes. fetch data if necessary
+						i = 0;
+						System.out.println("hallo");
+						for (LinkedList<Integer> intBuffer : intBuffers) {
+							if (intBuffer.isEmpty()) {
+								System.out.println("empty buffer");
+								j = 0;
+
+								// search for the needed speaker
+								for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
+									if (i == j) {
+										intBuffers.add(i, speaker.fetchData());
+										j++;
+									}
+								}
+							}
 							i++;
 						}
 
-						int channelSum = 0;
-						// check, if every Channel has added data to the
-						// inputBuffers
-						// if no, poll values from these channels with extra
-						// time
+						channelSum = 0;
 						for (i = 0; i < intBuffers.size(); i++) {
-							if (intBuffers.get(i).size() == 0) {
-								int channelWithNoData = 0;
-								intBuffers.remove(i);
 
-								for (LinkedBlockingQueue<LinkedList<Integer>> queue : listQueue) {
-									if (i == channelWithNoData) {
-										try {
-											LinkedList<Integer> checkData = queue.poll(25, TimeUnit.MILLISECONDS);
-											if (checkData != null) {
-												intBuffers.add(channelWithNoData, checkData);
-											}
-										} catch (InterruptedException e) {
-											e.printStackTrace();
-										}
-										break;
-									}
-									channelWithNoData++;
-								}
-							}
 							// sum up all first values from each channel
 							channelSum += intBuffers.get(i).removeFirst();
 						}
+
 						try {
-							outputStream.put(channelSum);
+							outputStream.get(entry.getKey()).put(channelSum);
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
@@ -191,13 +172,6 @@ public class OutputAdministrator {
 			});
 			distributionThread.start();
 		}
-
-		// TODO Hier nicht ok, nur in InputAdmin, da das zusätzliche 500ms
-		// Latenz verursacht.
-		/*
-		 * try { Thread.sleep(500); } catch (InterruptedException e1) {
-		 * e1.printStackTrace(); }
-		 */
 
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
@@ -210,14 +184,14 @@ public class OutputAdministrator {
 					while (!stopped) {
 
 						LinkedList<Integer> intBuffer = new LinkedList<>();
+						int intSample = 0;
 
-						// fetches 2 integer values from outputStream and writes
-						// it to intBuffer
-						while (intBuffer.size() < 2) {
+						// fetches 200 integer values from outputStream and
+						// writes it to intBuffer
+						while (intBuffer.size() < 2 * byteBufferSize) {
 							try {
-								intBuffer.add(outputStream.take());
+								intBuffer.add(outputStream.get(entry.getKey()).take());
 							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
@@ -226,19 +200,24 @@ public class OutputAdministrator {
 						// einer Schleife aufbauen und anschließend einen
 						// API-Aufruf machen. Das verhindert viele
 						// Betriebssystemaufrufe, die eine hohe Systemlast
-						// verursachen. Man könnte hier die Länge des intBuffers
+						// verursachen. Man könnte hier die Länge des
+						// intBuffers
 						// verwenden
-						byte[] byteBuffer = new byte[2];
+						byte[] byteBuffer = new byte[byteBufferSize];
 						// TODO Das wird so auch nicht funktionieren, da hier
 						// aus zwei Samples ein Sample gebaut wird. Es müssen,
 						// jedoch aus jedem Sample zwei Bytes geholt werden.
-						// Zusätzlich sollte bei einer LinkedList remove anstatt
+						// Zusätzlich sollte bei einer LinkedList remove
+						// anstatt
 						// get verwendet werden, da sonst keine Daten entfernt
 						// werden und immer die gleichen Daten verwendet werden.
 						// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
-						// byteBufferIndex				  2*i	 : 2*i+1
-						byteBuffer[0] = (byte) (intBuffer.get(0) & 0xFF);
-						byteBuffer[1] = (byte) (intBuffer.get(1) & 0xFF);
+						// byteBuffer 	------ : ------ :   2*i  : 2*i+1
+						for (int i = 0; i < byteBufferSize; i++) {
+							intSample = intBuffer.removeFirst();
+							byteBuffer[2*i] = (byte) (intSample & 0xFF00);
+							byteBuffer[2*i+1] = (byte) (intSample & 0xFF);
+						}
 						line.write(byteBuffer, 0, byteBuffer.length);
 					}
 				}
