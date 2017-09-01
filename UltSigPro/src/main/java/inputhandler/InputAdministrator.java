@@ -255,7 +255,6 @@ public class InputAdministrator {
 							}
 							entry.getKey().putData(data);
 						} catch (NullPointerException ex) {
-							ex.printStackTrace();
 							if (!stopped) {
 								USPGui.stopExternally();
 								Platform.runLater(new Runnable() {
