@@ -148,14 +148,16 @@ public class PluginManagerMenuItem extends MenuItem {
 					
 					File plugin = fileChooser.showOpenDialog(USPGui.stage);
 					
-					try {
-						PluginManager.getInstance().importCommonPlugin(plugin.toPath());
-					} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					if(plugin != null) {
+						try {
+							PluginManager.getInstance().importCommonPlugin(plugin.toPath());
+						} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						initializeCommonList();						
 					}
-					
-					initializeCommonList();
 				}
 				
 			});
@@ -168,14 +170,16 @@ public class PluginManagerMenuItem extends MenuItem {
 					
 					File plugin = fileChooser.showOpenDialog(USPGui.stage);
 					
-					try {
-						PluginManager.getInstance().importSigproPlugin(plugin.toPath());;
-					} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					if(plugin != null) {
+						try {
+							PluginManager.getInstance().importSigproPlugin(plugin.toPath());;
+						} catch (ClassNotFoundException | ClassCastException | IllegalArgumentException | IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						initializeSigprolist();						
 					}
-					
-					initializeSigprolist();
 				}
 				
 			});
