@@ -230,11 +230,13 @@ public class OutputAdministrator {
 						// verwenden
 						byte[] byteBuffer = new byte[2];
 						// TODO Das wird so auch nicht funktionieren, da hier
-						// aus zwei Samples ein Sample gebaut wird. Es müssen
+						// aus zwei Samples ein Sample gebaut wird. Es müssen,
 						// jedoch aus jedem Sample zwei Bytes geholt werden.
 						// Zusätzlich sollte bei einer LinkedList remove anstatt
 						// get verwendet werden, da sonst keine Daten entfernt
 						// werden und immer die gleichen Daten verwendet werden.
+						// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
+						// byteBufferIndex				  2*i	 : 2*i+1
 						byteBuffer[0] = (byte) (intBuffer.get(0) & 0xFF);
 						byteBuffer[1] = (byte) (intBuffer.get(1) & 0xFF);
 						line.write(byteBuffer, 0, byteBuffer.length);
