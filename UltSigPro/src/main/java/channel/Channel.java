@@ -33,8 +33,17 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		// passes data from channel to OutputAdmin
 		LinkedList<Integer> data = new LinkedList<> ();
 		
+		System.out.println("debug");
+		
+		try {
+			Thread.sleep(10);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		//TODO replace sinus values with real sound values
-		for (double i = 0; i<628; i+=2) {
+		for (double i = 0; i<628*2; i+=2) {
 			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
 		}
 		return data;

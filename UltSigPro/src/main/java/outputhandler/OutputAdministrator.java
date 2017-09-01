@@ -131,18 +131,26 @@ public class OutputAdministrator {
 					// contains the sampled values from the input
 					ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<>(listQueue.size());
 
-					int i = 0, j = 0, channelSum = 0;
+					int a = 0;
+					
+					for(OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
+						intBuffers.add(a, speaker.fetchData());
+						a++;
+					}
+					
+					int j = 0, channelSum = 0;
 
 					while (!stopped) {
 
 						// check every intBuffer (every integer stream from
 						// Channel), if there are values left to convert into
 						// bytes. fetch data if necessary
-						i = 0;
-						for (LinkedList<Integer> intBuffer : intBuffers) {
-							if (intBuffer.isEmpty()) {
+						for (int i=0; i<intBuffers.size(); i++) {
+							if (intBuffers.get(i).isEmpty()) {
 								j = 0;
 
+								intBuffers.remove(i);
+								
 								// search for the needed speaker
 								for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
 									if (i == j) {
@@ -151,11 +159,10 @@ public class OutputAdministrator {
 									}
 								}
 							}
-							i++;
 						}
 
 						channelSum = 0;
-						for (i = 0; i < intBuffers.size(); i++) {
+						for (int i = 0; i < intBuffers.size(); i++) {
 
 							// sum up all first values from each channel
 							channelSum += intBuffers.get(i).removeFirst();
@@ -174,6 +181,11 @@ public class OutputAdministrator {
 
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
+			
+			line.start();
+			line.flush();
+			
+			System.out.println("Started playback on: " + line);
 
 			Thread playbackThread = new Thread(new Runnable() {
 
@@ -189,7 +201,12 @@ public class OutputAdministrator {
 						// writes it to intBuffer
 						while (i < byteBufferSize/2) {							
 							
-							intSample = outputStream.get(entry.getKey()).remove();
+							try {
+								intSample = outputStream.get(entry.getKey()).take();
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 							
 							// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
 							// byteBuffer 	------ : ------ :   2*i  : 2*i+1

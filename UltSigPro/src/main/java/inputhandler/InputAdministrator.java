@@ -46,26 +46,27 @@ public class InputAdministrator {
 	private static HashMap<String, Mixer> subscribedDevices;
 	private static HashMap<String, TargetDataLine> targetDataLines;
 	private static boolean stopped = false;
-	
+
 	private static final String ALERT_TITLE = "alertTitle";
 	private static final String ALERT_HEADER = "alertHeader";
 	private static final String ALERT_TEXT = "alertText";
-	
+
 	private static final int distributionSize = 100;
-	
+
 	// TODO check necessity of distributionMap
-	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<> ();
-	// Map: Listener -> Device -> Queue for distribution (Listener will read from this queue) -> Data packages
-	private HashMap<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<> ();
-	
-	
+	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
+	// Map: Listener -> Device -> Queue for distribution (Listener will read
+	// from this queue) -> Data packages
+	private HashMap<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
+
 	public static InputAdministrator getInputAdminstrator() {
-		
+
 		if (inputAdministrator == null) {
 			inputAdministrator = new InputAdministrator();
 			allSoundInputDevices = new HashMap<>();
 			subscribedDevices = new HashMap<>();
-			targetDataLines = new HashMap<>();;
+			targetDataLines = new HashMap<>();
+			;
 		}
 		return inputAdministrator;
 	}
@@ -127,8 +128,8 @@ public class InputAdministrator {
 	 *            The name of the device.
 	 */
 	public void removeSubscribedDevice(String name) {
-		for(InputDataListener listener : distributionMap.keySet()) {
-			if(distributionMap.get(listener).contains(name)) {
+		for (InputDataListener listener : distributionMap.keySet()) {
+			if (distributionMap.get(listener).contains(name)) {
 				return;
 			}
 		}
@@ -137,7 +138,7 @@ public class InputAdministrator {
 		targetDataLines.get(name).close();
 		targetDataLines.remove(name);
 	}
-	
+
 	/**
 	 * Checks first if the device is already subscribed. In the case of a new
 	 * device it opens a {@linkplain TargetDataLine} with predefined values for
@@ -174,32 +175,33 @@ public class InputAdministrator {
 
 	/**
 	 * Collects the sampled bytes of all subscribed target data lines and
-	 * converts it to integer values. 
+	 * converts it to integer values.
 	 */
 	public void startListening() {
 
 		stopped = false;
-		
+
 		// Start a distribution task for every listener
-		for(Map.Entry<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue.entrySet()) {
-			
+		for (Map.Entry<InputDataListener, HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue
+				.entrySet()) {
+
 			Collection<LinkedBlockingQueue<LinkedList<Integer>>> queues = entry.getValue().values();
-			
+
 			// Remove all old data packages
-			for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
+			for (LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 				queue.clear();
 			}
-			
-			Thread distributionThread = new Thread(new Runnable () {
+
+			Thread distributionThread = new Thread(new Runnable() {
 
 				@Override
 				public void run() {
-					
-					ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<> (queues.size());
-					
+
+					ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<>(queues.size());
+
 					int i = 0;
-					
-					for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
+
+					for (LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 						try {
 							intBuffers.add(i, queue.poll(10000, TimeUnit.MILLISECONDS));
 						} catch (InterruptedException e) {
@@ -207,31 +209,37 @@ public class InputAdministrator {
 						}
 						i++;
 					}
-					
+
 					int size = queues.size();
-					
-					while(!stopped) {
+
+					while (!stopped) {
 						// Create a new array for distribution
 						int[] data = new int[distributionSize];
 						// Add all sources which shall be send to the listener
 						try {
-							for(int a=0; a<distributionSize; a++) {
+							for (int a = 0; a < distributionSize; a++) {
 								int value = 0;
 								// Loop over all input devices for this listener
-								for(i=0; i<size; i++) {
-									// Check if buffer from data source is empty -> get the next one
-									if(intBuffers.get(i).size() == 0) {
+								for (i = 0; i < size; i++) {
+									// Check if buffer from data source is empty
+									// -> get the next one
+									if (intBuffers.get(i).size() == 0) {
 										int count = 0;
 										// Delete the buffer
 										intBuffers.remove(i);
-										// Search the device to get the next package
-										for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
-											if(count == i) {
+										// Search the device to get the next
+										// package
+										for (LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
+											if (count == i) {
 												try {
-													// Read the next package from source -> wait till present if no data available
+													// Read the next package
+													// from source -> wait till
+													// present if no data
+													// available
 													intBuffers.add(i, queue.poll(100, TimeUnit.MILLISECONDS));
 												} catch (InterruptedException e) {
-													// TODO Auto-generated catch block
+													// TODO Auto-generated catch
+													// block
 													e.printStackTrace();
 												}
 												break;
@@ -247,21 +255,25 @@ public class InputAdministrator {
 							}
 							entry.getKey().putData(data);
 						} catch (NullPointerException ex) {
-							if(!stopped) {
+							ex.printStackTrace();
+							if (!stopped) {
 								USPGui.stopExternally();
-								Platform.runLater(new Runnable () {
-									
+								Platform.runLater(new Runnable() {
+
 									@Override
 									public void run() {
 										Alert alert = new Alert(AlertType.ERROR);
 										try {
-											alert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_TITLE));
-											alert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_HEADER));
-											
-											TextArea contentText = new TextArea(LanguageResourceHandler.getInstance().getLocalizedText(InputAdministrator.class, ALERT_TEXT));
+											alert.setTitle(LanguageResourceHandler.getInstance()
+													.getLocalizedText(InputAdministrator.class, ALERT_TITLE));
+											alert.setHeaderText(LanguageResourceHandler.getInstance()
+													.getLocalizedText(InputAdministrator.class, ALERT_HEADER));
+
+											TextArea contentText = new TextArea(LanguageResourceHandler.getInstance()
+													.getLocalizedText(InputAdministrator.class, ALERT_TEXT));
 											contentText.setEditable(false);
 											contentText.setWrapText(true);
-											
+
 											alert.getDialogPane().setContent(contentText);
 										} catch (ResourceProviderException e) {
 											// TODO Auto-generated catch block
@@ -269,8 +281,8 @@ public class InputAdministrator {
 										}
 										alert.show();
 									}
-									
-								});								
+
+								});
 							}
 						}
 					}
@@ -285,9 +297,7 @@ public class InputAdministrator {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
-		OutputAdministrator.getOutputAdministrator().startPlayback();
-		
+
 		for (Map.Entry<String, TargetDataLine> entry : targetDataLines.entrySet()) {
 
 			TargetDataLine line = entry.getValue();
@@ -296,14 +306,14 @@ public class InputAdministrator {
 
 				@Override
 				public void run() {
-					
+
 					String device = entry.getKey();
-					
-					LinkedList<LinkedBlockingQueue<LinkedList<Integer>>> queues = new LinkedList<> ();
-					
-					for(InputDataListener listener : distributionQueue.keySet()) {
+
+					LinkedList<LinkedBlockingQueue<LinkedList<Integer>>> queues = new LinkedList<>();
+
+					for (InputDataListener listener : distributionQueue.keySet()) {
 						LinkedBlockingQueue<LinkedList<Integer>> queue = distributionQueue.get(listener).get(device);
-						if(queue != null) {						
+						if (queue != null) {
 							queues.add(queue);
 						}
 					}
@@ -312,9 +322,9 @@ public class InputAdministrator {
 					line.flush();
 					System.out.println("Started recording on: " + line);
 					System.out.println(line.getFormat());
-					//List<Integer> intBuffer = new LinkedList<>();
-					LinkedList<LinkedList<Integer>> intBuffers = new LinkedList<> ();
-					
+					// List<Integer> intBuffer = new LinkedList<>();
+					LinkedList<LinkedList<Integer>> intBuffers = new LinkedList<>();
+
 					while (!stopped) {
 						// We will only read the current available data. If a
 						// fixed size is read, the read()-call will block until
@@ -325,13 +335,13 @@ public class InputAdministrator {
 						int bytesRead = line.read(data, 0, data.length);
 						int byteBuffer = 0, shiftCounter = 0;
 						if (bytesRead != 0) {
-							
+
 							intBuffers.clear();
-							for(int i=0; i<queues.size(); i++) {
-								intBuffers.add(new LinkedList<> ());
+							for (int i = 0; i < queues.size(); i++) {
+								intBuffers.add(new LinkedList<>());
 							}
-							
-							//intBuffer = new int[bytesRead/2];
+
+							// intBuffer = new int[bytesRead/2];
 
 							for (shiftCounter = 0; shiftCounter < bytesRead; shiftCounter = shiftCounter + 2) {
 								for (int i = 0; i < 2; i++) {
@@ -340,16 +350,16 @@ public class InputAdministrator {
 								}
 								byteBuffer = byteBuffer << 16;
 								byteBuffer = byteBuffer >> 16;
-								
-								for(LinkedList<Integer> intBuffer : intBuffers) {
+
+								for (LinkedList<Integer> intBuffer : intBuffers) {
 									intBuffer.add(byteBuffer);
 								}
-								//intBuffer[shiftCounter/2] = byteBuffer;
+								// intBuffer[shiftCounter/2] = byteBuffer;
 								byteBuffer = 0;
 							}
-							
-							int i=0;
-							for(LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
+
+							int i = 0;
+							for (LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
 								queue.offer(intBuffers.get(i));
 								i++;
 							}
@@ -361,55 +371,56 @@ public class InputAdministrator {
 						}
 					}
 					line.stop();
-					//line.close();
+					// line.close();
 					System.out.println("Recording stopped on " + line);
 				}
 			});
 			recordThread.start();
 		}
-					
+		OutputAdministrator.getOutputAdministrator().startPlayback();
+
 	}
-	
+
 	public void stopListening() {
 		stopped = true;
 	}
-	
+
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		distributionMap.put(listener, devices);
-		distributionQueue.put(listener, new HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>> ());
-		
-		for(String device : devices) {
+		distributionQueue.put(listener, new HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>>());
+
+		for (String device : devices) {
 			setSubscribedDevices(device);
-			distributionQueue.get(listener).put(device, new LinkedBlockingQueue<LinkedList<Integer>> ());
+			distributionQueue.get(listener).put(device, new LinkedBlockingQueue<LinkedList<Integer>>());
 		}
 	}
-	
+
 	public synchronized void addDeviceToInputDataListener(InputDataListener listener, String device) {
 		Collection<String> devices = distributionMap.get(listener);
-		if(devices != null) {
+		if (devices != null) {
 			devices.add(device);
 			distributionQueue.get(listener).put(device, new LinkedBlockingQueue<LinkedList<Integer>>());
 			setSubscribedDevices(device);
 		} else {
-			devices = new HashSet<> ();
+			devices = new HashSet<>();
 			devices.add(device);
 			registerInputDataListener(listener, devices);
 		}
 	}
-	
+
 	public synchronized void removeDeviceFromInputDataListener(InputDataListener listener, String device) {
 		Collection<String> devices = distributionMap.get(listener);
-		if(devices != null) {
+		if (devices != null) {
 			devices.remove(device);
 			distributionQueue.get(listener).remove(device);
 			removeSubscribedDevice(device);
 		}
 	}
-	
+
 	public synchronized void removeInputDataListener(InputDataListener listener) {
 		Collection<String> devices = distributionMap.remove(listener);
 		distributionQueue.remove(listener);
-		for(String device : devices) {
+		for (String device : devices) {
 			removeSubscribedDevice(device);
 		}
 	}
