@@ -24,6 +24,8 @@ public class OutputAdministrator {
 	private static HashMap<String, Mixer> selectedDevices;
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
+	
+	private long latency = 20;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
@@ -93,6 +95,15 @@ public class OutputAdministrator {
 
 		// entry: stores every SoundOutputDevice-entry in the distributionQueue
 		// Code in this for-loop is executed for every SoundOutputDevice:
+		
+		// Wait for the specified latency to start the playback
+		try {
+			Thread.sleep(latency);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		for (Map.Entry<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue
 				.entrySet()) {
 
@@ -181,11 +192,13 @@ public class OutputAdministrator {
 			distributionThread.start();
 		}
 
+		// TODO Hier nicht ok, nur in InputAdmin, da das zusätzliche 500ms Latenz verursacht.
+		/*
 		try {
 			Thread.sleep(500);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
-		}
+		}*/
 
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
@@ -209,7 +222,16 @@ public class OutputAdministrator {
 								e.printStackTrace();
 							}
 						}
+
+						// TODO Ich würde hier größere Arrays nehmen, die in
+						// einer Schleife aufbauen und anschließend einen
+						// API-Aufruf machen. Das verhindert viele
+						// Betriebssystemaufrufe, die eine hohe Systemlast
+						// verursachen.
 						byte[] byteBuffer = new byte[2];
+						// TODO Das wird so auch nicht funktionieren, da hier
+						// aus zwei Samples ein Sample gebaut wird. Es müssen
+						// jedoch aus jedem Sample zwei Bytes geholt werden.
 						byteBuffer[0] = (byte) (intBuffer.get(0) & 0xFF);
 						byteBuffer[1] = (byte) (intBuffer.get(1) & 0xFF);
 						line.write(byteBuffer, 0, byteBuffer.length);
@@ -303,7 +325,7 @@ public class OutputAdministrator {
 		// checks if there are any entries left for this
 		// SoundOutputDevice or if the SoundOutputDevice receives
 		// no more longer any data from any speaker
-		if (distributionQueue.get(device) == null) {
+		if (distributionQueue.get(device).isEmpty()) {
 			distributionQueue.remove(device);
 		}
 	}
@@ -325,7 +347,7 @@ public class OutputAdministrator {
 				// checks if there are any entries left for this
 				// SoundOutputDevice or if the SoundOutputDevice receives
 				// no more longer any data from any speaker
-				if (distributionQueue.get(device) == null) {
+				if (distributionQueue.get(device).isEmpty()) {
 					distributionQueue.remove(device);
 				}
 			}

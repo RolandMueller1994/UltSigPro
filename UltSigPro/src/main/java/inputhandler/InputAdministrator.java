@@ -27,6 +27,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextArea;
+import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -284,6 +285,8 @@ public class InputAdministrator {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
+		OutputAdministrator.getOutputAdministrator().startPlayback();
 		
 		for (Map.Entry<String, TargetDataLine> entry : targetDataLines.entrySet()) {
 
