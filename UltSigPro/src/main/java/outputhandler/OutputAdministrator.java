@@ -15,8 +15,20 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.TargetDataLine;
+
+import channel.Channel;
 import channel.OutputDataSpeaker;
 
+/**
+ * Administrates which output devices are available and sends received processed
+ * data from {@linkplainplain Channel} to output devices. Converts it from integers
+ * to bytes before writing it on the lines. Handles the complete data
+ * distribution from {@linkplainplain Channel} to output.
+ * 
+ * @author Kone
+ *
+ */
 public class OutputAdministrator {
 
 	private static OutputAdministrator outputAdministrator;
@@ -46,6 +58,9 @@ public class OutputAdministrator {
 	private OutputAdministrator() {
 	}
 
+	/**
+	 * Collects all sound devices and filters the results for output devices.
+	 */
 	public void collectSoundOutputDevices() {
 
 		Mixer mixer;
@@ -63,18 +78,43 @@ public class OutputAdministrator {
 		}
 	}
 
+	/**
+	 * Returns all selected sound output devices (as Strings), who receive sound
+	 * data from {@linkplain Channel}s.
+	 * 
+	 * @return
+	 */
 	public Set<String> getOutputDevices() {
 		return allSoundOutputDevices.keySet();
 	}
 
+	/**
+	 * Returns all selected sound output devices (as {@linkplain Mixer}s), who
+	 * receive sound data from {@linkplain Channel}s.
+	 * 
+	 * @return all selected Devices
+	 */
 	public HashMap<String, Mixer> getSelectedDevices() {
 		return selectedDevices;
 	}
 
+	/**
+	 * Returns all open {@linkplain SourceDataLines}.
+	 * 
+	 * @return Map of all open lines.
+	 */
 	public HashMap<String, SourceDataLine> getSourceDataLines() {
 		return sourceDataLines;
 	}
 
+	/**
+	 * Removes entries and closes the {@linkplain SourceDataLine} of the given
+	 * device, if there are no others channels who use this device as a output
+	 * device.
+	 * 
+	 * @param deviceName
+	 *            name of the output device
+	 */
 	public void removeSelectedDevice(String deviceName) {
 
 		// Checks, if there is a soundOutputDevice with the delivered
@@ -84,13 +124,17 @@ public class OutputAdministrator {
 				return;
 			}
 		}
-		
+
 		selectedDevices.remove(deviceName);
 		sourceDataLines.get(deviceName).stop();
 		sourceDataLines.get(deviceName).close();
 		sourceDataLines.remove(deviceName);
 	}
 
+	/**
+	 * Starts two threads which are collecting data from {@linkplain Channel}s and
+	 * write it to the determined sound output devices.
+	 */
 	public void startPlayback() {
 
 		stopped = false;
@@ -121,6 +165,8 @@ public class OutputAdministrator {
 				outputStream.get(stream).clear();
 			}
 
+			// This thread collects the integer values from every channel for a
+			// single sound output device and sums it up.
 			Thread distributionThread = new Thread(new Runnable() {
 
 				@Override
@@ -132,12 +178,12 @@ public class OutputAdministrator {
 					ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<>(listQueue.size());
 
 					int a = 0;
-					
-					for(OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
+
+					for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
 						intBuffers.add(a, speaker.fetchData());
 						a++;
 					}
-					
+
 					int j = 0, channelSum = 0;
 
 					while (!stopped) {
@@ -145,12 +191,12 @@ public class OutputAdministrator {
 						// check every intBuffer (every integer stream from
 						// Channel), if there are values left to convert into
 						// bytes. fetch data if necessary
-						for (int i=0; i<intBuffers.size(); i++) {
+						for (int i = 0; i < intBuffers.size(); i++) {
 							if (intBuffers.get(i).isEmpty()) {
 								j = 0;
 
 								intBuffers.remove(i);
-								
+
 								// search for the needed speaker
 								for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
 									if (i == j) {
@@ -167,7 +213,7 @@ public class OutputAdministrator {
 							// sum up all first values from each channel
 							channelSum += intBuffers.get(i).removeFirst();
 						}
-						
+
 						try {
 							outputStream.get(entry.getKey()).put(channelSum);
 						} catch (InterruptedException e) {
@@ -181,12 +227,14 @@ public class OutputAdministrator {
 
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
-			
+
 			line.start();
 			line.flush();
-			
+
 			System.out.println("Started playback on: " + line);
 
+			// This thread converts the retrieved integer values from the
+			// distributionThread to bytes and writes the data to the line.
 			Thread playbackThread = new Thread(new Runnable() {
 
 				@Override
@@ -196,23 +244,23 @@ public class OutputAdministrator {
 
 						int i = 0, intSample = 0;
 						byte[] byteBuffer = new byte[byteBufferSize];
-						
+
 						// fetches 50 integer values from outputStream and
 						// writes it to intBuffer
-						while (i < byteBufferSize/2) {							
-							
+						while (i < byteBufferSize / 2) {
+
 							try {
 								intSample = outputStream.get(entry.getKey()).take();
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
-							
-							// Int: 		Byte 3 : Byte 2 : Byte 1 : Byte 0
-							// byteBuffer 	------ : ------ :   2*i  : 2*i+1
-							byteBuffer[2*i] = (byte) ((intSample & 0xFF00) >> 8);
-							byteBuffer[2*i+1] = (byte) (intSample & 0xFF);
-							
+
+							// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
+							// byteBuffer ------ : ------ : 2*i : 2*i+1
+							byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
+							byteBuffer[2 * i + 1] = (byte) (intSample & 0xFF);
+
 							i++;
 						}
 						line.write(byteBuffer, 0, byteBuffer.length);
@@ -228,6 +276,13 @@ public class OutputAdministrator {
 		stopped = true;
 	}
 
+	/**
+	 * Checks, if there is already a {@linkplain SourceDataLine} open for the given
+	 * device name. If not, opens a line and allows it to engage in data I/O.
+	 * 
+	 * @param deviceName
+	 *            name of the sound output device
+	 */
 	public void setSelectedDevice(String deviceName) {
 
 		if (!selectedDevices.containsKey(deviceName)) {
@@ -255,12 +310,15 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Is called, when a new Channel/OutputDataSpeaker is created. Sets entries
-	 * in the distributionQueue for the new OutputDataSpeakers and
-	 * SoundOutputDevices.
+	 * Is called, when a new {@linkplain Channel}/{@linkplain OutputDataSpeaker} is
+	 * created. Sets entries in the distributionQueue for the new
+	 * OutputDataSpeakers and sound output devices.
 	 * 
 	 * @param speaker
+	 *            means the Channel/OutputDataSpeaker which has to be added
 	 * @param devices
+	 *            means the names of the sound output devices which has to be
+	 *            added
 	 */
 	public synchronized void registerOutputDevices(OutputDataSpeaker speaker, Collection<String> devices) {
 		for (String device : devices) {
@@ -275,11 +333,14 @@ public class OutputAdministrator {
 	}
 
 	/***
-	 * Is called, when Channel/OutputDataSpeaker adds a single SoundOutputDevice
-	 * as listener.
+	 * Is called, when {@linkplain Channel}/{@linkplain OutputDataSpeaker} adds a single
+	 * sound output device as a listener.
 	 * 
 	 * @param speaker
+	 *            means the Channel/OutputDataSpeaker which has to be added
 	 * @param device
+	 *            means the name of the sound output device which has to be
+	 *            added
 	 */
 	public synchronized void addSoundOutputDeviceToSpeaker(OutputDataSpeaker speaker, String device) {
 
@@ -294,11 +355,15 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Is called, when a single SoundOutputDevice gets deleted. Removes
-	 * the entry of the channel from distributionQueue.
+	 * Is called, when a single sound output device gets deleted. Removes the
+	 * entry of the {@linkplain Channel} from distributionQueue.
 	 * 
 	 * @param speaker
+	 *            means the Channel/{@linkplain OutputDataSpeaker} which has to be
+	 *            removed
 	 * @param device
+	 *            means the name of the sound output device which has to be
+	 *            removed
 	 */
 	public synchronized void removeDeviceFromOutputDataSpeaker(OutputDataSpeaker speaker, String device) {
 		distributionQueue.get(device).remove(speaker);
@@ -314,10 +379,11 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Is called, when a complete Channel/OutputDataSpeaker gets deleted.
-	 * Removes the entry of the channel from the distributionQueue.
+	 * Is called, when a complete {@linkplain Channel}/{@linkplain OutputDataSpeaker} gets
+	 * deleted. Removes the entry of the channel from the distributionQueue.
 	 * 
 	 * @param speaker
+	 *            means the Channel/OutputDataSpeaker which has to be removed
 	 */
 	public synchronized void removeOutputDevices(OutputDataSpeaker speaker) {
 		for (String device : distributionQueue.keySet()) {
