@@ -23,7 +23,7 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class PluginConnection implements DataDestinationInterface {
 
-	private HashMap<SigproPlugin, LinkedBlockingQueue<int[]>> outputMap = new HashMap<>();
+	private HashMap<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> outputMap = new HashMap<>();
 
 	private int outputSize = 0;
 	private boolean play = false;
@@ -34,33 +34,39 @@ public class PluginConnection implements DataDestinationInterface {
 	public void play() {
 		play = true;
 
-		for (Map.Entry<SigproPlugin, LinkedBlockingQueue<int[]>> entry : outputMap.entrySet()) {
+		for (Map.Entry<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> entry : outputMap.entrySet()) {
 
-			Thread playThread = new Thread(new Runnable() {
+			for (Map.Entry<String, LinkedBlockingQueue<int[]>> inputEntry : entry.getValue().entrySet()) {
 
-				@Override
-				public void run() {
+				Thread playThread = new Thread(new Runnable() {
 
-					LinkedBlockingQueue<int[]> queue = entry.getValue();
-					SigproPlugin dest = entry.getKey();
-					int[] data;
+					@Override
+					public void run() {
 
-					while (play) {
-						try {
-							data = queue.poll(100, TimeUnit.MILLISECONDS);
-							if (data != null) {
-								dest.putData(data);
+						LinkedBlockingQueue<int[]> queue = inputEntry.getValue();
+						SigproPlugin dest = entry.getKey();
+						String pluginInput = inputEntry.getKey();
+
+						int[] data;
+
+						while (play) {
+							try {
+								data = queue.poll(100, TimeUnit.MILLISECONDS);
+								if (data != null) {
+									dest.putData(pluginInput, data);
+								}
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
 							}
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
 						}
+
 					}
+				});
 
-				}
-			});
+				playThread.start();
+			}
 
-			playThread.start();
 		}
 	}
 
@@ -77,8 +83,11 @@ public class PluginConnection implements DataDestinationInterface {
 			e.printStackTrace();
 		}
 
-		for (Map.Entry<SigproPlugin, LinkedBlockingQueue<int[]>> entry : outputMap.entrySet()) {
-			entry.getValue().clear();
+		for (Map.Entry<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> entry : outputMap.entrySet()) {
+
+			for (Map.Entry<String, LinkedBlockingQueue<int[]>> inputEntry : entry.getValue().entrySet()) {
+				inputEntry.getValue().clear();
+			}
 		}
 	}
 
@@ -87,9 +96,15 @@ public class PluginConnection implements DataDestinationInterface {
 	 * 
 	 * @param plugin
 	 *            the {@link SigproPlugin} as output. Must not be null.
+	 * @param input
+	 *            the input of the plugin to which data shall we written. Must
+	 *            not be null.
 	 */
-	public synchronized void addOutput(@Nonnull SigproPlugin plugin) {
-		outputMap.put(plugin, new LinkedBlockingQueue<int[]>());
+	public synchronized void addOutput(@Nonnull SigproPlugin plugin, @Nonnull String input) {
+		if (!outputMap.containsKey(plugin)) {
+			outputMap.put(plugin, new HashMap<String, LinkedBlockingQueue<int[]>>());
+		}
+		outputMap.get(plugin).put(input, new LinkedBlockingQueue<int[]>());
 		outputSize++;
 	}
 
@@ -98,9 +113,16 @@ public class PluginConnection implements DataDestinationInterface {
 	 * 
 	 * @param plugin
 	 *            the {@link SigproPlugin} to remove. Must not be null.
+	 * @param input
+	 *            the input of the plugin to remove. Must not be null.
 	 */
-	public synchronized void removeOutput(@Nonnull SigproPlugin plugin) {
-		outputMap.remove(plugin);
+	public synchronized void removeOutput(@Nonnull SigproPlugin plugin, @Nonnull String input) {
+		if(outputMap.containsKey(plugin)) {
+			outputMap.get(plugin).remove(input);
+			if(outputMap.get(plugin).isEmpty()) {
+				outputMap.remove(plugin);
+			}
+		}
 		outputSize--;
 	}
 
@@ -109,15 +131,17 @@ public class PluginConnection implements DataDestinationInterface {
 
 		int i = 0;
 
-		for (Map.Entry<SigproPlugin, LinkedBlockingQueue<int[]>> entry : outputMap.entrySet()) {
-			if (i == 0) {
-				entry.getValue().offer(data);
-			} else {
-				int[] newData = new int[data.length];
-				System.arraycopy(data, 0, newData, 0, data.length);
-				entry.getValue().offer(newData);
+		for (Map.Entry<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> entry : outputMap.entrySet()) {
+			for(LinkedBlockingQueue<int[]> queue : entry.getValue().values()) {
+				if (i == 0) {
+					queue.offer(data);
+				} else {
+					int[] newData = new int[data.length];
+					System.arraycopy(data, 0, newData, 0, data.length);
+					queue.offer(newData);
+				}
+				i++;				
 			}
-			i++;
 		}
 
 	}

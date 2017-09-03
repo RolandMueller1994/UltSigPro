@@ -50,11 +50,12 @@ public interface SigproPlugin extends PluginInterface {
 	 * Will be called by the underlying signal processing system. The
 	 * implementation of this method must execute the signal processing and
 	 * write the data to the outputs.
+	 * @param input 
 	 * 
 	 * @param data
 	 *            The new data package.
 	 */
-	public void putData(int[] data);
+	public void putData(String input, int[] data);
 
 	/**
 	 * Sets the configuration of the outputs. Each output will get a
