@@ -86,12 +86,14 @@ public class USPGui extends Application {
 
 			@Override
 			public void handle(MouseEvent event) {
-				play = true;
-				Iterator<Node> iter = channelBox.getChildren().iterator();
-				while(iter.hasNext()) {
-					((ChannelPane) iter.next()).setPlay(true);
+				if(!play) {
+					play = true;
+					Iterator<Node> iter = channelBox.getChildren().iterator();
+					while(iter.hasNext()) {
+						((ChannelPane) iter.next()).setPlay(true);
+					}
+					InputAdministrator.getInputAdminstrator().startListening();					
 				}
-				InputAdministrator.getInputAdminstrator().startListening();
 			}
 			
 		});
@@ -168,13 +170,15 @@ public class USPGui extends Application {
 	}
 	
 	private static void stopPlay() {
-		play = false;
-		Iterator<Node> iter = channelBox.getChildren().iterator();
-		while(iter.hasNext()) {
-			((ChannelPane) iter.next()).setPlay(false);
+		if(play) {
+			play = false;
+			Iterator<Node> iter = channelBox.getChildren().iterator();
+			while(iter.hasNext()) {
+				((ChannelPane) iter.next()).setPlay(false);
+			}
+			InputAdministrator.getInputAdminstrator().stopListening();
+			OutputAdministrator.getOutputAdministrator().stopPlayback();			
 		}
-		InputAdministrator.getInputAdminstrator().stopListening();
-		OutputAdministrator.getOutputAdministrator().stopPlayback();
 	}
 	
 }

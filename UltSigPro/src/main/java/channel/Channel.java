@@ -114,9 +114,9 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	}
 	
 	public void setPlay(boolean play) {
-		
-		play = false;
-		remaining = 0;
-		
+		if(!play) {
+			outputQueue.clear();
+		}
+		this.play = play;
 	}
 }

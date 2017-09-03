@@ -19,6 +19,13 @@ import javax.sound.sampled.TargetDataLine;
 
 import channel.Channel;
 import channel.OutputDataSpeaker;
+import gui.USPGui;
+import i18n.LanguageResourceHandler;
+import inputhandler.InputAdministrator;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextArea;
+import resourceframework.ResourceProviderException;
 
 /**
  * Administrates which output devices are available and sends received processed
@@ -186,38 +193,53 @@ public class OutputAdministrator {
 
 					int j = 0, channelSum = 0;
 
-					while (!stopped) {
-
-						// check every intBuffer (every integer stream from
-						// Channel), if there are values left to convert into
-						// bytes. fetch data if necessary
-						for (int i = 0; i < intBuffers.size(); i++) {
-							if (intBuffers.get(i).isEmpty()) {
-								j = 0;
-
-								intBuffers.remove(i);
-
-								// search for the needed speaker
-								for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
-									if (i == j) {
-										intBuffers.add(i, speaker.fetchData());
-										j++;
+					try {
+						while (!stopped) {
+							
+							// check every intBuffer (every integer stream from
+							// Channel), if there are values left to convert into
+							// bytes. fetch data if necessary
+							for (int i = 0; i < intBuffers.size(); i++) {
+								if (intBuffers.get(i).isEmpty()) {
+									j = 0;
+									
+									intBuffers.remove(i);
+									
+									// search for the needed speaker
+									for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
+										if (i == j) {
+											intBuffers.add(i, speaker.fetchData());
+											j++;
+										}
 									}
 								}
 							}
-						}
+							
+							channelSum = 0;
+							for (int i = 0; i < intBuffers.size(); i++) {
+								
+								// sum up all first values from each channel
+								channelSum += intBuffers.get(i).removeFirst();
+							}
+							
+							try {
+								outputStream.get(entry.getKey()).put(channelSum);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}						
+					} catch (NullPointerException ex) {
+						if(!stopped) {
+							USPGui.stopExternally();
+							Platform.runLater(new Runnable () {
 
-						channelSum = 0;
-						for (int i = 0; i < intBuffers.size(); i++) {
-
-							// sum up all first values from each channel
-							channelSum += intBuffers.get(i).removeFirst();
-						}
-
-						try {
-							outputStream.get(entry.getKey()).put(channelSum);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
+								@Override
+								public void run() {
+									OutputAlert alert = new OutputAlert();
+									alert.show();
+								}
+								
+							});
 						}
 					}
 				}
@@ -241,38 +263,51 @@ public class OutputAdministrator {
 				@Override
 				public void run() {
 
-					while (!stopped) {
-
-						int i = 0, intSample = 0;
-						byte[] byteBuffer = new byte[byteBufferSize];
-
-						// fetches 50 integer values from outputStream and
-						// writes it to intBuffer
-						while (i < byteBufferSize / 2) {
-
-							try {
-								intSample = outputStream.get(entry.getKey()).poll(100, TimeUnit.MILLISECONDS);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							} catch (NullPointerException e) {
-								// Nullpointer is ok, when stopped button has
-								// been pressed
-								if (!stopped) {
+					try {
+						while (!stopped) {
+							
+							int i = 0, intSample = 0;
+							byte[] byteBuffer = new byte[byteBufferSize];
+							
+							// fetches 50 integer values from outputStream and
+							// writes it to intBuffer
+							while (i < byteBufferSize / 2) {
+								
+								try {
+									intSample = outputStream.get(entry.getKey()).poll(100, TimeUnit.MILLISECONDS);
+								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
+								
+								// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
+								// byteBuffer ------ : ------ : 2*i : 2*i+1
+								byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
+								byteBuffer[2 * i + 1] = (byte) (intSample & 0xFF);
+								
+								i++;
 							}
-
-							// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
-							// byteBuffer ------ : ------ : 2*i : 2*i+1
-							byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
-							byteBuffer[2 * i + 1] = (byte) (intSample & 0xFF);
-
-							i++;
+							line.write(byteBuffer, 0, byteBuffer.length);
+						}		
+					} catch (NullPointerException e) {
+						// Nullpointer is ok, when stopped button has
+						// been pressed
+						if (!stopped) {
+							USPGui.stopExternally();
+							
+							Platform.runLater(new Runnable() {
+								
+								@Override
+								public void run() {
+									OutputAlert alert = new OutputAlert();
+									alert.show();
+								}
+								
+							});
 						}
-						line.write(byteBuffer, 0, byteBuffer.length);
 					}
+					System.out.println("Stopped playback on: " + line);
 				}
-
+				
 			});
 			playbackThread.start();
 		}
@@ -410,5 +445,36 @@ public class OutputAdministrator {
 			}
 		}
 
+	}
+	
+	private class OutputAlert extends Alert {
+		
+		private static final String ALERT_TITLE = "alertTitle";
+		private static final String ALERT_HEADER = "alertHeader";
+		private static final String ALERT_TEXT = "alertText";
+		
+		public OutputAlert() {
+			super(AlertType.ERROR);
+			
+			try {
+				LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+				
+				setTitle(lanHandler.getLocalizedText(OutputAlert.class, ALERT_TITLE));
+				setHeaderText(lanHandler.getLocalizedText(OutputAlert.class, ALERT_HEADER));
+				
+				TextArea contentText = new TextArea(LanguageResourceHandler.getInstance()
+						.getLocalizedText(OutputAlert.class, ALERT_TEXT));
+				contentText.setEditable(false);
+				contentText.setWrapText(true);
+
+				getDialogPane().setContent(contentText);
+				
+			} catch (ResourceProviderException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
 	}
 }
