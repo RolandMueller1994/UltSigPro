@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nonnull;
 
+import channel.DataDestinationInterface;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
 
@@ -39,22 +40,21 @@ public interface SigproPlugin extends PluginInterface {
 	 * Every plugin has to create its one user interface. This method will be
 	 * called by the plugin framework to display the gui.
 	 * 
-	 * @return a {@link Pane} which contains the user interface of the plugin. Won't be null.
+	 * @return a {@link Pane} which contains the user interface of the plugin.
+	 *         Won't be null.
 	 */
 	@Nonnull
 	Pane getGUI();
 
 	/**
-	 * Provides the configuration for input channels of the plugin. Every input
-	 * will be marked by a {@link String}. There will be a
-	 * {@link LinkedBlockingQueue} for each input which will be used to insert
-	 * data into the plugin.
+	 * Will be called by the underlying signal processing system. The
+	 * implementation of this method must execute the signal processing and
+	 * write the data to the outputs.
 	 * 
-	 * @return a {@link HashMap} of {@link String}s and
-	 *         {@link LinkedBlockingQueue}s of int array. Won't be null.
+	 * @param data
+	 *            The new data package.
 	 */
-	@Nonnull
-	HashMap<String, LinkedBlockingQueue<int[]>> getInputConfig();
+	public void putData(int[] data);
 
 	/**
 	 * Sets the configuration of the outputs. Each output will get a
@@ -62,9 +62,19 @@ public interface SigproPlugin extends PluginInterface {
 	 * 
 	 * @param outputConfig
 	 *            a {@link HashMap} of {@link String}s and
-	 *            {@link LinkedBlockingQueue}. Must not be null.
+	 *            {@link DataDestinationInterface}. Must not be null.
 	 */
-	void setOutputConfig(@Nonnull HashMap<String, LinkedBlockingQueue<int[]>> outputConfig);
+	void setOutputConfig(@Nonnull HashMap<String, DataDestinationInterface> outputConfig);
+
+	/**
+	 * Adds a {@link DataDestinationInterface} as output.
+	 * 
+	 * @param output
+	 *            the name of the output of the plugin.
+	 * @param dest
+	 *            the destination for data.
+	 */
+	void addOutputConfig(@Nonnull String output, @Nonnull DataDestinationInterface dest);
 
 	/**
 	 * Provides the config for the outputs. Each output is marked by a
