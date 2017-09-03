@@ -2,8 +2,11 @@ package channel;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import inputhandler.InputAdministrator;
 import outputhandler.OutputAdministrator;
@@ -15,6 +18,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private boolean play = false;
 	private String name;
 	private ChannelPane pane;
+	
+	private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new LinkedBlockingQueue<>();
 	
 	private int remaining = 0;
 	int distance = (int) (44100/44);
@@ -31,7 +36,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	@Override
 	public LinkedList<Integer> fetchData() {
 		// passes data from channel to OutputAdmin
-		LinkedList<Integer> data = new LinkedList<> ();
+		/*LinkedList<Integer> data = new LinkedList<> ();
 		
 		System.out.println("debug");
 		
@@ -45,8 +50,14 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		//TODO replace sinus values with real sound values
 		for (double i = 0; i<628*2; i+=2) {
 			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
+		}*/
+		try {
+			return outputQueue.poll(100, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
 		}
-		return data;
 	}
 
 	@Override
@@ -68,6 +79,17 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		} else {
 			remaining = remaining + (data.length - pos);
 		}
+		
+		LinkedList<Integer> outputPackage = new LinkedList<>();
+		
+		
+		for(int i=0; i<data.length; i++) {
+			outputPackage.add(data[i]);
+		}
+		
+		//System.out.println(data.length);
+		
+		outputQueue.offer(outputPackage);
 		
 		
 		pane.insertWaveChartData(waveChartData);
