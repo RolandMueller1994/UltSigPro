@@ -33,8 +33,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		// passes data from channel to OutputAdmin
 		LinkedList<Integer> data = new LinkedList<> ();
 		
-		System.out.println("debug");
-		
 		try {
 			Thread.sleep(10);
 		} catch (InterruptedException e) {

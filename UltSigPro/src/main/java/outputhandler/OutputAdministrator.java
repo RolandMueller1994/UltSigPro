@@ -22,8 +22,8 @@ import channel.OutputDataSpeaker;
 
 /**
  * Administrates which output devices are available and sends received processed
- * data from {@linkplainplain Channel} to output devices. Converts it from integers
- * to bytes before writing it on the lines. Handles the complete data
+ * data from {@linkplainplain Channel} to output devices. Converts it from
+ * integers to bytes before writing it on the lines. Handles the complete data
  * distribution from {@linkplainplain Channel} to output.
  * 
  * @author Kone
@@ -132,8 +132,8 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Starts two threads which are collecting data from {@linkplain Channel}s and
-	 * write it to the determined sound output devices.
+	 * Starts two threads which are collecting data from {@linkplain Channel}s
+	 * and write it to the determined sound output devices.
 	 */
 	public void startPlayback() {
 
@@ -235,6 +235,7 @@ public class OutputAdministrator {
 
 			// This thread converts the retrieved integer values from the
 			// distributionThread to bytes and writes the data to the line.
+
 			Thread playbackThread = new Thread(new Runnable() {
 
 				@Override
@@ -250,10 +251,15 @@ public class OutputAdministrator {
 						while (i < byteBufferSize / 2) {
 
 							try {
-								intSample = outputStream.get(entry.getKey()).take();
+								intSample = outputStream.get(entry.getKey()).poll(100, TimeUnit.MILLISECONDS);
 							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
+							} catch (NullPointerException e) {
+								// Nullpointer is ok, when stopped button has
+								// been pressed
+								if (!stopped) {
+									e.printStackTrace();
+								}
 							}
 
 							// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
@@ -277,8 +283,9 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Checks, if there is already a {@linkplain SourceDataLine} open for the given
-	 * device name. If not, opens a line and allows it to engage in data I/O.
+	 * Checks, if there is already a {@linkplain SourceDataLine} open for the
+	 * given device name. If not, opens a line and allows it to engage in data
+	 * I/O.
 	 * 
 	 * @param deviceName
 	 *            name of the sound output device
@@ -310,8 +317,8 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Is called, when a new {@linkplain Channel}/{@linkplain OutputDataSpeaker} is
-	 * created. Sets entries in the distributionQueue for the new
+	 * Is called, when a new {@linkplain Channel}/{@linkplain OutputDataSpeaker}
+	 * is created. Sets entries in the distributionQueue for the new
 	 * OutputDataSpeakers and sound output devices.
 	 * 
 	 * @param speaker
@@ -333,8 +340,8 @@ public class OutputAdministrator {
 	}
 
 	/***
-	 * Is called, when {@linkplain Channel}/{@linkplain OutputDataSpeaker} adds a single
-	 * sound output device as a listener.
+	 * Is called, when {@linkplain Channel}/{@linkplain OutputDataSpeaker} adds
+	 * a single sound output device as a listener.
 	 * 
 	 * @param speaker
 	 *            means the Channel/OutputDataSpeaker which has to be added
@@ -359,8 +366,8 @@ public class OutputAdministrator {
 	 * entry of the {@linkplain Channel} from distributionQueue.
 	 * 
 	 * @param speaker
-	 *            means the Channel/{@linkplain OutputDataSpeaker} which has to be
-	 *            removed
+	 *            means the Channel/{@linkplain OutputDataSpeaker} which has to
+	 *            be removed
 	 * @param device
 	 *            means the name of the sound output device which has to be
 	 *            removed
@@ -379,8 +386,9 @@ public class OutputAdministrator {
 	}
 
 	/**
-	 * Is called, when a complete {@linkplain Channel}/{@linkplain OutputDataSpeaker} gets
-	 * deleted. Removes the entry of the channel from the distributionQueue.
+	 * Is called, when a complete
+	 * {@linkplain Channel}/{@linkplain OutputDataSpeaker} gets deleted. Removes
+	 * the entry of the channel from the distributionQueue.
 	 * 
 	 * @param speaker
 	 *            means the Channel/OutputDataSpeaker which has to be removed
