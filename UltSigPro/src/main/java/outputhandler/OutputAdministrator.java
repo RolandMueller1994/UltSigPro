@@ -44,7 +44,7 @@ public class OutputAdministrator {
 
 	private long latency = 20;
 	private int byteBufferSize = 100;
-	
+
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
 	HashMap<String, LinkedBlockingQueue<Integer>> outputStream = new HashMap<>();
@@ -193,16 +193,17 @@ public class OutputAdministrator {
 
 					try {
 						while (!stopped) {
-							
+
 							// check every intBuffer (every integer stream from
-							// Channel), if there are values left to convert into
+							// Channel), if there are values left to convert
+							// into
 							// bytes. fetch data if necessary
 							for (int i = 0; i < intBuffers.size(); i++) {
 								if (intBuffers.get(i).isEmpty()) {
 									j = 0;
-									
+
 									intBuffers.remove(i);
-									
+
 									// search for the needed speaker
 									for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
 										if (i == j) {
@@ -212,31 +213,31 @@ public class OutputAdministrator {
 									}
 								}
 							}
-							
+
 							channelSum = 0;
 							for (int i = 0; i < intBuffers.size(); i++) {
-								
+
 								// sum up all first values from each channel
 								channelSum += intBuffers.get(i).removeFirst();
 							}
-							
+
 							try {
 								outputStream.get(entry.getKey()).put(channelSum);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
-						}						
+						}
 					} catch (NullPointerException ex) {
-						if(!stopped) {
+						if (!stopped) {
 							USPGui.stopExternally();
-							Platform.runLater(new Runnable () {
+							Platform.runLater(new Runnable() {
 
 								@Override
 								public void run() {
 									OutputAlert alert = new OutputAlert();
 									alert.show();
 								}
-								
+
 							});
 						}
 					}
@@ -248,8 +249,8 @@ public class OutputAdministrator {
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
 
-//			line.flush();
-	//		line.start();
+			// line.flush();
+			// line.start();
 
 			System.out.println("Started playback on: " + line);
 
@@ -262,58 +263,59 @@ public class OutputAdministrator {
 				public void run() {
 
 					try {
-						
+
 						while (!stopped) {
-							
+
 							int i = 0, intSample = 0;
 							byte[] byteBuffer = new byte[byteBufferSize];
-							
+
 							// fetches 50 integer values from outputStream and
 							// writes it to intBuffer
 							while (i < byteBufferSize / 2) {
-								
+
 								try {
 									intSample = outputStream.get(entry.getKey()).poll(100, TimeUnit.MILLISECONDS);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								
-								// limit the values of the sound to its max/min values
+
+								// limit the values of the sound to its max/min
+								// values
 								if (intSample > Short.MAX_VALUE) {
 									intSample = Short.MAX_VALUE;
 								} else if (intSample < Short.MIN_VALUE) {
 									intSample = Short.MIN_VALUE;
 								}
-								
+
 								// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
 								// byteBuffer ------ : ------ : 2*i : 2*i+1
 								byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
 								byteBuffer[2 * i + 1] = (byte) (intSample & 0xFF);
-								
+
 								i++;
 							}
 							line.write(byteBuffer, 0, byteBuffer.length);
-						}		
+						}
 					} catch (NullPointerException e) {
 						// Nullpointer is ok, when stopped button has
 						// been pressed
 						if (!stopped) {
 							USPGui.stopExternally();
-							
+
 							Platform.runLater(new Runnable() {
-								
+
 								@Override
 								public void run() {
 									OutputAlert alert = new OutputAlert();
 									alert.show();
 								}
-								
+
 							});
 						}
 					}
 					System.out.println("Stopped playback on: " + line);
 				}
-				
+
 			});
 			playbackThread.start();
 			System.out.println("Output started at: " + System.currentTimeMillis());
@@ -347,8 +349,9 @@ public class OutputAdministrator {
 			try {
 				line = (SourceDataLine) allSoundOutputDevices.get(deviceName).getLine(info);
 				line.open(audioFormat);
-				
-				// We have to write a few data at the beginning, because the first write operation causes a delay at playback.
+
+				// We have to write a few data at the beginning, because the
+				// first write operation causes a delay at playback.
 				byte[] firstData = new byte[2];
 				firstData[0] = 0;
 				firstData[1] = 0;
@@ -459,35 +462,35 @@ public class OutputAdministrator {
 		}
 
 	}
-	
+
 	private class OutputAlert extends Alert {
-		
+
 		private static final String ALERT_TITLE = "alertTitle";
 		private static final String ALERT_HEADER = "alertHeader";
 		private static final String ALERT_TEXT = "alertText";
-		
+
 		public OutputAlert() {
 			super(AlertType.ERROR);
-			
+
 			try {
 				LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
-				
+
 				setTitle(lanHandler.getLocalizedText(OutputAlert.class, ALERT_TITLE));
 				setHeaderText(lanHandler.getLocalizedText(OutputAlert.class, ALERT_HEADER));
-				
-				TextArea contentText = new TextArea(LanguageResourceHandler.getInstance()
-						.getLocalizedText(OutputAlert.class, ALERT_TEXT));
+
+				TextArea contentText = new TextArea(
+						LanguageResourceHandler.getInstance().getLocalizedText(OutputAlert.class, ALERT_TEXT));
 				contentText.setEditable(false);
 				contentText.setWrapText(true);
 
 				getDialogPane().setContent(contentText);
-				
+
 			} catch (ResourceProviderException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		}
-		
+
 	}
 }
