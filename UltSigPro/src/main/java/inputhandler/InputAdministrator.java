@@ -50,7 +50,7 @@ public class InputAdministrator {
 	private static final String ALERT_TITLE = "alertTitle";
 	private static final String ALERT_HEADER = "alertHeader";
 	private static final String ALERT_TEXT = "alertText";
-	
+
 	private static final int distributionSize = 100;
 
 	// TODO check necessity of distributionMap
@@ -297,6 +297,8 @@ public class InputAdministrator {
 			e1.printStackTrace();
 		}
 
+		OutputAdministrator.getOutputAdministrator().startPlayback();
+
 		for (Map.Entry<String, TargetDataLine> entry : targetDataLines.entrySet()) {
 
 			TargetDataLine line = entry.getValue();
@@ -305,6 +307,8 @@ public class InputAdministrator {
 
 				@Override
 				public void run() {
+
+					boolean firstRead = true;
 
 					String device = entry.getKey();
 
@@ -322,6 +326,8 @@ public class InputAdministrator {
 					System.out.println(line.getFormat());
 					LinkedList<LinkedList<Integer>> intBuffers = new LinkedList<>();
 
+					boolean first = true;
+
 					while (!stopped) {
 						// We will only read the current available data. If a
 						// fixed size is read, the read()-call will block until
@@ -330,9 +336,19 @@ public class InputAdministrator {
 						// TODO Optimize sleep time after reading
 						byte[] data = new byte[line.available()];
 						int bytesRead = line.read(data, 0, data.length);
-						
+
 						int byteBuffer = 0, shiftCounter = 0;
-						if (bytesRead != 0) {
+
+						// We discard the first read data because this package
+						// is pretty big and causes latency
+						if (first) {
+							first = false;
+						} else if (bytesRead != 0) {
+
+							if (firstRead) {
+								System.out.println("First read at: " + System.currentTimeMillis());
+								firstRead = false;
+							}
 
 							intBuffers.clear();
 							for (int i = 0; i < queues.size(); i++) {
@@ -360,7 +376,7 @@ public class InputAdministrator {
 							}
 						}
 						try {
-							Thread.sleep(10);
+							Thread.sleep(2);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -372,7 +388,6 @@ public class InputAdministrator {
 			});
 			recordThread.start();
 		}
-		OutputAdministrator.getOutputAdministrator().startPlayback();
 
 	}
 

@@ -42,7 +42,7 @@ public class OutputAdministrator {
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
 
-	private long latency = 10;
+	private long latency = 6;
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
@@ -249,9 +249,6 @@ public class OutputAdministrator {
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
 
-			// line.flush();
-			// line.start();
-
 			System.out.println("Started playback on: " + line);
 
 			// This thread converts the retrieved integer values from the
@@ -263,6 +260,8 @@ public class OutputAdministrator {
 				public void run() {
 
 					try {
+
+						boolean firstWrite = true;
 
 						while (!stopped) {
 
@@ -295,6 +294,10 @@ public class OutputAdministrator {
 								i++;
 							}
 							line.write(byteBuffer, 0, byteBuffer.length);
+							if (firstWrite) {
+								System.out.println("First write at: " + System.currentTimeMillis());
+								firstWrite = false;
+							}
 						}
 					} catch (NullPointerException e) {
 						// Nullpointer is ok, when stopped button has
