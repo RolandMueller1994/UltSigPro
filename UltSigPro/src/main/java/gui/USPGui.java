@@ -173,11 +173,11 @@ public class USPGui extends Application {
 		if(play) {
 			play = false;
 			Iterator<Node> iter = channelBox.getChildren().iterator();
+			InputAdministrator.getInputAdminstrator().stopListening();
+			OutputAdministrator.getOutputAdministrator().stopPlayback();			
 			while(iter.hasNext()) {
 				((ChannelPane) iter.next()).setPlay(false);
 			}
-			InputAdministrator.getInputAdminstrator().stopListening();
-			OutputAdministrator.getOutputAdministrator().stopPlayback();			
 		}
 	}
 	

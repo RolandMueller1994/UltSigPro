@@ -50,7 +50,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
 		}*/
 		try {
-			return outputQueue.poll(100, TimeUnit.MILLISECONDS);
+			LinkedList<Integer> output =  outputQueue.poll(100, TimeUnit.MILLISECONDS);
+			return output;
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -79,7 +80,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		}
 		
 		LinkedList<Integer> outputPackage = new LinkedList<>();
-		
 		
 		for(int i=0; i<data.length; i++) {
 			outputPackage.add(data[i]);
@@ -114,7 +114,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	}
 	
 	public void setPlay(boolean play) {
-		if(!play) {
+		if(play) {
 			outputQueue.clear();
 		}
 		this.play = play;

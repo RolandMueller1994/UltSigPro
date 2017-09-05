@@ -50,7 +50,7 @@ public class InputAdministrator {
 	private static final String ALERT_TITLE = "alertTitle";
 	private static final String ALERT_HEADER = "alertHeader";
 	private static final String ALERT_TEXT = "alertText";
-
+	
 	private static final int distributionSize = 100;
 
 	// TODO check necessity of distributionMap
@@ -319,9 +319,7 @@ public class InputAdministrator {
 
 					line.start();
 					line.flush();
-					System.out.println("Started recording on: " + line);
 					System.out.println(line.getFormat());
-					// List<Integer> intBuffer = new LinkedList<>();
 					LinkedList<LinkedList<Integer>> intBuffers = new LinkedList<>();
 
 					while (!stopped) {
@@ -332,6 +330,7 @@ public class InputAdministrator {
 						// TODO Optimize sleep time after reading
 						byte[] data = new byte[line.available()];
 						int bytesRead = line.read(data, 0, data.length);
+						
 						int byteBuffer = 0, shiftCounter = 0;
 						if (bytesRead != 0) {
 
@@ -339,8 +338,6 @@ public class InputAdministrator {
 							for (int i = 0; i < queues.size(); i++) {
 								intBuffers.add(new LinkedList<>());
 							}
-
-							// intBuffer = new int[bytesRead/2];
 
 							for (shiftCounter = 0; shiftCounter < bytesRead; shiftCounter = shiftCounter + 2) {
 								for (int i = 0; i < 2; i++) {
@@ -353,7 +350,6 @@ public class InputAdministrator {
 								for (LinkedList<Integer> intBuffer : intBuffers) {
 									intBuffer.add(byteBuffer);
 								}
-								// intBuffer[shiftCounter/2] = byteBuffer;
 								byteBuffer = 0;
 							}
 
@@ -375,6 +371,7 @@ public class InputAdministrator {
 				}
 			});
 			recordThread.start();
+			System.out.println("Input started at: " + System.currentTimeMillis());
 		}
 		OutputAdministrator.getOutputAdministrator().startPlayback();
 

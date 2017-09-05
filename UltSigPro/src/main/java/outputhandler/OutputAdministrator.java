@@ -1,6 +1,5 @@
 package outputhandler;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,19 +8,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.TargetDataLine;
 
 import channel.Channel;
 import channel.OutputDataSpeaker;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import inputhandler.InputAdministrator;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
@@ -46,7 +44,7 @@ public class OutputAdministrator {
 
 	private long latency = 20;
 	private int byteBufferSize = 100;
-
+	
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
 	HashMap<String, LinkedBlockingQueue<Integer>> outputStream = new HashMap<>();
@@ -250,8 +248,8 @@ public class OutputAdministrator {
 		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
 			SourceDataLine line = entry.getValue();
 
-			line.start();
-			line.flush();
+//			line.flush();
+	//		line.start();
 
 			System.out.println("Started playback on: " + line);
 
@@ -264,6 +262,7 @@ public class OutputAdministrator {
 				public void run() {
 
 					try {
+						
 						while (!stopped) {
 							
 							int i = 0, intSample = 0;
@@ -310,6 +309,7 @@ public class OutputAdministrator {
 				
 			});
 			playbackThread.start();
+			System.out.println("Output started at: " + System.currentTimeMillis());
 		}
 	}
 
@@ -340,6 +340,12 @@ public class OutputAdministrator {
 			try {
 				line = (SourceDataLine) allSoundOutputDevices.get(deviceName).getLine(info);
 				line.open(audioFormat);
+				
+				// We have to write a few data at the beginning, because the first write operation causes a delay at playback.
+				byte[] firstData = new byte[2];
+				firstData[0] = 0;
+				firstData[1] = 0;
+				line.write(firstData, 0, 2);
 			} catch (LineUnavailableException e) {
 				e.printStackTrace();
 			}
