@@ -371,7 +371,6 @@ public class InputAdministrator {
 				}
 			});
 			recordThread.start();
-			System.out.println("Input started at: " + System.currentTimeMillis());
 		}
 		OutputAdministrator.getOutputAdministrator().startPlayback();
 

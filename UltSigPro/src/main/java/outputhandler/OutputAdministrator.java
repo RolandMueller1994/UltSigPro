@@ -42,7 +42,7 @@ public class OutputAdministrator {
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
 
-	private long latency = 20;
+	private long latency = 10;
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
@@ -318,7 +318,6 @@ public class OutputAdministrator {
 
 			});
 			playbackThread.start();
-			System.out.println("Output started at: " + System.currentTimeMillis());
 		}
 	}
 
