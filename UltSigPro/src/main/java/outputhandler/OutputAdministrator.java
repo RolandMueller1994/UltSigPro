@@ -278,6 +278,13 @@ public class OutputAdministrator {
 									e.printStackTrace();
 								}
 								
+								// limit the values of the sound to its max/min values
+								if (intSample > Short.MAX_VALUE) {
+									intSample = Short.MAX_VALUE;
+								} else if (intSample < Short.MIN_VALUE) {
+									intSample = Short.MIN_VALUE;
+								}
+								
 								// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
 								// byteBuffer ------ : ------ : 2*i : 2*i+1
 								byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
