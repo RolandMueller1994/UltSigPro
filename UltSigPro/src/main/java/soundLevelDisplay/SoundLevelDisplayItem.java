@@ -12,8 +12,8 @@ import javafx.scene.layout.HBox;
 
 public class SoundLevelDisplayItem extends GridPane {
 
-	private static Label deviceNameField;
-	private static ProgressBar soundLevel;
+	private Label deviceNameField;
+	private ProgressBar soundLevel;
 
 	public SoundLevelDisplayItem(String deviceName) {
 
@@ -37,12 +37,18 @@ public class SoundLevelDisplayItem extends GridPane {
 		}
 		
 		// norm the max value
-		// minimum is -40dB
+		// minimum is -30dB
 		maxValue = 20*Math.log10(maxValue/Short.MAX_VALUE);
-		if (maxValue < -20) {
-			maxValue = -20;
+		if (maxValue < -30) {
+			maxValue = -30;
 		}
-		soundLevel.setProgress((20+maxValue)/20);
+		this.soundLevel.setProgress((30+maxValue)/30);
+		if (maxValue > -3)
+			this.soundLevel.setStyle("-fx-accent: red");
+		else if (maxValue > -6)
+			this.soundLevel.setStyle("-fx-accent: orange");
+		else
+			this.soundLevel.setStyle("-fx-accent: green");
 	}
 
 }
