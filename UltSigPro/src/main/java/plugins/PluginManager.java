@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import logging.CommonLogger;
 import pluginframework.PluginLoader;
 import plugins.commonplugins.CommonPlugin;
@@ -37,6 +40,7 @@ public class PluginManager {
 	 * 
 	 * @return the singleton instance
 	 */
+	@Nonnull
 	public static PluginManager getInstance() {
 		if (instance == null) {
 			instance = new PluginManager();
@@ -81,9 +85,9 @@ public class PluginManager {
 		for (int i = 0; i < files.length; i++) {
 			try {
 				if (loader.equals("sigpro")) {
-					sigproLoader.registerPlugin(files[i].toPath());
+					sigproLoader.registerExternPlugin(files[i].toPath());
 				} else if (loader.equals("common")) {
-					commonLoader.registerPlugin(files[i].toPath());
+					commonLoader.registerExternPlugin(files[i].toPath());
 				}
 			} catch (IllegalArgumentException e) {
 				CommonLogger.getInstance().logMessageAndException("Non .jar file in " + dir.getPath(), e);
@@ -94,12 +98,23 @@ public class PluginManager {
 	}
 
 	/**
-	 * Method to get all available signal processing plugins
+	 * Method to get all available external signal processing plugins
 	 * 
 	 * @return a {@link List} of plugin names.
 	 */
-	public List<String> getAvailableSigproPlugins() {
-		return sigproLoader.getAvailablePlugins();
+	@Nonnull
+	public List<String> getAvailableExternSigproPlugins() {
+		return sigproLoader.getAvailableExternPlugins();
+	}
+
+	/**
+	 * Method to get all available signal processing plugins.
+	 * 
+	 * @return a {@link List} of plugin names.
+	 */
+	@Nonnull
+	public List<String> getAllAvailableSigproPlugins() {
+		return sigproLoader.getAllAvailablePlugins();
 	}
 
 	/**
@@ -107,8 +122,19 @@ public class PluginManager {
 	 * 
 	 * @return a {@link List} of plugin names.
 	 */
-	public List<String> getAvailableCommonPlugins() {
-		return commonLoader.getAvailablePlugins();
+	@Nonnull
+	public List<String> getAvailableExternCommonPlugins() {
+		return commonLoader.getAvailableExternPlugins();
+	}
+
+	/**
+	 * Method to get all available common plugins.
+	 * 
+	 * @return a {@link List} of plugin names
+	 */
+	@Nonnull
+	public List<String> getAllAvailbaleCommonPlugins() {
+		return commonLoader.getAllAvailablePlugins();
 	}
 
 	/**
@@ -116,7 +142,7 @@ public class PluginManager {
 	 * working direcotry.
 	 * 
 	 * @param pluginPath
-	 *            the {@link Path} to the .jar file
+	 *            the {@link Path} to the .jar file. Must not be null.
 	 * @throws ClassNotFoundException
 	 *             if the class can't be found
 	 * @throws ClassCastException
@@ -127,9 +153,27 @@ public class PluginManager {
 	 * @throws IOException
 	 *             if an error occurs within the file handling
 	 */
-	public void registerSigproPlugin(Path pluginPath)
+	public void registerExternSigproPlugin(@Nonnull Path pluginPath)
 			throws ClassNotFoundException, ClassCastException, IllegalArgumentException, IOException {
-		sigproLoader.registerPlugin(pluginPath);
+		sigproLoader.registerExternPlugin(pluginPath);
+	}
+
+	/**
+	 * Register a internal signal processing plugin which isn't located in a
+	 * .jar file.
+	 * 
+	 * @param name
+	 *            the name of the plugin. Must not be null.
+	 * @param clazz
+	 *            the {@link Class} to register. Must not be null.
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 */
+	@SuppressWarnings("unchecked")
+	public void registerInternSigproPlugin(@Nonnull String name, @Nonnull Class<?> clazz) throws InstantiationException, IllegalAccessException {
+		if(clazz.newInstance() instanceof SigproPlugin) {
+			sigproLoader.registerInternalPlugin(name, (Class<SigproPlugin>) clazz);			
+		}
 	}
 
 	/**
@@ -137,7 +181,7 @@ public class PluginManager {
 	 * direcotry.
 	 * 
 	 * @param pluginPath
-	 *            the {@link Path} to the .jar file
+	 *            the {@link Path} to the .jar file. Must not be null.
 	 * @throws ClassNotFoundException
 	 *             if the class can't be found
 	 * @throws ClassCastException
@@ -148,22 +192,39 @@ public class PluginManager {
 	 * @throws IOException
 	 *             if an error occurs within the file handling
 	 */
-	public void registerCommonPlugin(Path pluginPath)
+	public void registerExternCommonPlugin(@Nonnull Path pluginPath)
 			throws ClassNotFoundException, ClassCastException, IllegalArgumentException, IOException {
-		commonLoader.registerPlugin(pluginPath);
+		commonLoader.registerExternPlugin(pluginPath);
+	}
+
+	/**
+	 * Register a interal signal processing plugin which isn't located in a .jar
+	 * file.
+	 * 
+	 * @param name
+	 *            the name of the plugin. Must not be null.
+	 * @param clazz
+	 *            the {@link Class} to register. Must not be null.
+	 */
+	@SuppressWarnings("unchecked")
+	public void registerInternCommonPlugin(@Nonnull String name, @Nonnull Class<?> clazz) {
+		if(clazz.isInstance(CommonPlugin.class)) {
+			commonLoader.registerInternalPlugin(name, (Class<CommonPlugin>) clazz);			
+		}
 	}
 
 	/**
 	 * Creates a new instance of the requested signal processing plugin
 	 * 
 	 * @param name
-	 *            the name of the requested plugin
-	 * @return the new instance of the requested plugin
+	 *            the name of the requested plugin. Must not be null.
+	 * @return the new instance of the requested plugin. Can be null.
 	 * @throws InstantiationException
 	 *             if the new instance can't be created
 	 * @throws IllegalAccessException
 	 *             if the access isn't be granted
 	 */
+	@CheckForNull
 	public SigproPlugin getSigproPlugin(String name) throws InstantiationException, IllegalAccessException {
 		return sigproLoader.getPlugin(name);
 	}
@@ -172,14 +233,15 @@ public class PluginManager {
 	 * Creates a new instance of the requested common plugin
 	 * 
 	 * @param name
-	 *            the name of the requested plugin
-	 * @return the new instance of the requested plugin
+	 *            the name of the requested plugin. Must not be null.
+	 * @return the new instance of the requested plugin. Can be null.
 	 * @throws InstantiationException
 	 *             if the new instance can't be created
 	 * @throws IllegalAccessException
 	 *             if the access isn't be granted
 	 */
-	public CommonPlugin getCommonPlugin(String name) throws InstantiationException, IllegalAccessException {
+	@CheckForNull
+	public CommonPlugin getCommonPlugin(@Nonnull String name) throws InstantiationException, IllegalAccessException {
 		return commonLoader.getPlugin(name);
 	}
 
@@ -188,7 +250,7 @@ public class PluginManager {
 	 * the registers it at the plugin loader.
 	 * 
 	 * @param path
-	 *            The path to the source file.
+	 *            The path to the source file. Must not be null.
 	 * @throws IOException
 	 *             if an error occurs within the file handling.
 	 * @throws ClassNotFoundException
@@ -199,7 +261,7 @@ public class PluginManager {
 	 * @throws IllegalArgumentException
 	 *             if the given path doesn't point to a char file
 	 */
-	public void importSigproPlugin(Path path)
+	public void importSigproPlugin(@Nonnull Path path)
 			throws IOException, ClassNotFoundException, ClassCastException, IllegalArgumentException {
 		File sourceFile = path.toFile();
 
@@ -215,7 +277,7 @@ public class PluginManager {
 
 		Files.copy(path, destPath, StandardCopyOption.REPLACE_EXISTING);
 
-		registerSigproPlugin(destPath);
+		registerExternSigproPlugin(destPath);
 	}
 
 	/**
@@ -223,7 +285,7 @@ public class PluginManager {
 	 * the registers it at the plugin loader.
 	 * 
 	 * @param path
-	 *            The path to the source file.
+	 *            The path to the source file. Must not be null.
 	 * @throws IOException
 	 *             if an error occurs within the file handling.
 	 * @throws ClassNotFoundException
@@ -234,7 +296,7 @@ public class PluginManager {
 	 * @throws IllegalArgumentException
 	 *             if the given path doesn't point to a char file
 	 */
-	public void importCommonPlugin(Path path)
+	public void importCommonPlugin(@Nonnull Path path)
 			throws IOException, ClassNotFoundException, ClassCastException, IllegalArgumentException {
 		File sourceFile = path.toFile();
 
@@ -250,7 +312,7 @@ public class PluginManager {
 
 		Files.copy(path, destPath, StandardCopyOption.REPLACE_EXISTING);
 
-		registerCommonPlugin(destPath);
+		registerExternCommonPlugin(destPath);
 	}
 
 	/**
@@ -259,10 +321,10 @@ public class PluginManager {
 	 * Instances of the delete plugin can be used further on.
 	 * 
 	 * @param name
-	 *            the name of the plugin to delete
+	 *            the name of the plugin to delete. Must not be null.
 	 */
-	public void removeCommonPlugin(String name) {
-		commonLoader.removePlugin(name);
+	public void removeCommonPlugin(@Nonnull String name) {
+		commonLoader.removeExternalPlugin(name);
 		File[] commonFiles = commonDirFile.listFiles();
 
 		for (int i = 0; i < commonFiles.length; i++) {
@@ -279,10 +341,10 @@ public class PluginManager {
 	 * Instances of the delete plugin can be used further on.
 	 * 
 	 * @param name
-	 *            the name of the plugin to delete
+	 *            the name of the plugin to delete. Must not be null.
 	 */
-	public void removeSigproPlugin(String name) {
-		sigproLoader.removePlugin(name);
+	public void removeSigproPlugin(@Nonnull String name) {
+		sigproLoader.removeExternalPlugin(name);
 		File[] sigproFiles = sigproDirFile.listFiles();
 
 		for (int i = 0; i < sigproFiles.length; i++) {

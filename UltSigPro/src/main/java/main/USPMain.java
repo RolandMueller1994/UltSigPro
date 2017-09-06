@@ -11,6 +11,8 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import logging.CommonLogger;
 import plugins.PluginManager;
+import plugins.sigproplugins.internal.GainBlock;
+import plugins.sigproplugins.signalrouting.SignalAdder;
 import resourceframework.GlobalResourceProvider;
 import startup.ArgParser;
 
@@ -59,6 +61,10 @@ public class USPMain {
 			
 			// Initialize plugin manager
 			PluginManager.getInstance();
+			
+			// Register internal plugins
+			PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
+			PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
 
 			// Setup the LanguageResourceHandler
 			// TODO Read configured language

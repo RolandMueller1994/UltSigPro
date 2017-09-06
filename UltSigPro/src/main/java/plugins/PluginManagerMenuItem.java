@@ -3,10 +3,8 @@ package plugins;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Optional;
 
 import gui.USPGui;
-import gui.menubar.AddChannelMenuItem;
 import i18n.LanguageResourceHandler;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -19,15 +17,17 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import resourceframework.ResourceProviderException;
 
+/**
+ * This class handles the import and deletion of external signal processing and common plugins.
+ * @author roland
+ *
+ */
 public class PluginManagerMenuItem extends MenuItem {
 
 	private static final String TITLE = "title";
@@ -36,6 +36,10 @@ public class PluginManagerMenuItem extends MenuItem {
 	
 	private PluginManagerDialog dialog;
 	
+	/**
+	 * Creates a new {@link MenuItem} for the plugin manager.
+	 * @throws ResourceProviderException if the {@link ResourceProviderException} hasn't been initialized correctly.
+	 */
 	public PluginManagerMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(PluginManagerMenuItem.class, TITLE));
 		
@@ -192,14 +196,14 @@ public class PluginManagerMenuItem extends MenuItem {
 		
 		private void initializeCommonList() {
 			commonList.getItems().clear();
-			for(String plugin : PluginManager.getInstance().getAvailableCommonPlugins()) {
+			for(String plugin : PluginManager.getInstance().getAvailableExternCommonPlugins()) {
 				commonList.getItems().add(plugin);
 			}
 		}
 		
 		private void initializeSigprolist() {
 			sigproList.getItems().clear();
-			for(String plugin : PluginManager.getInstance().getAvailableSigproPlugins()) {
+			for(String plugin : PluginManager.getInstance().getAvailableExternSigproPlugins()) {
 				sigproList.getItems().add(plugin);
 			}
 		}

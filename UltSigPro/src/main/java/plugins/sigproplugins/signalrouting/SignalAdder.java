@@ -26,6 +26,13 @@ public class SignalAdder implements SigproPlugin {
 	private DataDestinationInterface output;
 
 	/**
+	 * Empty default constructor. Needed for instantiation by reflection. 
+	 */
+	public SignalAdder() {
+		
+	}
+	
+	/**
 	 * Creates a new add block.
 	 * 
 	 * @param size
