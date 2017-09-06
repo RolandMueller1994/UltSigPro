@@ -39,10 +39,10 @@ public class SoundLevelDisplayItem extends GridPane {
 		// norm the max value
 		// minimum is -40dB
 		maxValue = 20*Math.log10(maxValue/Short.MAX_VALUE);
-		if (maxValue < -40) {
-			maxValue = -40;
+		if (maxValue < -20) {
+			maxValue = -20;
 		}
-		soundLevel.setProgress((40+maxValue)/40);
+		soundLevel.setProgress((20+maxValue)/20);
 	}
 
 }

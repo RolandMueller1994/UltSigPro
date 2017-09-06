@@ -352,7 +352,7 @@ public class InputAdministrator {
 							}
 
 							intBuffers.clear();
-							for (int i = 0; i < queues.size(); i++) {
+							for (int i = 0; i < queues.size()+1; i++) {
 								intBuffers.add(new LinkedList<>());
 							}
 
@@ -372,7 +372,7 @@ public class InputAdministrator {
 
 							int i = 0;
 							for (LinkedBlockingQueue<LinkedList<Integer>> queue : queues) {
-								queue.offer(intBuffers.get(i));
+								queue.offer(intBuffers.get(i+1));
 								i++;
 							}
 			
