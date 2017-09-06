@@ -56,7 +56,12 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			outputDevicesList = new HashMap<>();
 			
 			inputDevicesBar = new GridPane();
+			inputDevicesBar.setPadding(new Insets(5));
+			inputDevicesBar.setHgap(15);
+			
 			outputDevicesBar = new GridPane();
+			outputDevicesBar.setPadding(new Insets(5));
+			outputDevicesBar.setHgap(15);
 			
 			TitledPane inputPane = new TitledPane();
 			inputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, INPUT_TITLE));
@@ -74,9 +79,6 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			GridPane.setHgrow(outputPane, Priority.ALWAYS);
 			outputPane.setMinHeight(HEIGHT);
 			
-			//soundLevelBar.setPadding(new Insets(5));
-			//soundLevelBar.setHgap(5);
-			//soundLevelBar.setVgap(5);
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
 			

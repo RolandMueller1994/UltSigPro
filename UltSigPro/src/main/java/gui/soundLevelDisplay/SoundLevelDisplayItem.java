@@ -6,6 +6,7 @@ import channel.Channel;
 import javafx.scene.control.ProgressBar;
 import channel.InputDataListener;
 import channel.OutputDataSpeaker;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -24,6 +25,7 @@ public class SoundLevelDisplayItem extends GridPane {
 		this.setVgap(5);
 		this.add(deviceNameField, 0, 0);
 		this.add(soundLevel, 0, 1);
+		GridPane.setHalignment(soundLevel, HPos.CENTER);
 	}
 	
 	public void  setSoundLevel(LinkedList<Integer> soundValues) {
