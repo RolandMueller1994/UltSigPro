@@ -6,6 +6,7 @@ import java.util.Iterator;
 import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.menubar.MenuBarCreator;
+import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.application.Application;
@@ -33,7 +34,6 @@ import javafx.stage.Stage;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
-import soundLevelDisplay.SoundLevelBar;
 
 /**
  * This class is a handler for all issues depending on building and executing

@@ -20,6 +20,8 @@ import javax.sound.sampled.TargetDataLine;
 import channel.Channel;
 import channel.InputDataListener;
 import gui.USPGui;
+import gui.soundLevelDisplay.SoundLevelBar;
+import gui.soundLevelDisplay.SoundValueInterface;
 import i18n.LanguageResourceHandler;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -27,8 +29,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextArea;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
-import soundLevelDisplay.SoundLevelBar;
-import soundLevelDisplay.SoundValueInterface;
 
 /**
  * Administrates which input devices are available and requests their sampled

@@ -1,4 +1,4 @@
-package soundLevelDisplay;
+package gui.soundLevelDisplay;
 
 import java.util.LinkedList;
 

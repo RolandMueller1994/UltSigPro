@@ -1,6 +1,5 @@
 package plugins.sigproplugins.signalrouting;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -8,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
-import channel.DataDestinationInterface;
 import plugins.sigproplugins.SigproPlugin;
 
 /**
@@ -24,6 +22,8 @@ import plugins.sigproplugins.SigproPlugin;
 public class PluginConnection implements DataDestinationInterface {
 
 	private HashMap<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> outputMap = new HashMap<>();
+	private DataOutput dataOutput;
+	private LinkedBlockingQueue<int[]> dataOutputQueue;
 
 	private int outputSize = 0;
 	private boolean play = false;
@@ -34,6 +34,8 @@ public class PluginConnection implements DataDestinationInterface {
 	public void play() {
 		play = true;
 
+		dataOutputQueue.clear();
+		
 		for (Map.Entry<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> entry : outputMap.entrySet()) {
 
 			for (Map.Entry<String, LinkedBlockingQueue<int[]>> inputEntry : entry.getValue().entrySet()) {
@@ -44,6 +46,7 @@ public class PluginConnection implements DataDestinationInterface {
 					public void run() {
 
 						LinkedBlockingQueue<int[]> queue = inputEntry.getValue();
+						queue.clear();
 						SigproPlugin dest = entry.getKey();
 						String pluginInput = inputEntry.getKey();
 
@@ -60,7 +63,6 @@ public class PluginConnection implements DataDestinationInterface {
 								e.printStackTrace();
 							}
 						}
-
 					}
 				});
 
@@ -75,20 +77,6 @@ public class PluginConnection implements DataDestinationInterface {
 	 */
 	public void stop() {
 		play = false;
-
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		for (Map.Entry<SigproPlugin, HashMap<String, LinkedBlockingQueue<int[]>>> entry : outputMap.entrySet()) {
-
-			for (Map.Entry<String, LinkedBlockingQueue<int[]>> inputEntry : entry.getValue().entrySet()) {
-				inputEntry.getValue().clear();
-			}
-		}
 	}
 
 	/**
@@ -106,6 +94,11 @@ public class PluginConnection implements DataDestinationInterface {
 		}
 		outputMap.get(plugin).put(input, new LinkedBlockingQueue<int[]>());
 		outputSize++;
+	}
+	
+	public synchronized void addOutput(@Nonnull DataOutput dest) {
+		this.dataOutput = dataOutput;
+		dataOutputQueue = new LinkedBlockingQueue<int[]>();
 	}
 
 	/**
@@ -126,6 +119,11 @@ public class PluginConnection implements DataDestinationInterface {
 		outputSize--;
 	}
 
+	public synchronized void removeOutput() {
+		dataOutput = null;
+		dataOutputQueue = null;
+	}
+	
 	@Override
 	public void putData(int[] data) {
 
@@ -143,7 +141,26 @@ public class PluginConnection implements DataDestinationInterface {
 				i++;				
 			}
 		}
-
+		
+		if(dataOutput != null) {
+			if (i == 0) {
+				dataOutputQueue.offer(data);
+			} else {
+				int[] newData = new int[data.length];
+				System.arraycopy(data, 0, newData, 0, data.length);
+				dataOutputQueue.offer(newData);
+			}
+		}
 	}
 
+	public int[] fetch() {
+		try {
+			return dataOutputQueue.poll(100, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 }

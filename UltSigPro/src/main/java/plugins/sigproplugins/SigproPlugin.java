@@ -6,9 +6,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nonnull;
 
-import channel.DataDestinationInterface;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
+import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 
 /**
  * Basic interface for signal processing plugins. Every plugin has to implement

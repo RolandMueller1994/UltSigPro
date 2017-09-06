@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import channel.DataDestinationInterface;
 import gui.USPGui;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;

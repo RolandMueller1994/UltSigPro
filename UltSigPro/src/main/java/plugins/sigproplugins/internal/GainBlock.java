@@ -3,9 +3,9 @@ package plugins.sigproplugins.internal;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import channel.DataDestinationInterface;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
+import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 
 /**
  * Internal plugin. Proceeds a clean gain operation.

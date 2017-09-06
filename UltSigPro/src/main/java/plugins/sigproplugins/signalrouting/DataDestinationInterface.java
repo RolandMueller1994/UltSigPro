@@ -1,4 +1,4 @@
-package channel;
+package plugins.sigproplugins.signalrouting;
 
 import javax.annotation.Nonnull;
 

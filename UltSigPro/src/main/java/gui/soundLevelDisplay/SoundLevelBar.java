@@ -1,4 +1,4 @@
-package soundLevelDisplay;
+package gui.soundLevelDisplay;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,46 +7,85 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import channel.ChannelConfig;
+import i18n.LanguageResourceHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import resourceframework.ResourceProviderException;
 
 public class SoundLevelBar extends GridPane implements SoundValueInterface {
+	
+	private static final String INPUT_TITLE = "inputTitle";
+	private static final String OUTPUT_TITLE = "outputTitle";
+	
+	private static final int HEIGHT = 85;
+	
+	private LanguageResourceHandler lanHandler;
 
 	private static SoundLevelBar soundLevelBar;
 
-	private static GridPane inputDevicesBar;
-	private static GridPane outputDevicesBar;
+	private GridPane inputDevicesBar;
+	private GridPane outputDevicesBar;
 
 	// HashMap<DeviceName, ChannelName>
-	private static HashMap<String, LinkedList<String>> inputDevicesList;
-	private static HashMap<String, LinkedList<String>> outputDevicesList;
+	private HashMap<String, LinkedList<String>> inputDevicesList;
+	private HashMap<String, LinkedList<String>> outputDevicesList;
 
 	// HashMap<DeviceName, SoundDevice>
-	private static HashMap<String, SoundLevelDisplayItem> deviceItems;
+	private HashMap<String, SoundLevelDisplayItem> deviceItems;
 
 	public static SoundLevelBar getSoundLevelBar() {
 
 		if (soundLevelBar == null) {
 			soundLevelBar = new SoundLevelBar();
-			inputDevicesList = new HashMap<>();
-			outputDevicesList = new HashMap<>();
-
-			inputDevicesBar = new GridPane();
-			outputDevicesBar = new GridPane();
-
-			soundLevelBar.setPadding(new Insets(5));
-			soundLevelBar.setHgap(5);
-			soundLevelBar.setVgap(5);
-			soundLevelBar.add(inputDevicesBar, 0, 0);
-			soundLevelBar.add(outputDevicesBar, 1, 0);
-
-			deviceItems = new HashMap<>();
 		}
 
 		return soundLevelBar;
+	}
+	
+	private SoundLevelBar() {
+
+		try {
+			lanHandler = LanguageResourceHandler.getInstance();
+			
+			inputDevicesList = new HashMap<>();
+			outputDevicesList = new HashMap<>();
+			
+			inputDevicesBar = new GridPane();
+			outputDevicesBar = new GridPane();
+			
+			TitledPane inputPane = new TitledPane();
+			inputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, INPUT_TITLE));
+			inputPane.setCollapsible(false);
+			inputPane.setContent(inputDevicesBar);
+			inputPane.setMaxWidth(Double.MAX_VALUE);
+			inputPane.setMinHeight(HEIGHT);
+			GridPane.setHgrow(inputPane, Priority.ALWAYS);
+			
+			TitledPane outputPane = new TitledPane();
+			outputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, OUTPUT_TITLE));
+			outputPane.setCollapsible(false);
+			outputPane.setContent(outputDevicesBar);
+			outputPane.setMaxWidth(Double.MAX_VALUE);
+			GridPane.setHgrow(outputPane, Priority.ALWAYS);
+			outputPane.setMinHeight(HEIGHT);
+			
+			//soundLevelBar.setPadding(new Insets(5));
+			//soundLevelBar.setHgap(5);
+			//soundLevelBar.setVgap(5);
+			add(inputPane, 0, 0);
+			add(outputPane, 1, 0);
+			
+			deviceItems = new HashMap<>();
+		} catch (ResourceProviderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	@Override
