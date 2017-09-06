@@ -1,12 +1,10 @@
 package inputhandler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,6 +27,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextArea;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
+import soundLevelDisplay.SoundLevelBar;
+import soundLevelDisplay.SoundValueInterface;
 
 /**
  * Administrates which input devices are available and requests their sampled
@@ -302,6 +302,7 @@ public class InputAdministrator {
 		for (Map.Entry<String, TargetDataLine> entry : targetDataLines.entrySet()) {
 
 			TargetDataLine line = entry.getValue();
+			SoundValueInterface soundValueInterface = SoundLevelBar.getSoundLevelBar();
 
 			Thread recordThread = new Thread(new Runnable() {
 
@@ -374,6 +375,8 @@ public class InputAdministrator {
 								queue.offer(intBuffers.get(i));
 								i++;
 							}
+			
+							soundValueInterface.updateSoundLevelItems(device, new LinkedList<Integer>(intBuffers.get(0)));
 						}
 						try {
 							Thread.sleep(2);

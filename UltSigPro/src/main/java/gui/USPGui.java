@@ -33,26 +33,29 @@ import javafx.stage.Stage;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
+import soundLevelDisplay.SoundLevelBar;
 
 /**
- * This class is a handler for all issues depending on building and executing the graphical user interface.
+ * This class is a handler for all issues depending on building and executing
+ * the graphical user interface.
  * 
  * @author roland
  *
  */
 public class USPGui extends Application {
-	
+
 	private static final String TITLE = "title";
-	
+
 	public static Stage stage;
-	
+
 	private static VBox channelBox;
 	private static TabPane pluginPane;
-	private static HashMap<String, Tab> tabMap = new HashMap<> ();
-	
+	private static SoundLevelBar soundLevelBar;
+	private static HashMap<String, Tab> tabMap = new HashMap<>();
+
 	private String[] args;
 	private static boolean play = false;
-	
+
 	/**
 	 * This method must be called at startup. The GUI will be set up.
 	 */
@@ -60,7 +63,7 @@ public class USPGui extends Application {
 		this.args = args;
 		launch(args);
 	}
-	
+
 	@Override
 	public void stop() throws Exception {
 		// TODO ask the user for confirmation to stop
@@ -69,55 +72,55 @@ public class USPGui extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		
+
 		stage = primaryStage;
-		
+
 		LanguageResourceHandler languageRes = LanguageResourceHandler.getInstance();
-		
+
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
-		
+
 		VBox vBox = new VBox();
-		
+
 		MenuBar buttonMenu = new MenuBar();
 		Menu startMenu = new Menu();
 		Label startLabel = new Label(languageRes.getLocalizedText("play"));
-		startLabel.setOnMousePressed(new EventHandler<MouseEvent> () {
+		startLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
-				if(!play) {
+				if (!play) {
 					play = true;
 					Iterator<Node> iter = channelBox.getChildren().iterator();
-					while(iter.hasNext()) {
+					while (iter.hasNext()) {
 						((ChannelPane) iter.next()).setPlay(true);
 					}
-					InputAdministrator.getInputAdminstrator().startListening();					
+					InputAdministrator.getInputAdminstrator().startListening();
 				}
 			}
-			
+
 		});
-		startMenu.setGraphic(startLabel);		
+		startMenu.setGraphic(startLabel);
 		Menu stopMenu = new Menu();
 		Label stopLabel = new Label(languageRes.getLocalizedText("stop"));
-		stopLabel.setOnMousePressed(new EventHandler<MouseEvent> () {
+		stopLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
 				stopPlay();
-			}		
+			}
 		});
-		
+
 		stopMenu.setGraphic(stopLabel);
-		
+
 		buttonMenu.getMenus().addAll(startMenu, stopMenu);
-		
+
 		vBox.getChildren().addAll(menuBar, buttonMenu);
-		
+
 		BorderPane pane = new BorderPane();
-		
+
 		pane.setTop(vBox);
-		
+
 		// Build Channels
 		SplitPane centerSplit = new SplitPane();
 		centerSplit.setOrientation(Orientation.VERTICAL);
@@ -126,59 +129,61 @@ public class USPGui extends Application {
 		channelScroll.setFitToWidth(true);
 		channelBox = new VBox();
 		channelScroll.setContent(channelBox);
-		centerSplit.getItems().addAll(pluginPane, channelScroll);
+		soundLevelBar = SoundLevelBar.getSoundLevelBar();
+		centerSplit.getItems().addAll(pluginPane, channelScroll, soundLevelBar);
 		pane.setCenter(centerSplit);
-		
+
 		Scene scene = new Scene(pane);
 		primaryStage.setScene(scene);
 		primaryStage.setTitle(languageRes.getLocalizedText(USPGui.class, TITLE));
 		primaryStage.setMaximized(true);
 		primaryStage.show();
-		
+
 	}
-	
+
 	public static void addChannel(ChannelConfig config) {
 		try {
 			channelBox.getChildren().add(new ChannelPane(config));
 			Tab curTab = new Tab(config.getName());
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
+			soundLevelBar.addNewChannelSoundDevices(config);
 		} catch (ResourceProviderException e) {
 			CommonLogger.getInstance().logException(e);
 		}
 	}
-	
+
 	public static void deleteChannel(ChannelPane pane) {
 		channelBox.getChildren().remove(pane);
 		Tab curTab = tabMap.remove(pane.getName());
 		pluginPane.getTabs().remove(curTab);
 	}
-	
+
 	public static boolean checkIfPresent(String name) {
 		Iterator<Node> iter = channelBox.getChildren().iterator();
-		
-		while(iter.hasNext()) {
-			if(((ChannelPane) iter.next()).getName().equals(name)) {
+
+		while (iter.hasNext()) {
+			if (((ChannelPane) iter.next()).getName().equals(name)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public static void stopExternally() {
 		stopPlay();
 	}
-	
+
 	private static void stopPlay() {
-		if(play) {
+		if (play) {
 			play = false;
 			Iterator<Node> iter = channelBox.getChildren().iterator();
 			InputAdministrator.getInputAdminstrator().stopListening();
-			OutputAdministrator.getOutputAdministrator().stopPlayback();			
-			while(iter.hasNext()) {
+			OutputAdministrator.getOutputAdministrator().stopPlayback();
+			while (iter.hasNext()) {
 				((ChannelPane) iter.next()).setPlay(false);
 			}
 		}
 	}
-	
+
 }
