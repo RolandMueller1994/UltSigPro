@@ -130,8 +130,9 @@ public class USPGui extends Application {
 		channelBox = new VBox();
 		channelScroll.setContent(channelBox);
 		soundLevelBar = SoundLevelBar.getSoundLevelBar();
-		centerSplit.getItems().addAll(pluginPane, channelScroll, soundLevelBar);
+		centerSplit.getItems().addAll(pluginPane, channelScroll);
 		pane.setCenter(centerSplit);
+		pane.setBottom(soundLevelBar);
 
 		Scene scene = new Scene(pane);
 		primaryStage.setScene(scene);

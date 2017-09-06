@@ -376,7 +376,7 @@ public class InputAdministrator {
 								i++;
 							}
 			
-							soundValueInterface.updateSoundLevelItems(device, new LinkedList<Integer>(intBuffers.get(0)));
+							soundValueInterface.updateSoundLevelItems(device, intBuffers.get(0));
 						}
 						try {
 							Thread.sleep(2);

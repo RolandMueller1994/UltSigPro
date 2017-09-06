@@ -6,6 +6,7 @@ import channel.Channel;
 import javafx.scene.control.ProgressBar;
 import channel.InputDataListener;
 import channel.OutputDataSpeaker;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;

@@ -7,16 +7,18 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import channel.ChannelConfig;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
-public class SoundLevelBar extends SplitPane implements SoundValueInterface {
-	
+public class SoundLevelBar extends GridPane implements SoundValueInterface {
+
 	private static SoundLevelBar soundLevelBar;
 
-	private static HBox inputDevicesBar;
-	private static HBox outputDevicesBar;
+	private static GridPane inputDevicesBar;
+	private static GridPane outputDevicesBar;
 
 	// HashMap<DeviceName, ChannelName>
 	private static HashMap<String, LinkedList<String>> inputDevicesList;
@@ -31,23 +33,33 @@ public class SoundLevelBar extends SplitPane implements SoundValueInterface {
 			soundLevelBar = new SoundLevelBar();
 			inputDevicesList = new HashMap<>();
 			outputDevicesList = new HashMap<>();
-			
-			inputDevicesBar = new HBox();
-			outputDevicesBar = new HBox();
-			
-			soundLevelBar.setOrientation(Orientation.HORIZONTAL);
-			soundLevelBar.getItems().addAll(inputDevicesBar, outputDevicesBar);
-			
+
+			inputDevicesBar = new GridPane();
+			outputDevicesBar = new GridPane();
+
+			soundLevelBar.setPadding(new Insets(5));
+			soundLevelBar.setHgap(5);
+			soundLevelBar.setVgap(5);
+			soundLevelBar.add(inputDevicesBar, 0, 0);
+			soundLevelBar.add(outputDevicesBar, 1, 0);
+
 			deviceItems = new HashMap<>();
 		}
-		
+
 		return soundLevelBar;
 	}
 
 	@Override
 	public void updateSoundLevelItems(String deviceName, LinkedList<Integer> soundValues) {
 
-		deviceItems.get(deviceName).setSoundLevel(new LinkedList<>(soundValues));
+		Thread updateSoundLevel = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				deviceItems.get(deviceName).setSoundLevel(new LinkedList<>(soundValues));
+			}
+		});
+		updateSoundLevel.start();
 	}
 
 	/**
@@ -65,7 +77,7 @@ public class SoundLevelBar extends SplitPane implements SoundValueInterface {
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
 				deviceItems.put(device, new SoundLevelDisplayItem(device));
-				inputDevicesBar.getChildren().add(deviceItems.get(device));
+				inputDevicesBar.addRow(0, deviceItems.get(device));
 			}
 
 			// add channel name to this device
@@ -78,7 +90,7 @@ public class SoundLevelBar extends SplitPane implements SoundValueInterface {
 			if (!outputDevicesList.containsKey(device)) {
 				outputDevicesList.put(device, new LinkedList<>());
 				deviceItems.put(device, new SoundLevelDisplayItem(device));
-				outputDevicesBar.getChildren().add(deviceItems.get(device));
+				outputDevicesBar.addRow(0, deviceItems.get(device));
 			}
 
 			// add channel name to this device
