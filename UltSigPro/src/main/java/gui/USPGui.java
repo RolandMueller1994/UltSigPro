@@ -96,6 +96,7 @@ public class USPGui extends Application {
 						((ChannelPane) iter.next()).setPlay(true);
 					}
 					InputAdministrator.getInputAdminstrator().startListening();
+					soundLevelBar.setPlay(true);
 				}
 			}
 
@@ -178,6 +179,9 @@ public class USPGui extends Application {
 	private static void stopPlay() {
 		if (play) {
 			play = false;
+			
+			soundLevelBar.setPlay(false);
+			
 			Iterator<Node> iter = channelBox.getChildren().iterator();
 			InputAdministrator.getInputAdminstrator().stopListening();
 			OutputAdministrator.getOutputAdministrator().stopPlayback();

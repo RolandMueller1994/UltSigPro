@@ -1,6 +1,8 @@
 package gui.soundLevelDisplay;
 
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import channel.Channel;
 import javafx.scene.control.ProgressBar;
@@ -16,8 +18,13 @@ public class SoundLevelDisplayItem extends GridPane {
 
 	private Label deviceNameField;
 	private ProgressBar soundLevel;
+	private LinkedBlockingQueue<LinkedList<Integer>> dataQueue;
+	
+	private LinkedList<Integer> internalBuffer = new LinkedList<> ();
+	
+	private boolean playInternally = false;
 
-	public SoundLevelDisplayItem(String deviceName) {
+	public SoundLevelDisplayItem(String deviceName, LinkedBlockingQueue<LinkedList<Integer>> dataQueue) {
 
 		deviceNameField = new Label(deviceName);
 		soundLevel = new ProgressBar(0.1);
@@ -26,32 +33,76 @@ public class SoundLevelDisplayItem extends GridPane {
 		this.add(deviceNameField, 0, 0);
 		this.add(soundLevel, 0, 1);
 		GridPane.setHalignment(soundLevel, HPos.CENTER);
+		
+		this.dataQueue = dataQueue;
 	}
 	
-	public void  setSoundLevel(LinkedList<Integer> soundValues) {
+	private void  setSoundLevel(LinkedList<Integer> soundValues) {
 		
-		double maxValue = 0;
+		internalBuffer.addAll(soundValues);
 		
-		// look for the max value
-		for (int i=0; i<soundValues.size(); i++) {
-			if (maxValue < soundValues.get(i)) {
-				maxValue = soundValues.get(i);
+		if(internalBuffer.size() > 3000) {
+			double maxValue = 0;
+			
+			// look for the max value
+			for (int i=0; i<soundValues.size(); i++) {
+				if (maxValue < soundValues.get(i)) {
+					maxValue = soundValues.get(i);
+				}
 			}
+			
+			// norm the max value
+			// minimum is -30dB
+			maxValue = 20*Math.log10(maxValue/Short.MAX_VALUE);
+			if (maxValue < -30) {
+				maxValue = -30;
+			}
+			this.soundLevel.setProgress((30+maxValue)/30);
+			if (maxValue > -3) {
+				this.soundLevel.setStyle("-fx-accent: red");				
+			} else if (maxValue > -6) {
+				this.soundLevel.setStyle("-fx-accent: orange");				
+			} else {
+				this.soundLevel.setStyle("-fx-accent: green");							
+			}
+			
+			internalBuffer.clear();
 		}
-		
-		// norm the max value
-		// minimum is -30dB
-		maxValue = 20*Math.log10(maxValue/Short.MAX_VALUE);
-		if (maxValue < -30) {
-			maxValue = -30;
-		}
-		this.soundLevel.setProgress((30+maxValue)/30);
-		if (maxValue > -3)
-			this.soundLevel.setStyle("-fx-accent: red");
-		else if (maxValue > -6)
-			this.soundLevel.setStyle("-fx-accent: orange");
-		else
-			this.soundLevel.setStyle("-fx-accent: green");
 	}
 
+	public void setPlay(boolean play) {
+		playInternally = play;
+		
+		internalBuffer.clear();
+		
+		if(play) {
+			
+			Thread evaluationThread = new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					
+					dataQueue.clear();
+					
+					while(playInternally) {
+						try {
+							LinkedList<Integer> dataPackage = dataQueue.poll(200, TimeUnit.MILLISECONDS);
+							
+							if(dataPackage != null) {
+								setSoundLevel(dataPackage);		
+							}
+							
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
+				}
+			});
+			evaluationThread.start();
+		}
+		
+	}
+	
 }

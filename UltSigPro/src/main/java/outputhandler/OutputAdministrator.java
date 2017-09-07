@@ -19,6 +19,7 @@ import javax.sound.sampled.SourceDataLine;
 import channel.Channel;
 import channel.OutputDataSpeaker;
 import gui.USPGui;
+import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -191,8 +192,14 @@ public class OutputAdministrator {
 
 					int j = 0, channelSum = 0;
 
+					LinkedList<Integer> soundLevelData = null;
+
 					try {
 						while (!stopped) {
+
+							if (soundLevelData == null) {
+								soundLevelData = new LinkedList<>();
+							}
 
 							// check every intBuffer (every integer stream from
 							// Channel), if there are values left to convert
@@ -221,10 +228,26 @@ public class OutputAdministrator {
 								channelSum += intBuffers.get(i).removeFirst();
 							}
 
+							// limit the values of the sound to its max/min
+							// values
+							if (channelSum > Short.MAX_VALUE) {
+								channelSum = Short.MAX_VALUE;
+							} else if (channelSum < Short.MIN_VALUE) {
+								channelSum = Short.MIN_VALUE;
+							}
+
 							try {
 								outputStream.get(entry.getKey()).put(channelSum);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
+							}
+
+							soundLevelData.add(channelSum);
+
+							if (soundLevelData.size() > 800) {
+								SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundLevelData,
+										false);
+								soundLevelData = null;
 							}
 						}
 					} catch (NullPointerException ex) {
@@ -276,14 +299,6 @@ public class OutputAdministrator {
 									intSample = outputStream.get(entry.getKey()).poll(100, TimeUnit.MILLISECONDS);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
-								}
-
-								// limit the values of the sound to its max/min
-								// values
-								if (intSample > Short.MAX_VALUE) {
-									intSample = Short.MAX_VALUE;
-								} else if (intSample < Short.MIN_VALUE) {
-									intSample = Short.MIN_VALUE;
 								}
 
 								// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0

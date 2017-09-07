@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import channel.ChannelConfig;
 import i18n.LanguageResourceHandler;
@@ -33,10 +34,13 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 	// HashMap<DeviceName, ChannelName>
 	private HashMap<String, LinkedList<String>> inputDevicesList;
+	private HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>> inputQueues;
 	private HashMap<String, LinkedList<String>> outputDevicesList;
-
+	private HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>> outputQueues;
+	
 	// HashMap<DeviceName, SoundDevice>
-	private HashMap<String, SoundLevelDisplayItem> deviceItems;
+	private HashMap<String, SoundLevelDisplayItem> inputDeviceItems;
+	private HashMap<String, SoundLevelDisplayItem> outputDeviceItems;
 
 	public static SoundLevelBar getSoundLevelBar() {
 
@@ -82,7 +86,11 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
 			
-			deviceItems = new HashMap<>();
+			inputDeviceItems = new HashMap<>();
+			outputDeviceItems = new HashMap<>();
+			
+			inputQueues = new HashMap<>();
+			outputQueues = new HashMap<>();
 		} catch (ResourceProviderException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -91,16 +99,14 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	}
 
 	@Override
-	public void updateSoundLevelItems(String deviceName, LinkedList<Integer> soundValues) {
+	public void updateSoundLevelItems(String deviceName, LinkedList<Integer> soundValues, boolean input) {
 
-		Thread updateSoundLevel = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				deviceItems.get(deviceName).setSoundLevel(new LinkedList<>(soundValues));
-			}
-		});
-		updateSoundLevel.start();
+		if(input) {
+			inputQueues.get(deviceName).offer(soundValues);
+		} else {
+			outputQueues.get(deviceName).offer(soundValues);
+		}
+		
 	}
 
 	/**
@@ -110,15 +116,19 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	 * 
 	 * @param config
 	 */
-	public void addNewChannelSoundDevices(ChannelConfig config) {
+	public synchronized void addNewChannelSoundDevices(ChannelConfig config) {
 
 		for (String device : config.getInputDevices()) {
 
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
-				deviceItems.put(device, new SoundLevelDisplayItem(device));
-				inputDevicesBar.addRow(0, deviceItems.get(device));
+				
+				LinkedBlockingQueue<LinkedList<Integer>> queue = new LinkedBlockingQueue<LinkedList<Integer>>();
+				
+				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				inputQueues.put(device, queue);
 			}
 
 			// add channel name to this device
@@ -130,8 +140,12 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// new output device entry
 			if (!outputDevicesList.containsKey(device)) {
 				outputDevicesList.put(device, new LinkedList<>());
-				deviceItems.put(device, new SoundLevelDisplayItem(device));
-				outputDevicesBar.addRow(0, deviceItems.get(device));
+				
+				LinkedBlockingQueue<LinkedList<Integer>> queue = new LinkedBlockingQueue<LinkedList<Integer>>();
+				
+				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputQueues.put(device, queue);
 			}
 
 			// add channel name to this device
@@ -158,6 +172,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if (inputDevicesList.get(device).isEmpty()) {
 				inputDevicesList.remove(device);
 				inputDevicesBar.getChildren().remove(device);
+				inputQueues.remove(device);
+				inputDeviceItems.remove(device);
 			}
 		}
 
@@ -170,7 +186,20 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if (outputDevicesList.get(device).isEmpty()) {
 				outputDevicesList.remove(device);
 				outputDevicesBar.getChildren().remove(device);
+				outputQueues.remove(device);
+				outputDeviceItems.remove(device);
 			}
+		}
+	}
+	
+	public void setPlay(boolean play) {
+		
+		for(SoundLevelDisplayItem item : inputDeviceItems.values()) {
+			item.setPlay(play);
+		}
+
+		for(SoundLevelDisplayItem item : outputDeviceItems.values()) {
+			item.setPlay(play);
 		}
 	}
 }
