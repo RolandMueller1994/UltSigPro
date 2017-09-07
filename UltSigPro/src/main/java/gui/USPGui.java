@@ -95,6 +95,7 @@ public class USPGui extends Application {
 					while (iter.hasNext()) {
 						((ChannelPane) iter.next()).setPlay(true);
 					}
+					OutputAdministrator.getOutputAdministrator().startDistribution();
 					InputAdministrator.getInputAdminstrator().startListening();
 					soundLevelBar.setPlay(true);
 				}
@@ -190,5 +191,4 @@ public class USPGui extends Application {
 			}
 		}
 	}
-
 }

@@ -19,6 +19,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private String name;
 	private ChannelPane pane;
 	
+	private boolean firstFetch = true;
+	
 	private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new LinkedBlockingQueue<>();
 	
 	private int remaining = 0;
@@ -50,7 +52,13 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
 		}*/
 		try {
-			LinkedList<Integer> output =  outputQueue.poll(100, TimeUnit.MILLISECONDS);
+			LinkedList<Integer> output;
+			if(firstFetch) {
+				output =  outputQueue.poll(10000, TimeUnit.MILLISECONDS);
+				firstFetch = false;
+			} else {
+				output = outputQueue.poll(100, TimeUnit.MILLISECONDS);
+			}
 			return output;
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -116,6 +124,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	public void setPlay(boolean play) {
 		if(play) {
 			outputQueue.clear();
+			firstFetch = true;
 		}
 		this.play = play;
 	}
