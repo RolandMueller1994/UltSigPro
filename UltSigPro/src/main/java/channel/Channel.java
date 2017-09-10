@@ -57,7 +57,22 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 				output =  outputQueue.poll(10000, TimeUnit.MILLISECONDS);
 				firstFetch = false;
 			} else {
-				output = outputQueue.poll(100, TimeUnit.MILLISECONDS);
+				
+				output = null;
+				
+				int pollCount = 0;
+				
+				while(output == null) {
+					output = outputQueue.poll();
+					
+					Thread.sleep(1);
+					pollCount++;
+					
+					if(pollCount>50) {
+						break;
+					}
+				}
+				
 			}
 			return output;
 		} catch (InterruptedException e) {

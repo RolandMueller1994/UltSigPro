@@ -45,7 +45,7 @@ public class OutputAdministrator {
 	
 	private LinkedList<PlaybackThread> playbackThreads;
 
-	private long latency = 6;
+	private long latency = 20;
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
@@ -193,6 +193,8 @@ public class OutputAdministrator {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
+		
+		System.out.println("Pre playback start: " + System.currentTimeMillis());
 		
 		for(PlaybackThread thread : playbackThreads) {
 			thread.start();
