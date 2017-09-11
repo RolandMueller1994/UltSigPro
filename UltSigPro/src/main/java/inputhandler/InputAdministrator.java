@@ -11,6 +11,9 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -51,6 +54,9 @@ public class InputAdministrator {
 	
 	private ScheduledThreadPoolExecutor executor;
 	private Runnable readRunnable;
+	
+	private Lock lock = new ReentrantLock();
+	private Condition startupCondition = lock.newCondition();
 	
 	private static final String ALERT_TITLE = "alertTitle";
 	private static final String ALERT_HEADER = "alertHeader";
@@ -236,6 +242,19 @@ public class InputAdministrator {
 		}
 	}
 	
+	public void waitForStartup() {
+		lock.lock();
+		
+		try {
+			startupCondition.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
 	private class InputThread extends Thread {
 		
 		public InputThread() {
@@ -260,11 +279,9 @@ public class InputAdministrator {
 			
 			System.out.println("Recording started: " + System.currentTimeMillis());
 			
-			OutputAdministrator.getOutputAdministrator().startPlayback();
-			
-			//notifyAll();
-			
 			readRunnable = new Runnable() {
+				
+				boolean first = true;
 				
 				@Override
 				public void run() {
@@ -273,6 +290,14 @@ public class InputAdministrator {
 						if(targetEntry.getValue().available() < packageSize) {
 							return;
 						}
+					}
+					
+					if(first) {
+						lock.lock();
+						startupCondition.signal();
+						lock.unlock();
+						first = false;
+						System.out.println("First data input at: " + System.currentTimeMillis());
 					}
 					
 					for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
@@ -331,62 +356,6 @@ public class InputAdministrator {
 			};
 			
 			executor.scheduleAtFixedRate(readRunnable, 0, 1, TimeUnit.MILLISECONDS);
-			
-			/*while(!stopped) {
-				
-				System.out.println("Read input data at: " + System.currentTimeMillis());
-				
-				for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
-					byte[] readData = data.get(targetEntry.getKey());
-					targetEntry.getValue().read(readData, 0, packageSize);
-					
-					//ArrayList<Integer> marshalledData = new ArrayList<> (outPackageSize);
-					int[] marshalledData = new int[packageSize];
-					
-					
-					for(int i=0; i<outPackageSize; i++) {
-						int intValue = 0;
-						
-						intValue = intValue | Byte.toUnsignedInt(readData[2*i]);
-						intValue <<= 8;
-						intValue = intValue | Byte.toUnsignedInt(readData[2*i + 1]);
-						
-						marshalledData[i] = intValue;
-					}
-					
-					System.out.println("Put input data at: " + System.currentTimeMillis());
-					marshalledBuffer.put(targetEntry.getKey(), marshalledData);
-				}
-				
-				for(Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
-					
-					boolean first = true;
-					
-					int[] destData = new int[outPackageSize];
-					
-					for(String input : destEntry.getValue()) {
-						int[] inputData = marshalledBuffer.get(input);
-						
-						if(first) {
-							for(int i=0; i<outPackageSize; i++) {
-								destData[i] = inputData[i];
-								first = false;
-							}
-						} else {
-							for(int i=0; i<outPackageSize; i++) {
-								destData[i] += inputData[i];
-							}
-						}					
-					}
-					
-					destEntry.getKey().putData(destData);
-				}
-			}
-			
-			for(TargetDataLine line : targetDataLines.values()) {
-				line.stop();
-			}*/
-			//System.out.println("Recording stopped at: " + System.currentTimeMillis());
 		}
 	}
 }

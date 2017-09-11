@@ -3,10 +3,12 @@ package outputhandler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.sound.sampled.AudioFormat;
@@ -21,6 +23,7 @@ import channel.OutputDataSpeaker;
 import gui.USPGui;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
+import inputhandler.InputAdministrator;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
@@ -43,13 +46,15 @@ public class OutputAdministrator {
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
 	
-	private LinkedList<PlaybackThread> playbackThreads;
+	private ScheduledThreadPoolExecutor executor;
 
-	private long latency = 20;
+	private long latency = 10;
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
+	private HashSet<OutputDataSpeaker> allSpeaker = new HashSet<> ();
+	
 	HashMap<String, LinkedBlockingQueue<Integer>> outputStream = new HashMap<>();
 
 	public static OutputAdministrator getOutputAdministrator() {
@@ -144,65 +149,16 @@ public class OutputAdministrator {
 	 * and write it to the determined sound output devices.
 	 */
 
-	public void startDistribution() {
+	public void startOutput() {
 
-		stopped = false;
+		executor = new ScheduledThreadPoolExecutor(1);
 		
-		LinkedList<DistributionThread> distributionThreads = new LinkedList<> ();
-		
-		for (Map.Entry<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue
-				.entrySet()) {
-
-			// outputSpeakerQueue: contains all Channels for this
-			// SoundOutputDevice
-			// listQueue: contains a collection of LinkedBlockingQueues
-			// (Datapaths) for this SoundOutputDevice
-			HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>> outputSpeakerQueue = entry.getValue();
-			Collection<LinkedBlockingQueue<LinkedList<Integer>>> listQueue = entry.getValue().values();
-
-			// Clears all old data of every single LinkedBlockingQueue of this
-			// SoundOutputDevice
-			for (String stream : outputStream.keySet()) {
-				outputStream.get(stream).clear();
-			}
-			
-			distributionThreads.add(new DistributionThread(entry.getKey(), outputSpeakerQueue, listQueue));
-		}
-		
-		for(DistributionThread thread : distributionThreads) {
-			thread.start();
-		}
-		
-		playbackThreads = new LinkedList<> ();
-		
-		for (Map.Entry<String, SourceDataLine> entry : sourceDataLines.entrySet()) {
-			SourceDataLine line = entry.getValue();
-			
-			playbackThreads.add(new PlaybackThread(entry.getKey(), line));
-		}
-	}
-
-	public void startPlayback() {
-
-		// entry: stores every SoundOutputDevice-entry in the distributionQueue
-		// Code in this for-loop is executed for every SoundOutputDevice:
-
-		// Wait for the specified latency to start the playback
-		try {
-			Thread.sleep(latency);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
-		
-		System.out.println("Pre playback start: " + System.currentTimeMillis());
-		
-		for(PlaybackThread thread : playbackThreads) {
-			thread.start();
-		}
+		executor.scheduleAtFixedRate(new OutputRunnable(), 0, 1, TimeUnit.MILLISECONDS);
 	}
 
 	public void stopPlayback() {
-		stopped = true;
+		
+		executor.shutdownNow();
 	}
 
 	/**
@@ -266,6 +222,7 @@ public class OutputAdministrator {
 				outputStream.put(device, new LinkedBlockingQueue<Integer>());
 			}
 			distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
+			allSpeaker.add(speaker);
 		}
 	}
 
@@ -289,6 +246,7 @@ public class OutputAdministrator {
 		}
 		distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
 		setSelectedDevice(device);
+		allSpeaker.add(speaker);
 	}
 
 	/**
@@ -324,6 +282,7 @@ public class OutputAdministrator {
 	 *            means the Channel/OutputDataSpeaker which has to be removed
 	 */
 	public synchronized void removeOutputDevices(OutputDataSpeaker speaker) {
+		allSpeaker.remove(speaker);
 		for (String device : distributionQueue.keySet()) {
 			// Search for all SoundOutputDevices with a queue to this speaker
 			if (distributionQueue.get(device).containsKey(speaker)) {
@@ -375,7 +334,7 @@ public class OutputAdministrator {
 
 	// This thread collects the integer values from every channel for a
 	// single sound output device and sums it up.
-	private class DistributionThread extends Thread {
+	/*private class DistributionThread extends Thread {
 
 		private String device;
 		private HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>> outputSpeakerQueue;
@@ -548,6 +507,100 @@ public class OutputAdministrator {
 			System.out.println("Stopped playback on: " + line);
 		}
 
+	}*/
+	
+	private class OutputRunnable implements Runnable {
+		
+		private boolean first = true;
+		private boolean firstOutput = true;
+		private int inputPackageSize = 100;
+		private int outputPackageSize = inputPackageSize * 2;
+		
+		private HashMap<OutputDataSpeaker, int[]> data = new HashMap<> ();
+		
+		public OutputRunnable() {
+			
+		}
+
+		@Override
+		public void run() {
+			
+			if(first) {
+				InputAdministrator.getInputAdminstrator().waitForStartup();
+				first = false;
+				try {
+					Thread.sleep(latency);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+			boolean missing = false;
+			
+			while(!missing) {
+				
+				for(OutputDataSpeaker speaker : allSpeaker) {
+					if(!data.containsKey(speaker)) {
+						int[] speakerData = speaker.fetchData();
+						
+						if(speakerData == null) {
+							missing = true;
+						} else {
+							data.put(speaker, speakerData);
+						}					
+					}
+				}
+				
+				if(missing) {
+					return;
+				}
+				
+				if(firstOutput) {
+					System.out.println("First data output at: " + System.currentTimeMillis());
+					firstOutput = false;
+				}
+				
+				for(Map.Entry<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue.entrySet()) {
+					boolean firstData = true;
+					
+					int[] outData = new int[inputPackageSize];
+					
+					for(OutputDataSpeaker speaker : entry.getValue().keySet()) {
+						
+						int[] inData = data.get(speaker);
+						
+						if(firstData) {
+							for(int i=0; i<inputPackageSize; i++) {
+								outData[i] = inData[i];
+							}
+						} else {
+							for(int i=0; i<inputPackageSize; i++) {
+								outData[i] += inData[i];
+							}
+						}
+						
+						LinkedList<Integer> soundValueData = new LinkedList<> ();
+						
+						byte[] outByteData = new byte[outputPackageSize];
+						
+						for(int i=0; i<inputPackageSize; i++) {
+							int intSample = outData[i];
+							
+							soundValueData.add(intSample);
+							
+							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
+							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
+						}
+						
+						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+					}
+				}
+				
+				data.clear();
+			}		
+		}
 	}
 
 }

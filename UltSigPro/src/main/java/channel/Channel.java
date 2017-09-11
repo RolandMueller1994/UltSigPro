@@ -21,7 +21,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	
 	private boolean firstFetch = true;
 	
-	private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new LinkedBlockingQueue<>();
+	//private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new LinkedBlockingQueue<>();
+	private LinkedList<int[]> inputQueue = new LinkedList<>();
 	
 	private int remaining = 0;
 	int distance = (int) (44100/44);
@@ -36,7 +37,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	}
 	
 	@Override
-	public LinkedList<Integer> fetchData() {
+	public int[] fetchData() {
 		// passes data from channel to OutputAdmin
 		/*LinkedList<Integer> data = new LinkedList<> ();
 		
@@ -51,34 +52,10 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		for (double i = 0; i<628*2; i+=2) {
 			data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
 		}*/
-		try {
-			LinkedList<Integer> output;
-			if(firstFetch) {
-				output =  outputQueue.poll(10000, TimeUnit.MILLISECONDS);
-				firstFetch = false;
-			} else {
-				
-				output = null;
-				
-				int pollCount = 0;
-				
-				while(output == null) {
-					output = outputQueue.poll();
-					
-					Thread.sleep(1);
-					pollCount++;
-					
-					if(pollCount>50) {
-						break;
-					}
-				}
-				
-			}
-			return output;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+		
+		// TODO outputQueue
+		synchronized(inputQueue) {
+			return inputQueue.poll();
 		}
 	}
 
@@ -102,16 +79,9 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			remaining = remaining + (data.length - pos);
 		}
 		
-		LinkedList<Integer> outputPackage = new LinkedList<>();
-		
-		for(int i=0; i<data.length; i++) {
-			outputPackage.add(data[i]);
+		synchronized(inputQueue) {
+			inputQueue.add(data);			
 		}
-		
-		//System.out.println(data.length);
-		
-		outputQueue.offer(outputPackage);
-		
 		
 		pane.insertWaveChartData(waveChartData);
 	}
@@ -136,9 +106,9 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.removeInputDataListener(this);
 	}
 	
-	public void setPlay(boolean play) {
+	public synchronized void setPlay(boolean play) {
 		if(play) {
-			outputQueue.clear();
+			inputQueue.clear();
 			firstFetch = true;
 		}
 		this.play = play;
