@@ -34,9 +34,9 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 	// HashMap<DeviceName, ChannelName>
 	private HashMap<String, LinkedList<String>> inputDevicesList;
-	private HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>> inputQueues;
+	private HashMap<String, LinkedList<LinkedList<Integer>>> inputQueues;
 	private HashMap<String, LinkedList<String>> outputDevicesList;
-	private HashMap<String, LinkedBlockingQueue<LinkedList<Integer>>> outputQueues;
+	private HashMap<String, LinkedList<LinkedList<Integer>>> outputQueues;
 	
 	// HashMap<DeviceName, SoundDevice>
 	private HashMap<String, SoundLevelDisplayItem> inputDeviceItems;
@@ -102,9 +102,15 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	public void updateSoundLevelItems(String deviceName, LinkedList<Integer> soundValues, boolean input) {
 
 		if(input) {
-			inputQueues.get(deviceName).offer(soundValues);
+			LinkedList<LinkedList<Integer>> queue = inputQueues.get(deviceName);
+			synchronized(queue) {
+				queue.add(soundValues);				
+			}
 		} else {
-			outputQueues.get(deviceName).offer(soundValues);
+			LinkedList<LinkedList<Integer>> queue = outputQueues.get(deviceName);
+			synchronized(queue) {
+				queue.add(soundValues);				
+			}
 		}
 		
 	}
@@ -124,7 +130,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
 				
-				LinkedBlockingQueue<LinkedList<Integer>> queue = new LinkedBlockingQueue<LinkedList<Integer>>();
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 				
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
 				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
@@ -141,7 +147,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if (!outputDevicesList.containsKey(device)) {
 				outputDevicesList.put(device, new LinkedList<>());
 				
-				LinkedBlockingQueue<LinkedList<Integer>> queue = new LinkedBlockingQueue<LinkedList<Integer>>();
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 				
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
 				outputDevicesBar.addRow(0, outputDeviceItems.get(device));

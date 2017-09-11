@@ -2,6 +2,7 @@ package gui.soundLevelDisplay;
 
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import channel.Channel;
@@ -18,13 +19,15 @@ public class SoundLevelDisplayItem extends GridPane {
 
 	private Label deviceNameField;
 	private ProgressBar soundLevel;
-	private LinkedBlockingQueue<LinkedList<Integer>> dataQueue;
+	private LinkedList<LinkedList<Integer>> dataQueue;
 	
 	private LinkedList<Integer> internalBuffer = new LinkedList<> ();
 	
+	private ScheduledThreadPoolExecutor executor;
+	
 	private boolean playInternally = false;
 
-	public SoundLevelDisplayItem(String deviceName, LinkedBlockingQueue<LinkedList<Integer>> dataQueue) {
+	public SoundLevelDisplayItem(String deviceName, LinkedList<LinkedList<Integer>> dataQueue) {
 
 		deviceNameField = new Label(deviceName);
 		soundLevel = new ProgressBar(0.1);
@@ -41,7 +44,7 @@ public class SoundLevelDisplayItem extends GridPane {
 		
 		internalBuffer.addAll(soundValues);
 		
-		if(internalBuffer.size() > 3000) {
+		if(internalBuffer.size() > 6000) {
 			double maxValue = 0;
 			
 			// look for the max value
@@ -77,30 +80,29 @@ public class SoundLevelDisplayItem extends GridPane {
 		
 		if(play) {
 			
-			Thread evaluationThread = new Thread(new Runnable() {
-				
+			Runnable evaluationRunnable = new Runnable() {
+
 				@Override
 				public void run() {
+					LinkedList<LinkedList<Integer>> data = new LinkedList<> ();
 					
-					dataQueue.clear();
-					
-					while(playInternally) {
-						try {
-							LinkedList<Integer> dataPackage = dataQueue.poll(200, TimeUnit.MILLISECONDS);
-							
-							if(dataPackage != null) {
-								setSoundLevel(dataPackage);		
-							}
-							
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+					synchronized(dataQueue) {
+						data.addAll(dataQueue);
+						dataQueue.clear();
 					}
 					
+					for(LinkedList<Integer> list : data) {
+						setSoundLevel(list);
+					}
 				}
-			});
-			evaluationThread.start();
+				
+			};
+			
+			executor = new ScheduledThreadPoolExecutor(1);
+			
+			executor.scheduleAtFixedRate(evaluationRunnable, 0, 25, TimeUnit.MILLISECONDS);
+		} else {
+			executor.shutdownNow();
 		}
 		
 	}

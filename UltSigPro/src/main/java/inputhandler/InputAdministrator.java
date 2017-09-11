@@ -168,6 +168,7 @@ public class InputAdministrator {
 			try {
 				line = (TargetDataLine) allSoundInputDevices.get(deviceName).getLine(info);
 				line.open(audioFormat);
+				line.start();
 			} catch (LineUnavailableException e) {
 				e.printStackTrace();
 			}
@@ -273,7 +274,7 @@ public class InputAdministrator {
 			
 			for(Map.Entry<String, TargetDataLine> entry : targetEntrySet) {
 				data.put(entry.getKey(), new byte[packageSize]);
-				entry.getValue().start();
+				//entry.getValue().start();
 				entry.getValue().flush();
 			}
 			
@@ -282,6 +283,8 @@ public class InputAdministrator {
 			readRunnable = new Runnable() {
 				
 				boolean first = true;
+				
+				long lastRead;
 				
 				@Override
 				public void run() {
@@ -298,11 +301,42 @@ public class InputAdministrator {
 						lock.unlock();
 						first = false;
 						System.out.println("First data input at: " + System.currentTimeMillis());
+						lastRead = System.currentTimeMillis();
+					} else {
+						long curRead = System.currentTimeMillis();
+						
+						long diff = curRead - lastRead;
+						lastRead = curRead;
+						
+						if(diff > 40) {
+							System.out.println("Diff > 40");
+						} else if(diff > 30) {
+							System.out.println("Diff > 30");
+						} else if(diff > 20) {
+							System.out.println("Diff > 20");
+						} else if(diff > 10) {
+							System.out.println("Diff > 10");
+						}
 					}
 					
 					for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 						byte[] readData = data.get(targetEntry.getKey());
+						
+						long preRead = System.currentTimeMillis();
+						
 						targetEntry.getValue().read(readData, 0, packageSize);
+						
+						long diffRead = System.currentTimeMillis() - preRead;
+						
+						if(diffRead > 40) {
+							System.out.println("DiffRead > 40");
+						} else if(diffRead > 30) {
+							System.out.println("DiffRead > 30");
+						} else if(diffRead > 20) {
+							System.out.println("DiffRead > 20");
+						} else if(diffRead > 10) {
+							System.out.println("DiffRead > 10");
+						}
 						
 						//ArrayList<Integer> marshalledData = new ArrayList<> (outPackageSize);
 						int[] marshalledData = new int[packageSize];
@@ -349,7 +383,22 @@ public class InputAdministrator {
 							}					
 						}
 						
+						long preRead = System.currentTimeMillis();
+						
 						destEntry.getKey().putData(destData);
+						
+
+						long diffRead = System.currentTimeMillis() - preRead;
+						
+						if(diffRead > 40) {
+							System.out.println("DiffPut > 40");
+						} else if(diffRead > 30) {
+							System.out.println("DiffPut > 30");
+						} else if(diffRead > 20) {
+							System.out.println("DiffPut > 20");
+						} else if(diffRead > 10) {
+							System.out.println("DiffPut > 10");
+						}
 					}
 					
 				}
