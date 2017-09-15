@@ -51,20 +51,20 @@ public class InputAdministrator {
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
 	private boolean stopped = false;
-	
+
 	private ScheduledThreadPoolExecutor executor;
 	private Runnable readRunnable;
-	
+
 	private Lock lock = new ReentrantLock();
 	private Condition startupCondition = lock.newCondition();
-	
+
 	private static final String ALERT_TITLE = "alertTitle";
 	private static final String ALERT_HEADER = "alertHeader";
 	private static final String ALERT_TEXT = "alertText";
 
 	// TODO check necessity of distributionMap
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
-	
+
 	public static InputAdministrator getInputAdminstrator() {
 
 		if (inputAdministrator == null) {
@@ -133,7 +133,7 @@ public class InputAdministrator {
 	 *            The name of the device.
 	 */
 	public void removeSubscribedDevice(String name) {
-		
+
 		for (InputDataListener listener : distributionMap.keySet()) {
 			if (distributionMap.get(listener).contains(name)) {
 				return;
@@ -154,7 +154,7 @@ public class InputAdministrator {
 	 *            Name of the new subscribed device.
 	 */
 	public void setSubscribedDevices(String deviceName) {
-		
+
 		if (!subscribedDevices.containsKey(deviceName)) {
 
 			subscribedDevices.put(deviceName, allSoundInputDevices.get(deviceName));
@@ -178,7 +178,7 @@ public class InputAdministrator {
 			if (line != null) {
 				targetDataLines.put(deviceName, line);
 			}
-			
+
 		}
 	}
 
@@ -189,32 +189,32 @@ public class InputAdministrator {
 	public void startListening() {
 
 		stopped = false;
-		
+
 		InputThread thread = new InputThread();
-		
+
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		thread.start();
 
 	}
 
 	public void stopListening() {
 		stopped = true;
-		
+
 		executor.shutdownNow();
-		
+
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
-		
+
 	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		distributionMap.put(listener, devices);
-		
+
 		for (String device : devices) {
 			setSubscribedDevices(device);
 		}
@@ -246,10 +246,10 @@ public class InputAdministrator {
 			removeSubscribedDevice(device);
 		}
 	}
-	
+
 	public void waitForStartup() {
 		lock.lock();
-		
+
 		try {
 			startupCondition.await();
 		} catch (InterruptedException e) {
@@ -259,66 +259,66 @@ public class InputAdministrator {
 			lock.unlock();
 		}
 	}
-	
+
 	private class InputThread extends Thread {
-		
+
 		public InputThread() {
-			
+
 		}
-		
+
 		@Override
 		public void run() {
-			
+
 			int packageSize = 200;
-			int outPackageSize = packageSize/2;
-			HashMap<String, byte[]> data = new HashMap<> ();
-			HashMap<String, int[]> marshalledBuffer = new HashMap<> ();
+			int outPackageSize = packageSize / 2;
+			HashMap<String, byte[]> data = new HashMap<>();
+			HashMap<String, int[]> marshalledBuffer = new HashMap<>();
 			Set<Entry<String, TargetDataLine>> targetEntrySet = targetDataLines.entrySet();
 			executor = new ScheduledThreadPoolExecutor(1);
-			
-			for(Map.Entry<String, TargetDataLine> entry : targetEntrySet) {
+
+			for (Map.Entry<String, TargetDataLine> entry : targetEntrySet) {
 				data.put(entry.getKey(), new byte[packageSize]);
-				//entry.getValue().start();
+				// entry.getValue().start();
 				entry.getValue().flush();
 			}
-			
+
 			System.out.println("Recording started: " + System.currentTimeMillis());
-			
+
 			readRunnable = new Runnable() {
-				
+
 				boolean first = true;
 				boolean second = true;
-				
+
 				long lastRead;
-				
+
 				int startCount = 0;
-				
+
 				@Override
 				public void run() {
-					
-					for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
-						if(targetEntry.getValue().available() < packageSize) {
+
+					for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+						if (targetEntry.getValue().available() < packageSize) {
 							return;
 						}
 					}
-					
-					if(startCount<3000) {
+
+					if (startCount < 3000) {
 						startCount++;
 						return;
 					}
-					
-					if(first) {
+
+					if (first) {
 						System.gc();
-						
-						for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+
+						for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 							targetEntry.getValue().flush();
 						}
-						
-						for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+
+						for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 							int avail = targetEntry.getValue().available();
 							targetEntry.getValue().read(new byte[avail], 0, avail);
 						}
-						
+
 						first = false;
 						return;
 					} else if (second) {
@@ -329,62 +329,63 @@ public class InputAdministrator {
 						System.out.println("First data input at: " + System.currentTimeMillis());
 						lastRead = System.currentTimeMillis();
 					}
-					
-					for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+
+					for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 						byte[] readData = data.get(targetEntry.getKey());
-						
+
 						targetEntry.getValue().read(readData, 0, packageSize);
-						
-						//ArrayList<Integer> marshalledData = new ArrayList<> (outPackageSize);
+
+						// ArrayList<Integer> marshalledData = new ArrayList<>
+						// (outPackageSize);
 						int[] marshalledData = new int[packageSize];
-						LinkedList<Integer> soundLevelData = new LinkedList<> ();
-						
-						
-						for(int i=0; i<outPackageSize; i++) {
+						LinkedList<Integer> soundLevelData = new LinkedList<>();
+
+						for (int i = 0; i < outPackageSize; i++) {
 							int intValue = 0;
-							
-							intValue = intValue | Byte.toUnsignedInt(readData[2*i]);
+
+							intValue = intValue | Byte.toUnsignedInt(readData[2 * i]);
 							intValue <<= 8;
-							intValue = intValue | Byte.toUnsignedInt(readData[2*i + 1]);
-							
+							intValue = intValue | Byte.toUnsignedInt(readData[2 * i + 1]);
+
 							intValue <<= 16;
 							intValue >>= 16;
-							
+
 							marshalledData[i] = intValue;
 							soundLevelData.add(intValue);
 						}
-						
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(targetEntry.getKey(), soundLevelData, true);
-						
+
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(targetEntry.getKey(), soundLevelData,
+								true);
+
 						marshalledBuffer.put(targetEntry.getKey(), marshalledData);
 					}
-					
-					for(Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
-						
+
+					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
+
 						boolean first = true;
-						
+
 						int[] destData = new int[outPackageSize];
-						
-						for(String input : destEntry.getValue()) {
+
+						for (String input : destEntry.getValue()) {
 							int[] inputData = marshalledBuffer.get(input);
-							
-							if(first) {
-								for(int i=0; i<outPackageSize; i++) {
+
+							if (first) {
+								for (int i = 0; i < outPackageSize; i++) {
 									destData[i] = inputData[i];
 									first = false;
 								}
 							} else {
-								for(int i=0; i<outPackageSize; i++) {
+								for (int i = 0; i < outPackageSize; i++) {
 									destData[i] += inputData[i];
 								}
-							}					
+							}
 						}
-						
+
 						destEntry.getKey().putData(destData);
 					}
 				}
 			};
-			
+
 			executor.scheduleAtFixedRate(readRunnable, 0, 1, TimeUnit.MILLISECONDS);
 		}
 	}

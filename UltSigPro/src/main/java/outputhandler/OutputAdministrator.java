@@ -45,7 +45,7 @@ public class OutputAdministrator {
 	private static HashMap<String, Mixer> selectedDevices;
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
-	
+
 	private ScheduledThreadPoolExecutor executor;
 
 	private long latency = 10;
@@ -53,7 +53,7 @@ public class OutputAdministrator {
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
 	private HashMap<String, HashSet<OutputDataSpeaker>> distributionQueue = new HashMap<>();
-	private HashSet<OutputDataSpeaker> allSpeaker = new HashSet<> ();
+	private HashSet<OutputDataSpeaker> allSpeaker = new HashSet<>();
 
 	public static OutputAdministrator getOutputAdministrator() {
 
@@ -150,12 +150,12 @@ public class OutputAdministrator {
 	public void startOutput() {
 
 		executor = new ScheduledThreadPoolExecutor(1);
-		
+
 		executor.scheduleAtFixedRate(new OutputRunnable(), 0, 1, TimeUnit.MILLISECONDS);
 	}
 
 	public void stopPlayback() {
-		
+
 		executor.shutdownNow();
 	}
 
@@ -215,8 +215,7 @@ public class OutputAdministrator {
 		for (String device : devices) {
 			setSelectedDevice(device);
 			if (!distributionQueue.containsKey(device)) {
-				distributionQueue.put(device,
-						new HashSet<OutputDataSpeaker> ());
+				distributionQueue.put(device, new HashSet<OutputDataSpeaker>());
 			}
 			distributionQueue.get(device).add(speaker);
 			allSpeaker.add(speaker);
@@ -327,22 +326,22 @@ public class OutputAdministrator {
 	}
 
 	private class OutputRunnable implements Runnable {
-		
+
 		private boolean first = true;
 		private boolean firstOutput = true;
 		private int inputPackageSize = 100;
 		private int outputPackageSize = inputPackageSize * 2;
-		
-		private HashMap<OutputDataSpeaker, int[]> data = new HashMap<> ();
-		
+
+		private HashMap<OutputDataSpeaker, int[]> data = new HashMap<>();
+
 		public OutputRunnable() {
-			
+
 		}
 
 		@Override
 		public void run() {
-			
-			if(first) {
+
+			if (first) {
 				InputAdministrator.getInputAdminstrator().waitForStartup();
 				first = false;
 				try {
@@ -352,71 +351,71 @@ public class OutputAdministrator {
 					e.printStackTrace();
 				}
 			}
-			
+
 			boolean missing = false;
-			
-			while(!missing) {
-				
-				for(OutputDataSpeaker speaker : allSpeaker) {
-					if(!data.containsKey(speaker)) {
+
+			while (!missing) {
+
+				for (OutputDataSpeaker speaker : allSpeaker) {
+					if (!data.containsKey(speaker)) {
 						int[] speakerData = speaker.fetchData();
-						
-						if(speakerData == null) {
+
+						if (speakerData == null) {
 							missing = true;
 						} else {
 							data.put(speaker, speakerData);
-						}					
+						}
 					}
 				}
-				
-				if(missing) {
+
+				if (missing) {
 					return;
 				}
-				
-				if(firstOutput) {
+
+				if (firstOutput) {
 					System.out.println("First data output at: " + System.currentTimeMillis());
 					firstOutput = false;
 				}
-				
-				for(Map.Entry<String, HashSet<OutputDataSpeaker>> entry : distributionQueue.entrySet()) {
+
+				for (Map.Entry<String, HashSet<OutputDataSpeaker>> entry : distributionQueue.entrySet()) {
 					boolean firstData = true;
-					
+
 					int[] outData = new int[inputPackageSize];
-					
-					for(OutputDataSpeaker speaker : entry.getValue()) {
-						
+
+					for (OutputDataSpeaker speaker : entry.getValue()) {
+
 						int[] inData = data.get(speaker);
-						
-						if(firstData) {
-							for(int i=0; i<inputPackageSize; i++) {
+
+						if (firstData) {
+							for (int i = 0; i < inputPackageSize; i++) {
 								outData[i] = inData[i];
 							}
 						} else {
-							for(int i=0; i<inputPackageSize; i++) {
+							for (int i = 0; i < inputPackageSize; i++) {
 								outData[i] += inData[i];
 							}
 						}
-						
-						LinkedList<Integer> soundValueData = new LinkedList<> ();
-						
+
+						LinkedList<Integer> soundValueData = new LinkedList<>();
+
 						byte[] outByteData = new byte[outputPackageSize];
-						
-						for(int i=0; i<inputPackageSize; i++) {
+
+						for (int i = 0; i < inputPackageSize; i++) {
 							int intSample = outData[i];
-							
+
 							soundValueData.add(intSample);
-							
+
 							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
 							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
 						}
-						
+
 						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
 						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
 					}
 				}
-				
+
 				data.clear();
-			}		
+			}
 		}
 	}
 

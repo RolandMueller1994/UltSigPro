@@ -19,12 +19,12 @@ import javafx.scene.layout.Priority;
 import resourceframework.ResourceProviderException;
 
 public class SoundLevelBar extends GridPane implements SoundValueInterface {
-	
+
 	private static final String INPUT_TITLE = "inputTitle";
 	private static final String OUTPUT_TITLE = "outputTitle";
-	
+
 	private static final int HEIGHT = 85;
-	
+
 	private LanguageResourceHandler lanHandler;
 
 	private static SoundLevelBar soundLevelBar;
@@ -37,7 +37,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	private HashMap<String, LinkedList<LinkedList<Integer>>> inputQueues;
 	private HashMap<String, LinkedList<String>> outputDevicesList;
 	private HashMap<String, LinkedList<LinkedList<Integer>>> outputQueues;
-	
+
 	// HashMap<DeviceName, SoundDevice>
 	private HashMap<String, SoundLevelDisplayItem> inputDeviceItems;
 	private HashMap<String, SoundLevelDisplayItem> outputDeviceItems;
@@ -50,23 +50,23 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 		return soundLevelBar;
 	}
-	
+
 	private SoundLevelBar() {
 
 		try {
 			lanHandler = LanguageResourceHandler.getInstance();
-			
+
 			inputDevicesList = new HashMap<>();
 			outputDevicesList = new HashMap<>();
-			
+
 			inputDevicesBar = new GridPane();
 			inputDevicesBar.setPadding(new Insets(5));
 			inputDevicesBar.setHgap(15);
-			
+
 			outputDevicesBar = new GridPane();
 			outputDevicesBar.setPadding(new Insets(5));
 			outputDevicesBar.setHgap(15);
-			
+
 			TitledPane inputPane = new TitledPane();
 			inputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, INPUT_TITLE));
 			inputPane.setCollapsible(false);
@@ -74,7 +74,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			inputPane.setMaxWidth(Double.MAX_VALUE);
 			inputPane.setMinHeight(HEIGHT);
 			GridPane.setHgrow(inputPane, Priority.ALWAYS);
-			
+
 			TitledPane outputPane = new TitledPane();
 			outputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, OUTPUT_TITLE));
 			outputPane.setCollapsible(false);
@@ -82,37 +82,37 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			outputPane.setMaxWidth(Double.MAX_VALUE);
 			GridPane.setHgrow(outputPane, Priority.ALWAYS);
 			outputPane.setMinHeight(HEIGHT);
-			
+
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
-			
+
 			inputDeviceItems = new HashMap<>();
 			outputDeviceItems = new HashMap<>();
-			
+
 			inputQueues = new HashMap<>();
 			outputQueues = new HashMap<>();
 		} catch (ResourceProviderException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override
 	public void updateSoundLevelItems(String deviceName, LinkedList<Integer> soundValues, boolean input) {
 
-		if(input) {
+		if (input) {
 			LinkedList<LinkedList<Integer>> queue = inputQueues.get(deviceName);
-			synchronized(queue) {
-				queue.add(soundValues);				
+			synchronized (queue) {
+				queue.add(soundValues);
 			}
 		} else {
 			LinkedList<LinkedList<Integer>> queue = outputQueues.get(deviceName);
-			synchronized(queue) {
-				queue.add(soundValues);				
+			synchronized (queue) {
+				queue.add(soundValues);
 			}
 		}
-		
+
 	}
 
 	/**
@@ -129,9 +129,9 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
-				
+
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-				
+
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
 				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
@@ -146,9 +146,9 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// new output device entry
 			if (!outputDevicesList.containsKey(device)) {
 				outputDevicesList.put(device, new LinkedList<>());
-				
+
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-				
+
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
 				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
 				outputQueues.put(device, queue);
@@ -197,14 +197,14 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			}
 		}
 	}
-	
+
 	public void setPlay(boolean play) {
-		
-		for(SoundLevelDisplayItem item : inputDeviceItems.values()) {
+
+		for (SoundLevelDisplayItem item : inputDeviceItems.values()) {
 			item.setPlay(play);
 		}
 
-		for(SoundLevelDisplayItem item : outputDeviceItems.values()) {
+		for (SoundLevelDisplayItem item : outputDeviceItems.values()) {
 			item.setPlay(play);
 		}
 	}
