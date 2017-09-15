@@ -62,7 +62,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	@Override
 	public void putData(int[] data) {
 		
-		LinkedList<Double> waveChartData = new LinkedList<> ();
+		/*LinkedList<Double> waveChartData = new LinkedList<> ();
 		
 		int pos = 0;
 		
@@ -77,13 +77,13 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			remaining = data.length - pos;			
 		} else {
 			remaining = remaining + (data.length - pos);
-		}
+		}*/
 		
 		synchronized(inputQueue) {
 			inputQueue.add(data);			
 		}
 		
-		pane.insertWaveChartData(waveChartData);
+		//pane.insertWaveChartData(waveChartData);
 	}
 	
 	public void addInputDevice(String device) {

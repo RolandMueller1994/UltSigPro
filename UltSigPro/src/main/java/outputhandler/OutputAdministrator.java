@@ -52,10 +52,8 @@ public class OutputAdministrator {
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
-	private HashMap<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> distributionQueue = new HashMap<>();
+	private HashMap<String, HashSet<OutputDataSpeaker>> distributionQueue = new HashMap<>();
 	private HashSet<OutputDataSpeaker> allSpeaker = new HashSet<> ();
-	
-	HashMap<String, LinkedBlockingQueue<Integer>> outputStream = new HashMap<>();
 
 	public static OutputAdministrator getOutputAdministrator() {
 
@@ -218,10 +216,9 @@ public class OutputAdministrator {
 			setSelectedDevice(device);
 			if (!distributionQueue.containsKey(device)) {
 				distributionQueue.put(device,
-						new HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>());
-				outputStream.put(device, new LinkedBlockingQueue<Integer>());
+						new HashSet<OutputDataSpeaker> ());
 			}
-			distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
+			distributionQueue.get(device).add(speaker);
 			allSpeaker.add(speaker);
 		}
 	}
@@ -241,10 +238,9 @@ public class OutputAdministrator {
 		// Checks, if there is already an existing entry for this
 		// SoundOutputDevice
 		if (!distributionQueue.containsKey(device)) {
-			distributionQueue.put(device, new HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>());
-			outputStream.put(device, new LinkedBlockingQueue<Integer>());
+			distributionQueue.put(device, new HashSet<OutputDataSpeaker>());
 		}
-		distributionQueue.get(device).put(speaker, new LinkedBlockingQueue<LinkedList<Integer>>());
+		distributionQueue.get(device).add(speaker);
 		setSelectedDevice(device);
 		allSpeaker.add(speaker);
 	}
@@ -269,7 +265,6 @@ public class OutputAdministrator {
 		// no more longer any data from any speaker
 		if (distributionQueue.get(device).isEmpty()) {
 			distributionQueue.remove(device);
-			outputStream.remove(device);
 		}
 	}
 
@@ -285,7 +280,7 @@ public class OutputAdministrator {
 		allSpeaker.remove(speaker);
 		for (String device : distributionQueue.keySet()) {
 			// Search for all SoundOutputDevices with a queue to this speaker
-			if (distributionQueue.get(device).containsKey(speaker)) {
+			if (distributionQueue.get(device).contains(speaker)) {
 				removeSelectedDevice(device);
 				distributionQueue.get(device).remove(speaker);
 
@@ -294,7 +289,6 @@ public class OutputAdministrator {
 				// no more longer any data from any speaker
 				if (distributionQueue.get(device).isEmpty()) {
 					distributionQueue.remove(device);
-					outputStream.remove(device);
 				}
 			}
 		}
@@ -332,183 +326,6 @@ public class OutputAdministrator {
 
 	}
 
-	// This thread collects the integer values from every channel for a
-	// single sound output device and sums it up.
-	/*private class DistributionThread extends Thread {
-
-		private String device;
-		private HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>> outputSpeakerQueue;
-		private Collection<LinkedBlockingQueue<LinkedList<Integer>>> listQueue;
-
-		public DistributionThread(String device,
-				HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>> outputSpeakerQueue,
-				Collection<LinkedBlockingQueue<LinkedList<Integer>>> listQueue) {
-			this.device = device;
-			this.outputSpeakerQueue = outputSpeakerQueue;
-			this.listQueue = listQueue;
-		}
-
-		@Override
-		public void run() {
-			// listQueue.Size() represents the number of Channels
-			// connected with this SoundOutputDevice. Every element of
-			// this ArrayList represents one Channel and LinkedList
-			// contains the sampled values from the input
-			ArrayList<LinkedList<Integer>> intBuffers = new ArrayList<>(listQueue.size());
-
-			int a = 0;
-
-			for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
-				intBuffers.add(a, speaker.fetchData());
-				a++;
-			}
-
-			int j = 0, channelSum = 0;
-
-			LinkedList<Integer> soundLevelData = null;
-
-			try {
-				while (!stopped) {
-
-					if (soundLevelData == null) {
-						soundLevelData = new LinkedList<>();
-					}
-
-					// check every intBuffer (every integer stream from
-					// Channel), if there are values left to convert
-					// into
-					// bytes. fetch data if necessary
-					for (int i = 0; i < intBuffers.size(); i++) {
-						if (intBuffers.get(i).isEmpty()) {
-							j = 0;
-
-							intBuffers.remove(i);
-
-							// search for the needed speaker
-							for (OutputDataSpeaker speaker : outputSpeakerQueue.keySet()) {
-								if (i == j) {
-									intBuffers.add(i, speaker.fetchData());
-									j++;
-								}
-							}
-						}
-					}
-
-					channelSum = 0;
-					for (int i = 0; i < intBuffers.size(); i++) {
-
-						// sum up all first values from each channel
-						channelSum += intBuffers.get(i).removeFirst();
-					}
-
-					// limit the values of the sound to its max/min
-					// values
-					if (channelSum > Short.MAX_VALUE) {
-						channelSum = Short.MAX_VALUE;
-					} else if (channelSum < Short.MIN_VALUE) {
-						channelSum = Short.MIN_VALUE;
-					}
-
-					try {
-						outputStream.get(device).put(channelSum);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-					soundLevelData.add(channelSum);
-
-					if (soundLevelData.size() > 800) {
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(device, soundLevelData, false);
-						soundLevelData = null;
-					}
-				}
-			} catch (NullPointerException ex) {
-				if (!stopped) {
-					USPGui.stopExternally();
-					Platform.runLater(new Runnable() {
-
-						@Override
-						public void run() {
-							OutputAlert alert = new OutputAlert();
-							alert.show();
-						}
-
-					});
-				}
-			}
-		}
-
-	}
-
-	private class PlaybackThread extends Thread {
-
-		private SourceDataLine line;
-		private String device;
-		
-		public PlaybackThread(String device, SourceDataLine line) {
-			this.device = device;
-			this.line = line;
-		}
-
-		@Override
-		public void run() {
-
-			System.out.println("Started playback on: " + line);
-			
-			try {
-
-				boolean firstWrite = true;
-
-				while (!stopped) {
-
-					int i = 0, intSample = 0;
-					byte[] byteBuffer = new byte[byteBufferSize];
-
-					// fetches 50 integer values from outputStream and
-					// writes it to intBuffer
-					while (i < byteBufferSize / 2) {
-
-						try {
-							intSample = outputStream.get(device).poll(100, TimeUnit.MILLISECONDS);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-
-						// Int: Byte 3 : Byte 2 : Byte 1 : Byte 0
-						// byteBuffer ------ : ------ : 2*i : 2*i+1
-						byteBuffer[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
-						byteBuffer[2 * i + 1] = (byte) (intSample & 0xFF);
-
-						i++;
-					}
-					line.write(byteBuffer, 0, byteBuffer.length);
-					if (firstWrite) {
-						System.out.println("First write at: " + System.currentTimeMillis());
-						firstWrite = false;
-					}
-				}
-			} catch (NullPointerException e) {
-				// Nullpointer is ok, when stopped button has
-				// been pressed
-				if (!stopped) {
-					USPGui.stopExternally();
-
-					Platform.runLater(new Runnable() {
-
-						@Override
-						public void run() {
-							OutputAlert alert = new OutputAlert();
-							alert.show();
-						}
-
-					});
-				}
-			}
-			System.out.println("Stopped playback on: " + line);
-		}
-
-	}*/
-	
 	private class OutputRunnable implements Runnable {
 		
 		private boolean first = true;
@@ -561,12 +378,12 @@ public class OutputAdministrator {
 					firstOutput = false;
 				}
 				
-				for(Map.Entry<String, HashMap<OutputDataSpeaker, LinkedBlockingQueue<LinkedList<Integer>>>> entry : distributionQueue.entrySet()) {
+				for(Map.Entry<String, HashSet<OutputDataSpeaker>> entry : distributionQueue.entrySet()) {
 					boolean firstData = true;
 					
 					int[] outData = new int[inputPackageSize];
 					
-					for(OutputDataSpeaker speaker : entry.getValue().keySet()) {
+					for(OutputDataSpeaker speaker : entry.getValue()) {
 						
 						int[] inData = data.get(speaker);
 						

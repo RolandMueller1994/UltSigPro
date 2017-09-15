@@ -90,6 +90,7 @@ public class USPGui extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				if (!play) {
+					System.gc();
 					play = true;
 					Iterator<Node> iter = channelBox.getChildren().iterator();
 					while (iter.hasNext()) {

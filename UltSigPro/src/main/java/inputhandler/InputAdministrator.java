@@ -133,6 +133,7 @@ public class InputAdministrator {
 	 *            The name of the device.
 	 */
 	public void removeSubscribedDevice(String name) {
+		
 		for (InputDataListener listener : distributionMap.keySet()) {
 			if (distributionMap.get(listener).contains(name)) {
 				return;
@@ -153,7 +154,7 @@ public class InputAdministrator {
 	 *            Name of the new subscribed device.
 	 */
 	public void setSubscribedDevices(String deviceName) {
-
+		
 		if (!subscribedDevices.containsKey(deviceName)) {
 
 			subscribedDevices.put(deviceName, allSoundInputDevices.get(deviceName));
@@ -168,6 +169,7 @@ public class InputAdministrator {
 			try {
 				line = (TargetDataLine) allSoundInputDevices.get(deviceName).getLine(info);
 				line.open(audioFormat);
+				System.out.println("Buffer size: " + line.getBufferSize());
 				line.start();
 			} catch (LineUnavailableException e) {
 				e.printStackTrace();
@@ -176,6 +178,7 @@ public class InputAdministrator {
 			if (line != null) {
 				targetDataLines.put(deviceName, line);
 			}
+			
 		}
 	}
 
@@ -206,6 +209,7 @@ public class InputAdministrator {
 		executor.shutdownNow();
 		
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
+		
 	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
@@ -283,8 +287,11 @@ public class InputAdministrator {
 			readRunnable = new Runnable() {
 				
 				boolean first = true;
+				boolean second = true;
 				
 				long lastRead;
+				
+				int startCount = 0;
 				
 				@Override
 				public void run() {
@@ -295,48 +302,38 @@ public class InputAdministrator {
 						}
 					}
 					
+					if(startCount<3000) {
+						startCount++;
+						return;
+					}
+					
 					if(first) {
+						System.gc();
+						
+						for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+							targetEntry.getValue().flush();
+						}
+						
+						for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
+							int avail = targetEntry.getValue().available();
+							targetEntry.getValue().read(new byte[avail], 0, avail);
+						}
+						
+						first = false;
+						return;
+					} else if (second) {
 						lock.lock();
 						startupCondition.signal();
 						lock.unlock();
-						first = false;
+						second = false;
 						System.out.println("First data input at: " + System.currentTimeMillis());
 						lastRead = System.currentTimeMillis();
-					} else {
-						long curRead = System.currentTimeMillis();
-						
-						long diff = curRead - lastRead;
-						lastRead = curRead;
-						
-						if(diff > 40) {
-							System.out.println("Diff > 40");
-						} else if(diff > 30) {
-							System.out.println("Diff > 30");
-						} else if(diff > 20) {
-							System.out.println("Diff > 20");
-						} else if(diff > 10) {
-							System.out.println("Diff > 10");
-						}
 					}
 					
 					for(Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 						byte[] readData = data.get(targetEntry.getKey());
 						
-						long preRead = System.currentTimeMillis();
-						
 						targetEntry.getValue().read(readData, 0, packageSize);
-						
-						long diffRead = System.currentTimeMillis() - preRead;
-						
-						if(diffRead > 40) {
-							System.out.println("DiffRead > 40");
-						} else if(diffRead > 30) {
-							System.out.println("DiffRead > 30");
-						} else if(diffRead > 20) {
-							System.out.println("DiffRead > 20");
-						} else if(diffRead > 10) {
-							System.out.println("DiffRead > 10");
-						}
 						
 						//ArrayList<Integer> marshalledData = new ArrayList<> (outPackageSize);
 						int[] marshalledData = new int[packageSize];
@@ -383,24 +380,8 @@ public class InputAdministrator {
 							}					
 						}
 						
-						long preRead = System.currentTimeMillis();
-						
 						destEntry.getKey().putData(destData);
-						
-
-						long diffRead = System.currentTimeMillis() - preRead;
-						
-						if(diffRead > 40) {
-							System.out.println("DiffPut > 40");
-						} else if(diffRead > 30) {
-							System.out.println("DiffPut > 30");
-						} else if(diffRead > 20) {
-							System.out.println("DiffPut > 20");
-						} else if(diffRead > 10) {
-							System.out.println("DiffPut > 10");
-						}
 					}
-					
 				}
 			};
 			
