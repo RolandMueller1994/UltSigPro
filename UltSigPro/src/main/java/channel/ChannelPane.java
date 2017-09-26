@@ -55,7 +55,6 @@ public class ChannelPane extends TitledPane {
 	private boolean play;
 	private InputPane inputPane;
 	private OutputPane outputPane;
-	private WaveFormPane waveFormPane;
 	private String name;
 
 	private ContextMenu contextMenu;
@@ -77,7 +76,6 @@ public class ChannelPane extends TitledPane {
 		name = config.getName();
 		inputPane = new InputPane(config.getInputDevices());
 		outputPane = new OutputPane(config.getOutputDevices());
-		waveFormPane = new WaveFormPane();
 		
 		centralPane.add(inputPane, 0, 0);
 		centralPane.add(outputPane, 2, 0);
@@ -108,7 +106,7 @@ public class ChannelPane extends TitledPane {
 		setPlay(false);
 	}
 	
-	public void insertWaveChartData(LinkedList<Double> data) {
+	public void insertWaveChartData(int[] data) {
 		waveChart.insertData(data);
 	}
 

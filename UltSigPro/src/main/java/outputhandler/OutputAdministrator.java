@@ -27,6 +27,7 @@ import inputhandler.InputAdministrator;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
+import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -48,7 +49,7 @@ public class OutputAdministrator {
 
 	private ScheduledThreadPoolExecutor executor;
 
-	private long latency = 10;
+	private long latency;
 	private int byteBufferSize = 100;
 
 	// SoundOutputDevice -> Signal processing Channel -> Queue with sound values
@@ -67,6 +68,17 @@ public class OutputAdministrator {
 	}
 
 	private OutputAdministrator() {
+		GlobalResourceProvider resProv = GlobalResourceProvider.getInstance();
+		
+		if(resProv.checkRegistered("latency")) {
+			try {
+				latency = (long) resProv.getResource("latency");
+			} catch (ResourceProviderException e) {
+				// Won't happen due to previous check
+			}
+		} else {
+			latency = 10;
+		}
 	}
 
 	/**

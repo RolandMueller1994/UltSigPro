@@ -74,10 +74,12 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		 * distance; } remaining = data.length - pos; } else { remaining =
 		 * remaining + (data.length - pos); }
 		 */
+		pane.insertWaveChartData(data);
 
 		synchronized (inputQueue) {
 			inputQueue.add(data);
 		}
+		
 
 		// pane.insertWaveChartData(waveChartData);
 	}
