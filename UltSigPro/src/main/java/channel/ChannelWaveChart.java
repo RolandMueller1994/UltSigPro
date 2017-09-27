@@ -40,12 +40,9 @@ public class ChannelWaveChart extends Pane {
 	private int samplesPerBar;
 	private int barsPerSlice;
 	private int barCount;
-	private int curMax;
-	private long avg;
-	private int avgMax;
-	private int avgMaxValue;
-	private int avgCount;
-	private int avgCount2;
+	
+	private double rms;
+	private final double sqrt2 = Math.sqrt(2);
 	
 	private Pane curPane;
 	
@@ -63,14 +60,9 @@ public class ChannelWaveChart extends Pane {
 		if(play) {
 			curPane = null;
 			sliceCount = 0;
-			curMax = 0;
 			sliceCount = 0;
 			barCount = 0;
-			avg = 0;
-			avgCount = 0;
-			avgCount2 = 0;
-			avgMaxValue = 0;
-			avgMax = 0;
+			rms = 0;
 			ObservableList<Node> nodes = getChildren();
 			Iterator<Node> iter = nodes.iterator();
 			
@@ -107,49 +99,39 @@ public class ChannelWaveChart extends Pane {
 					}
 				}
 				
-				if(data[i] > curMax) {
-					curMax = data[i];
-					//avg += data[i];
-				} else if(-data[i] > curMax) {
-					curMax = - data[i];
-					//avg -= data[i];
-				}
-				
-				if(data[i] > avgMaxValue) {
-					avgMaxValue = data[i];
-				} else if (-data[i] > avgMaxValue) {
-					avgMaxValue = -data[i];
-				}
-				
-				if(avgCount >= avgMax) {
-					avg += avgMaxValue;
-					avgMaxValue = 0;
-					avgCount2++;
-					avgCount = 0;
-				}
-				
-				avgCount++;
+				double normValue = ((double)data[i]) / Short.MAX_VALUE;
+				rms += normValue * normValue;
 
 				count++;
 				
 				if(count>=samplesPerBar) {
 					count = 0;
 					
-					avg /= avgCount2;
-					avgCount2 = 0;
+					rms /= (double) samplesPerBar;
+					rms = Math.sqrt(rms) / sqrt2;;
 					
-					int length = (int) ((0.95 * ((double) avg) / Short.MAX_VALUE) * verticalSize);
+					int length;				
+					double log = Math.log10(rms);
+					
+					if(log > 0) {
+						log = 0;
+					} else if(log < -2) {
+						log = -2;
+					}
+					
+					log = (log + 2)/2;
+					length = (int) (1.1 * log * verticalSize);
+					
+					length = length > verticalSize ? verticalSize : length;
+					
 					int offset = (verticalSize - length) / 2;
-					
-					System.out.println("Length: " + length + " Offset: " + offset + " CurMax: " + curMax + " Avg: " + avg);
 					
 					//Rectangle rect = new Rectangle(barCount*pixelsPerBar, offset, pixelsPerBar, length);;
 					Line line = new Line(barCount*pixelsPerBar, offset, barCount*pixelsPerBar, offset + length);		
 					
 					Platform.runLater(new DrawRunnalbe(curPane, line));
 					
-					curMax = 0;
-					avg = 0;
+					rms = 0;
 					barCount++;
 					if(barCount >= barsPerSlice) {
 						curPane = null;
@@ -183,7 +165,6 @@ public class ChannelWaveChart extends Pane {
 		
 		samplesPerBar = (seconds*samplingFreq) / (verticalSize * pixelsPerBar);
 		barsPerSlice = horizontalSize / (slices * pixelsPerBar);
-		avgMax = 100;
 		
 		System.out.println("VerticalSize: " + verticalSize);
 		System.out.println("HorizontalSize: " + horizontalSize);
