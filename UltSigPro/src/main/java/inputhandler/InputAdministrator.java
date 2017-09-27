@@ -1,5 +1,7 @@
 package inputhandler;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,10 +19,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import channel.Channel;
 import channel.InputDataListener;
@@ -48,6 +52,7 @@ public class InputAdministrator {
 
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
+	private HashMap<String, Clip> allInputFiles;
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
 	private boolean stopped = false;
@@ -77,6 +82,7 @@ public class InputAdministrator {
 		allSoundInputDevices = new HashMap<>();
 		subscribedDevices = new HashMap<>();
 		targetDataLines = new HashMap<>();
+		allInputFiles = new HashMap<>();
 	}
 
 	/**
@@ -211,6 +217,31 @@ public class InputAdministrator {
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
 
 	}
+	
+	public synchronized void openWaveFiles(HashMap<String, File> waveFiles, Collection<String> outputDevices) {
+		HashMap<String, Mixer> selectedOutputDevices = OutputAdministrator.getOutputAdministrator().getSelectedDevices();
+		Collection<String> fileNames = waveFiles.keySet();
+		for (String fileName : fileNames) {
+			for (String outputDevice : outputDevices) {
+				try {
+					Clip clip = (Clip) selectedOutputDevices.get(outputDevice).getLine(new DataLine.Info(Clip.class, null));
+					if (clip != null) {
+						clip.open(AudioSystem.getAudioInputStream(waveFiles.get(fileName)));
+						allInputFiles.put(fileName, clip);
+					}
+				} catch (LineUnavailableException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedAudioFileException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		distributionMap.put(listener, devices);
@@ -317,6 +348,10 @@ public class InputAdministrator {
 						for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
 							int avail = targetEntry.getValue().available();
 							targetEntry.getValue().read(new byte[avail], 0, avail);
+						}
+						
+						for (String inputFile : allInputFiles.keySet()) {
+								allInputFiles.get(inputFile).start();
 						}
 
 						first = false;

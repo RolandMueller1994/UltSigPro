@@ -74,7 +74,7 @@ public class ChannelPane extends TitledPane {
 		super.setContent(centralPane);
 		this.config = config;
 		name = config.getName();
-		inputPane = new InputPane(config.getInputDevices());
+		inputPane = new InputPane(config.getInputDevices(), config.getWaveFiles().keySet());
 		outputPane = new OutputPane(config.getOutputDevices());
 		
 		centralPane.add(inputPane, 0, 0);
@@ -146,7 +146,7 @@ public class ChannelPane extends TitledPane {
 		private Button addButton;
 		private Button removeButton;
 
-		public InputPane(Collection<String> inputDevices) {
+		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles) {
 			addButton = new Button("+");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -171,6 +171,10 @@ public class ChannelPane extends TitledPane {
 			table.setPrefSize(200, 100);
 
 			for (String cur : inputDevices) {
+				table.getItems().add(cur);
+			}
+			
+			for (String cur : waveFiles) {
 				table.getItems().add(cur);
 			}
 
