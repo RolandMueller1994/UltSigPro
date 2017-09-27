@@ -88,7 +88,7 @@ public class ChannelWaveChart extends Pane {
 				if(curPane == null) {
 					curPane = new Pane();
 					curPane.setPrefHeight(verticalSize);
-					curPane.setPrefWidth(horizontalSize/slices);
+					curPane.setPrefWidth(barsPerSlice * pixelsPerBar);
 					barCount = 0;
 					
 					if(sliceCount>=slices) {
