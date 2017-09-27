@@ -127,7 +127,7 @@ public class ChannelWaveChart extends Pane {
 					int offset = (verticalSize - length) / 2;
 					
 					//Rectangle rect = new Rectangle(barCount*pixelsPerBar, offset, pixelsPerBar, length);;
-					Line line = new Line(barCount*pixelsPerBar, offset, barCount*pixelsPerBar, offset + length);		
+					Line line = new Line(barCount*pixelsPerBar + 1, offset, barCount*pixelsPerBar + 1, offset + length);		
 					
 					Platform.runLater(new DrawRunnalbe(curPane, line));
 					
