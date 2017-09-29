@@ -2,13 +2,14 @@ package plugins.sigproplugins;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.annotation.Nonnull;
 
+import channel.OutputDataWrapper;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
-import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 
 /**
  * Basic interface for signal processing plugins. Every plugin has to implement
@@ -27,6 +28,13 @@ public interface SigproPlugin extends PluginInterface {
 	 */
 	@Nonnull
 	String getName();
+	
+	/**
+	 * Sets the name of the plugin.
+	 * 
+	 * @param name The name
+	 */
+	void setName(@Nonnull String name);
 
 	/**
 	 * Returns the version string of the plugin.
@@ -55,27 +63,7 @@ public interface SigproPlugin extends PluginInterface {
 	 * @param data
 	 *            The new data package.
 	 */
-	public void putData(String input, int[] data);
-
-	/**
-	 * Sets the configuration of the outputs. Each output will get a
-	 * {@link LinkedBlockingQueue} which will be used as
-	 * 
-	 * @param outputConfig
-	 *            a {@link HashMap} of {@link String}s and
-	 *            {@link DataDestinationInterface}. Must not be null.
-	 */
-	void setOutputConfig(@Nonnull HashMap<String, DataDestinationInterface> outputConfig);
-
-	/**
-	 * Adds a {@link DataDestinationInterface} as output.
-	 * 
-	 * @param output
-	 *            the name of the output of the plugin.
-	 * @param dest
-	 *            the destination for data.
-	 */
-	void addOutputConfig(@Nonnull String output, @Nonnull DataDestinationInterface dest);
+	public LinkedList<OutputDataWrapper> putData(String input, double[] data);
 
 	/**
 	 * Provides the config for the outputs. Each output is marked by a

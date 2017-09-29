@@ -3,9 +3,12 @@ package plugins.sigproplugins.signalrouting;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import channel.OutputDataWrapper;
+import channel.OutputInfoWrapper;
 import gui.USPGui;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
@@ -20,9 +23,13 @@ import plugins.sigproplugins.SigproPlugin;
 public class SignalAdder implements SigproPlugin {
 
 	private HashMap<String, LinkedBlockingQueue<int[]>> inputs = new HashMap<>();
+	private HashMap<String, double[]> dataBuffer = new HashMap<>();
 
 	private boolean play = false;
-	private DataDestinationInterface output;
+	
+	private int distributionSize = 100;
+	
+	private String name = "Add";
 
 	/**
 	 * Empty default constructor. Needed for instantiation by reflection. 
@@ -46,80 +53,37 @@ public class SignalAdder implements SigproPlugin {
 	}
 
 	@Override
-	public void putData(String input, int[] data) {
+	public LinkedList<OutputDataWrapper> putData(String input, double[] data) {
 
-		inputs.get(input).offer(data);
-
+		dataBuffer.put(input, data);
+		
+		boolean first = true;
+		
+		if(dataBuffer.size() == inputs.size()) {
+			double[] outputData = new double[distributionSize];
+			
+			for(double[] addData : dataBuffer.values()) {
+				for(int i=0; i<distributionSize; i++) {
+					if(first) {
+						outputData[i] = addData[i];
+					} else {
+						outputData[i] += addData[i];
+					}
+				}				
+				first = false;
+			}
+			
+			LinkedList<OutputDataWrapper> outputWrappers = new LinkedList<>();
+			outputWrappers.add(new OutputDataWrapper(new OutputInfoWrapper(this, "out"), outputData));
+			
+			return outputWrappers;
+		}
+		
+		return null;
 	}
 
 	private void play() {
-		play = true;
-
-		Thread addThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-
-				ArrayList<int[]> intBuffers = new ArrayList<>(inputs.size());
-				int[] counter = new int[inputs.size()];
-				int[] max = new int[inputs.size()];
-
-				int i = 0;
-
-				for (LinkedBlockingQueue<int[]> input : inputs.values()) {
-					try {
-						intBuffers.add(i, input.poll(1, TimeUnit.SECONDS));
-						counter[i] = 0;
-						max[i] = intBuffers.get(i).length;
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					i++;
-				}
-
-				try {
-					while (play) {
-
-						i = 0;
-						int value;
-
-						int[] data = new int[100];
-
-						for (int j = 0; i < 100; i++) {
-							value = 0;
-							i = 0;
-							for (LinkedBlockingQueue<int[]> input : inputs.values()) {
-								if (counter[i] == max[i] - 1) {
-									intBuffers.remove(i);
-									try {
-										intBuffers.add(i, input.poll(100, TimeUnit.MILLISECONDS));
-										counter[i] = 0;
-										max[i] = intBuffers.get(i).length;
-									} catch (InterruptedException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								}
-								value += intBuffers.get(i)[counter[i]];
-								counter[i]++;
-								i++;
-							}
-							data[j] = value;
-						}
-
-						output.putData(data);
-					}
-				} catch (NullPointerException ex) {
-					if (play) {
-						ex.printStackTrace();
-						USPGui.stopExternally();
-					}
-				}
-			}
-		});
-		addThread.start();
-
+		
 	}
 
 	private void stop() {
@@ -156,19 +120,6 @@ public class SignalAdder implements SigproPlugin {
 	}
 
 	@Override
-	public void setOutputConfig(HashMap<String, DataDestinationInterface> outputConfig) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void addOutputConfig(String output, DataDestinationInterface dest) {
-		if (output.equals("out")) {
-			this.output = dest;
-		}
-	}
-
-	@Override
 	public HashSet<String> getOutputConfig() {
 
 		HashSet<String> outputConfig = new HashSet<>();
@@ -185,6 +136,12 @@ public class SignalAdder implements SigproPlugin {
 			stop();
 		}
 
+	}
+
+	@Override
+	public void setName(String name) {
+		
+		this.name = name;
 	}
 
 }

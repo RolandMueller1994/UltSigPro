@@ -3,6 +3,7 @@ package channel;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,10 +21,13 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private ChannelPane pane;
 
 	private boolean firstFetch = true;
+	
+	private HashMap<OutputInfoWrapper, InputInfoWrapper> dataflowMap = new HashMap<> ();
 
 	// private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new
 	// LinkedBlockingQueue<>();
 	private LinkedList<int[]> inputQueue = new LinkedList<>();
+	private LinkedList<int[]> outputQueue = new LinkedList<>();
 
 	private int remaining = 0;
 	int distance = (int) (44100 / 44);
@@ -110,5 +114,57 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			firstFetch = true;
 		}
 		this.play = play;
+	}
+	
+	private class DataflowRunnable implements Runnable {
+
+		@Override
+		public void run() {
+			
+			LinkedList<int[]> curData;
+			
+			synchronized(inputQueue) {
+				if(inputQueue.isEmpty()) {
+					return;
+				}
+				
+				curData = new LinkedList<> ();
+				
+				for(int i=0; i<inputQueue.size(); i++) {
+					curData.add(inputQueue.poll());
+				}			
+			}
+			
+			LinkedList<double[]> exeData = new LinkedList<> ();
+			
+			for(int[] inputArray : curData) {
+				double[] exeArray = new double[inputArray.length];
+				
+				for(int i=0; i<inputArray.length; i++) {
+					exeArray[i] = (double) inputArray[i];
+				}
+				
+				exeData.add(exeArray);
+			}
+			
+			for(double[] inputData : exeData) {
+				double[] sigflowOutputData = executeSignalProcessing(inputData);
+				int[] outputData = new int[inputData.length];
+				
+				for(int i=0; i<sigflowOutputData.length; i++) {
+					outputData[i] = (int) sigflowOutputData[i];
+				}
+				
+				synchronized(outputQueue) {
+					outputQueue.add(outputData);
+				}
+			}	
+		}
+		
+		private double[] executeSignalProcessing(double[] inputData) {
+			
+			return null;
+		}
+		
 	}
 }

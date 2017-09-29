@@ -2,10 +2,12 @@ package plugins.sigproplugins.internal;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
+import channel.OutputDataWrapper;
+import channel.OutputInfoWrapper;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
-import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 
 /**
  * Internal plugin. Proceeds a clean gain operation.
@@ -16,7 +18,8 @@ import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 public class GainBlock implements SigproPlugin {
 
 	private double gain = 1.0;
-	private DataDestinationInterface dest;
+	
+	private String name = "Gain";
 
 	/**
 	 * Empty default constructor. Needed for instantiation by reflection. 
@@ -28,7 +31,7 @@ public class GainBlock implements SigproPlugin {
 	@Override
 	public String getName() {
 
-		return "Gain";
+		return name;
 	}
 
 	@Override
@@ -44,30 +47,18 @@ public class GainBlock implements SigproPlugin {
 	}
 
 	@Override
-	public void putData(String input, int[] data) {
+	public LinkedList<OutputDataWrapper> putData(String input, double[] data) {
 
-		if (input.contentEquals("in") && dest != null) {
+		if (input.contentEquals("in")) {
 			for (int i = 0; i < data.length; i++) {
-				data[i] = (int) (gain * data[i]);
+				data[i] = gain * data[i];
 			}
 		}
 
-		dest.putData(data);
-	}
-
-	@Override
-	public void setOutputConfig(HashMap<String, DataDestinationInterface> outputConfig) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void addOutputConfig(String output, DataDestinationInterface dest) {
-
-		if (output.equals("out")) {
-			this.dest = dest;
-		}
-
+		LinkedList<OutputDataWrapper> output = new LinkedList<> ();
+		output.add(new OutputDataWrapper(new OutputInfoWrapper(this, "out"), data));
+		
+		return output;
 	}
 
 	@Override
@@ -83,6 +74,12 @@ public class GainBlock implements SigproPlugin {
 	public void setPlay(boolean play) {
 		// Nothing to do here
 
+	}
+
+	@Override
+	public void setName(String name) {
+	
+		this.name = name;
 	}
 
 }
