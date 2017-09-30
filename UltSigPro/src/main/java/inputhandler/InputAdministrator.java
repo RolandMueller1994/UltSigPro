@@ -18,6 +18,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
@@ -52,7 +53,8 @@ public class InputAdministrator {
 
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
-	private HashMap<String, Clip> allInputFiles;
+	private HashMap<String, AudioInputStream> inputStreams;
+	private int waveFileOffset;
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
 	private boolean stopped = false;
@@ -82,7 +84,7 @@ public class InputAdministrator {
 		allSoundInputDevices = new HashMap<>();
 		subscribedDevices = new HashMap<>();
 		targetDataLines = new HashMap<>();
-		allInputFiles = new HashMap<>();
+		inputStreams = new HashMap<>();
 	}
 
 	/**
@@ -217,28 +219,22 @@ public class InputAdministrator {
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
 
 	}
-	
-	public synchronized void openWaveFiles(HashMap<String, File> waveFiles, Collection<String> outputDevices) {
-		HashMap<String, Mixer> selectedOutputDevices = OutputAdministrator.getOutputAdministrator().getSelectedDevices();
+
+	public synchronized void openWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
+
 		Collection<String> fileNames = waveFiles.keySet();
 		for (String fileName : fileNames) {
-			for (String outputDevice : outputDevices) {
-				try {
-					Clip clip = (Clip) selectedOutputDevices.get(outputDevice).getLine(new DataLine.Info(Clip.class, null));
-					if (clip != null) {
-						clip.open(AudioSystem.getAudioInputStream(waveFiles.get(fileName)));
-						allInputFiles.put(fileName, clip);
-					}
-				} catch (LineUnavailableException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (UnsupportedAudioFileException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+			distributionMap.get(listener).add(fileName);
+			AudioInputStream stream;
+			try {
+				stream = AudioSystem.getAudioInputStream(waveFiles.get(fileName));
+				inputStreams.put(fileName, stream);
+			} catch (UnsupportedAudioFileException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
@@ -349,12 +345,30 @@ public class InputAdministrator {
 							int avail = targetEntry.getValue().available();
 							targetEntry.getValue().read(new byte[avail], 0, avail);
 						}
-						
-						for (String inputFile : allInputFiles.keySet()) {
-								allInputFiles.get(inputFile).start();
+
+						// -----------------------------------------------
+						for (Map.Entry<String, AudioInputStream> inputEntry : inputStreams.entrySet()) {
+							try {
+								int avail = inputEntry.getValue().available();
+								data.put(inputEntry.getKey(), new byte[avail]);
+								byte[] waveBytes = data.get(inputEntry.getKey());
+
+								//TODO check why audio data is deleted after read() command 
+								System.out.println("avail before " + inputEntry.getValue().available());
+								inputEntry.getValue().read(waveBytes, 0, avail);
+								System.out.println("avail afterwards " + inputEntry.getValue().available());
+								
+								data.put(inputEntry.getKey(), waveBytes);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
 
+						// --------------------------------------------------------
+
 						first = false;
+						waveFileOffset = 0;
 						return;
 					} else if (second) {
 						lock.lock();
@@ -395,10 +409,46 @@ public class InputAdministrator {
 						marshalledBuffer.put(targetEntry.getKey(), marshalledData);
 					}
 
+					for (Map.Entry<String, AudioInputStream> inputEntry : inputStreams.entrySet()) {
+						byte[] readData = data.get(inputEntry.getKey());
+						int[] marshalledData = new int[packageSize];
+						LinkedList<Integer> soundLevelData = new LinkedList<>();
+
+						for (int i = 0; i < outPackageSize; i++) {
+							int intValue = 0;
+							// TODO readData[4*i+...] reads only one channel
+							// (left or right)
+							// byte to integer conversion works here only for 4
+							// bytes/frame and big endian
+							// need different conversions for different coding
+							// formats
+
+							// Checks if the wave file has ended or not (no more
+							// data left to read)
+							if (4 * outPackageSize * waveFileOffset + 4 * i + 1 < readData.length) {
+								intValue = intValue
+										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 1]);
+								intValue <<= 8;
+								intValue = intValue
+										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i]);
+								// System.out.println(outPackageSize *
+								// waveFileOffset + 4 * i);
+								intValue <<= 16;
+								intValue >>= 16;
+							}
+
+							marshalledData[i] = intValue;
+							soundLevelData.add(intValue);
+						}
+						marshalledBuffer.put(inputEntry.getKey(), marshalledData);
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(inputEntry.getKey(), soundLevelData,
+								true);
+						waveFileOffset++;
+					}
+
 					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
 
 						boolean first = true;
-
 						int[] destData = new int[outPackageSize];
 
 						for (String input : destEntry.getValue()) {
