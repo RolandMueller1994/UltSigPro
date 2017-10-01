@@ -294,6 +294,7 @@ public class InputAdministrator {
 		public IteratableAudioInputStream(File waveFile) {
 			this.waveFile = waveFile;
 			try {
+				// At first we capture the complete sound file.
 				inputStream = AudioSystem.getAudioInputStream(waveFile);
 				
 				int avail = inputStream.available();
@@ -308,6 +309,7 @@ public class InputAdministrator {
 				e.printStackTrace();
 			}
 			
+			// Array filled with zeros -> We can just copy this array afterwards and don't have to write zeros manually.
 			nullBuffer = new byte[1000];
 			
 			for(int i=0; i<nullBuffer.length; i++) {
@@ -316,15 +318,17 @@ public class InputAdministrator {
 		}
 		
 		public void start() {
+			// Set the cursor to start of the sound file
 			startupTime = System.currentTimeMillis();
 			cursor = 0;
 		}
 		
 		public long available() {
 			
+			// How long the track has been played.
 			long timediff = System.currentTimeMillis() - startupTime;
 			
-			// Durch 500 teilen, da 4 bytes pro Sample -> samplingFreq * 4 / 1000
+			// Devide by 500 because of 4 bytes per sample -> samplingFreq * 4 / 1000
 			long curpos = (long) (timediff * ((double) samplingFreq) / 250);
 			
 			if(curpos > cursor) {
@@ -338,15 +342,18 @@ public class InputAdministrator {
 
 			byte[] outData = new byte[packageSize];
 			
+			// Check if there are enough data from file or if we have to write zeros.
 			if(cursor + packageSize < dataBuffer.length) {
 				System.arraycopy(dataBuffer, cursor, outData, 0, packageSize);
 				cursor += packageSize;
 			} else if(cursor < dataBuffer.length) {
+				// Still date to write but not enough for packageSize
 				int remaining = dataBuffer.length - cursor;
 				System.arraycopy(dataBuffer, cursor, outData, 0, remaining);
 				System.arraycopy(nullBuffer, 0, dataBuffer, remaining, packageSize - remaining);
 				cursor += packageSize;
 			} else {
+				// Only zeros will be written
 				System.arraycopy(nullBuffer, 0, outData, 0, packageSize);
 				cursor += packageSize;
 			}
