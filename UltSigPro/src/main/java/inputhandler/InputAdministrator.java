@@ -353,11 +353,12 @@ public class InputAdministrator {
 								data.put(inputEntry.getKey(), new byte[avail]);
 								byte[] waveBytes = data.get(inputEntry.getKey());
 
-								//TODO check why audio data is deleted after read() command 
+								// TODO check why audio data is deleted after
+								// read() command
 								System.out.println("avail before " + inputEntry.getValue().available());
 								inputEntry.getValue().read(waveBytes, 0, avail);
 								System.out.println("avail afterwards " + inputEntry.getValue().available());
-								
+
 								data.put(inputEntry.getKey(), waveBytes);
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
@@ -415,36 +416,47 @@ public class InputAdministrator {
 						LinkedList<Integer> soundLevelData = new LinkedList<>();
 
 						for (int i = 0; i < outPackageSize; i++) {
-							int intValue = 0;
-							// TODO readData[4*i+...] reads only one channel
-							// (left or right)
-							// byte to integer conversion works here only for 4
+							int intValueLeftStereo = 0;
+							int intValueRightStereo = 0;
+							int intValueMono = 0;
+							
+							// TODO byte to integer conversion works here only for 4
 							// bytes/frame and big endian
-							// need different conversions for different coding
-							// formats
+							// need different conversions implementations
+							// for different coding formats
 
 							// Checks if the wave file has ended or not (no more
-							// data left to read)
+							// data left to read). Left and right stereo channel
+							// from the wave file are merged to a mono channel
+							// (average value is calculated)
 							if (4 * outPackageSize * waveFileOffset + 4 * i + 1 < readData.length) {
-								intValue = intValue
+								intValueLeftStereo = intValueLeftStereo
 										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 1]);
-								intValue <<= 8;
-								intValue = intValue
+								intValueLeftStereo <<= 8;
+								intValueLeftStereo = intValueLeftStereo
 										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i]);
-								// System.out.println(outPackageSize *
-								// waveFileOffset + 4 * i);
-								intValue <<= 16;
-								intValue >>= 16;
+								intValueLeftStereo <<= 16;
+								intValueLeftStereo >>= 16;
+
+								intValueRightStereo = intValueRightStereo
+										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 3]);
+								intValueRightStereo <<= 8;
+								intValueRightStereo = intValueRightStereo
+										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 2]);
+								intValueRightStereo <<= 16;
+								intValueRightStereo >>= 16;
+
+								intValueMono = (intValueRightStereo + intValueLeftStereo) / 2;
 							}
 
-							marshalledData[i] = intValue;
-							soundLevelData.add(intValue);
+							marshalledData[i] = intValueMono;
+							soundLevelData.add(intValueMono);
 						}
 						marshalledBuffer.put(inputEntry.getKey(), marshalledData);
 						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(inputEntry.getKey(), soundLevelData,
 								true);
-						waveFileOffset++;
 					}
+					waveFileOffset++;
 
 					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
 
