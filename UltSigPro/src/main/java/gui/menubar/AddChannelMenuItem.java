@@ -293,7 +293,16 @@ public class AddChannelMenuItem extends MenuItem {
 						public void handle(ActionEvent event) {
 							if (box.getSelectionModel().getSelectedItem()
 									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
-								// TODO copy code from firstBox for this event
+								FileChooser fileChooser = new FileChooser();
+								File waveFile = fileChooser.showOpenDialog(USPGui.stage);
+								if (waveFile != null) {
+									list.add(waveFile.getName());
+									box.setItems(list);
+									box.setValue(waveFile.getName());
+									if (!waveFiles.containsKey(waveFile.getName())) {
+										waveFiles.put(waveFile.getName(), waveFile);
+									}
+								}
 							}
 						}
 					});
