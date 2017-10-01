@@ -53,7 +53,7 @@ public class InputAdministrator {
 
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
-	private HashMap<String, AudioInputStream> inputStreams;
+	private HashMap<String, IteratableAudioInputStream> inputStreams;
 	private int waveFileOffset;
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
@@ -225,17 +225,10 @@ public class InputAdministrator {
 		Collection<String> fileNames = waveFiles.keySet();
 		for (String fileName : fileNames) {
 			distributionMap.get(listener).add(fileName);
-			AudioInputStream stream;
-			try {
-				stream = AudioSystem.getAudioInputStream(waveFiles.get(fileName));
-				inputStreams.put(fileName, stream);
-			} catch (UnsupportedAudioFileException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			IteratableAudioInputStream stream;
+			
+			stream = new IteratableAudioInputStream(waveFiles.get(fileName));
+			inputStreams.put(fileName, stream);
 		}
 	}
 
@@ -286,6 +279,81 @@ public class InputAdministrator {
 			lock.unlock();
 		}
 	}
+	
+	private class IteratableAudioInputStream {
+		
+		private File waveFile;
+		private AudioInputStream inputStream;
+		private byte[] dataBuffer;
+		private byte[] nullBuffer;
+		
+		private long startupTime;
+		private int cursor;
+		private int samplingFreq = 44100;
+		
+		public IteratableAudioInputStream(File waveFile) {
+			this.waveFile = waveFile;
+			try {
+				inputStream = AudioSystem.getAudioInputStream(waveFile);
+				
+				int avail = inputStream.available();
+				dataBuffer = new byte[avail];
+				
+				inputStream.read(dataBuffer, 0, avail);
+			} catch (UnsupportedAudioFileException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			nullBuffer = new byte[1000];
+			
+			for(int i=0; i<nullBuffer.length; i++) {
+				nullBuffer[i] = 0;
+			}
+		}
+		
+		public void start() {
+			startupTime = System.currentTimeMillis();
+			cursor = 0;
+		}
+		
+		public long available() {
+			
+			long timediff = System.currentTimeMillis() - startupTime;
+			
+			// Durch 500 teilen, da 4 bytes pro Sample -> samplingFreq * 4 / 1000
+			long curpos = (long) (timediff * ((double) samplingFreq) / 250);
+			
+			if(curpos > cursor) {
+				return curpos - cursor;
+			}
+			
+			return 0;
+		}
+		
+		public byte[] read(int packageSize) {
+
+			byte[] outData = new byte[packageSize];
+			
+			if(cursor + packageSize < dataBuffer.length) {
+				System.arraycopy(dataBuffer, cursor, outData, 0, packageSize);
+				cursor += packageSize;
+			} else if(cursor < dataBuffer.length) {
+				int remaining = dataBuffer.length - cursor;
+				System.arraycopy(dataBuffer, cursor, outData, 0, remaining);
+				System.arraycopy(nullBuffer, 0, dataBuffer, remaining, packageSize - remaining);
+				cursor += packageSize;
+			} else {
+				System.arraycopy(nullBuffer, 0, outData, 0, packageSize);
+				cursor += packageSize;
+			}
+			
+			return outData;
+		}
+	}
 
 	private class InputThread extends Thread {
 
@@ -328,6 +396,14 @@ public class InputAdministrator {
 							return;
 						}
 					}
+					
+					if(!first) {
+						for(IteratableAudioInputStream inputStream : inputStreams.values()) {
+							if (inputStream.available() < packageSize * 2) {
+								return;
+							}
+						}						
+					}
 
 					if (startCount < 3000) {
 						startCount++;
@@ -346,27 +422,9 @@ public class InputAdministrator {
 							targetEntry.getValue().read(new byte[avail], 0, avail);
 						}
 
-						// -----------------------------------------------
-						for (Map.Entry<String, AudioInputStream> inputEntry : inputStreams.entrySet()) {
-							try {
-								int avail = inputEntry.getValue().available();
-								data.put(inputEntry.getKey(), new byte[avail]);
-								byte[] waveBytes = data.get(inputEntry.getKey());
-
-								// TODO check why audio data is deleted after
-								// read() command
-								System.out.println("avail before " + inputEntry.getValue().available());
-								inputEntry.getValue().read(waveBytes, 0, avail);
-								System.out.println("avail afterwards " + inputEntry.getValue().available());
-
-								data.put(inputEntry.getKey(), waveBytes);
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+						for(IteratableAudioInputStream inputStream : inputStreams.values()) {
+							inputStream.start();
 						}
-
-						// --------------------------------------------------------
 
 						first = false;
 						waveFileOffset = 0;
@@ -410,9 +468,9 @@ public class InputAdministrator {
 						marshalledBuffer.put(targetEntry.getKey(), marshalledData);
 					}
 
-					for (Map.Entry<String, AudioInputStream> inputEntry : inputStreams.entrySet()) {
-						byte[] readData = data.get(inputEntry.getKey());
-						int[] marshalledData = new int[packageSize];
+					for (Map.Entry<String, IteratableAudioInputStream> inputEntry : inputStreams.entrySet()) {
+						byte[] readData = inputEntry.getValue().read(packageSize * 2);
+						int[] marshalledData = new int[outPackageSize];
 						LinkedList<Integer> soundLevelData = new LinkedList<>();
 
 						for (int i = 0; i < outPackageSize; i++) {
@@ -429,25 +487,24 @@ public class InputAdministrator {
 							// data left to read). Left and right stereo channel
 							// from the wave file are merged to a mono channel
 							// (average value is calculated)
-							if (4 * outPackageSize * waveFileOffset + 4 * i + 1 < readData.length) {
-								intValueLeftStereo = intValueLeftStereo
-										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 1]);
-								intValueLeftStereo <<= 8;
-								intValueLeftStereo = intValueLeftStereo
-										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i]);
-								intValueLeftStereo <<= 16;
-								intValueLeftStereo >>= 16;
+							
+							intValueLeftStereo = intValueLeftStereo
+									| Byte.toUnsignedInt(readData[4 * i + 1]);
+							intValueLeftStereo <<= 8;
+							intValueLeftStereo = intValueLeftStereo
+									| Byte.toUnsignedInt(readData[4 * i]);
+							intValueLeftStereo <<= 16;
+							intValueLeftStereo >>= 16;
 
-								intValueRightStereo = intValueRightStereo
-										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 3]);
-								intValueRightStereo <<= 8;
-								intValueRightStereo = intValueRightStereo
-										| Byte.toUnsignedInt(readData[4 * outPackageSize * waveFileOffset + 4 * i + 2]);
-								intValueRightStereo <<= 16;
-								intValueRightStereo >>= 16;
+							intValueRightStereo = intValueRightStereo
+									| Byte.toUnsignedInt(readData[4 * i + 3]);
+							intValueRightStereo <<= 8;
+							intValueRightStereo = intValueRightStereo
+									| Byte.toUnsignedInt(readData[4 * i + 2]);
+							intValueRightStereo <<= 16;
+							intValueRightStereo >>= 16;
 
-								intValueMono = (intValueRightStereo + intValueLeftStereo) / 2;
-							}
+							intValueMono = (intValueRightStereo + intValueLeftStereo) / 2;		
 
 							marshalledData[i] = intValueMono;
 							soundLevelData.add(intValueMono);
@@ -456,7 +513,6 @@ public class InputAdministrator {
 						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(inputEntry.getKey(), soundLevelData,
 								true);
 					}
-					waveFileOffset++;
 
 					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
 
