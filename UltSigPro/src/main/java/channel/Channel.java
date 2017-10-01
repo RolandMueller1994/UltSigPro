@@ -29,9 +29,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private LinkedList<int[]> inputQueue = new LinkedList<>();
 	private LinkedList<int[]> outputQueue = new LinkedList<>();
 
-	private int remaining = 0;
-	int distance = (int) (44100 / 44);
-
 	public Channel(ChannelPane pane, ChannelConfig config) {
 		this.name = config.getName();
 		this.pane = pane;
@@ -43,41 +40,15 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 
 	@Override
 	public int[] fetchData() {
-		// passes data from channel to OutputAdmin
-		/*
-		 * LinkedList<Integer> data = new LinkedList<> ();
-		 * 
-		 * try { Thread.sleep(10); } catch (InterruptedException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); }
-		 * 
-		 * //TODO replace sinus values with real sound values for (double i = 0;
-		 * i<628*2; i+=2) { data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
-		 * }
-		 */
 
-		// TODO outputQueue
-		synchronized (inputQueue) {
-			return inputQueue.poll();
+		synchronized (outputQueue) {
+			return outputQueue.poll();
 		}
 	}
 
 	@Override
 	public void putData(int[] data) {
 
-		/*
-		 * LinkedList<Double> waveChartData = new LinkedList<> ();
-		 * 
-		 * int pos = 0;
-		 * 
-		 * if(distance-remaining < data.length) { waveChartData.add(((double)
-		 * data[distance-remaining])/(double) Short.MAX_VALUE); pos =
-		 * distance-remaining;
-		 * 
-		 * while(pos + distance < data.length) { waveChartData.add(((double)
-		 * data[pos + distance])/(double) Short.MAX_VALUE); pos = pos +
-		 * distance; } remaining = data.length - pos; } else { remaining =
-		 * remaining + (data.length - pos); }
-		 */
 		pane.insertWaveChartData(data);
 
 		synchronized (inputQueue) {
