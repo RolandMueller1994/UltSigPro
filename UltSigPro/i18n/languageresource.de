@@ -15,6 +15,7 @@ remove=-
 delete=Löschen
 play=Play
 stop=Stop
+file=Datei
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
 

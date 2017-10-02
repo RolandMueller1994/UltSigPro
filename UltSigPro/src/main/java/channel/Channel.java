@@ -35,6 +35,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
 		outputAdmin = OutputAdministrator.getOutputAdministrator();
 		outputAdmin.registerOutputDevices(this, config.getOutputDevices());
+		inputAdmin.openWaveFiles(config.getWaveFiles(), this);
 	}
 
 	@Override
