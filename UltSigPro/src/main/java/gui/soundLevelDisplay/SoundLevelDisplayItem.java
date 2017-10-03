@@ -20,6 +20,7 @@ public class SoundLevelDisplayItem extends GridPane {
 
 	private Label deviceNameField;
 	private ProgressBar soundLevelBar;
+	private ProgressBar overdriveIndicator;
 	private LinkedList<LinkedList<Integer>> dataQueue;
 
 	private LinkedList<Integer> internalBuffer = new LinkedList<>();
@@ -32,9 +33,14 @@ public class SoundLevelDisplayItem extends GridPane {
 		deviceNameField = new Label(deviceName);
 		soundLevelBar = new ProgressBar(0.1);
 		soundLevelBar.setStyle("-fx-accent: green");
+		overdriveIndicator = new ProgressBar(0);
+		overdriveIndicator.setStyle("-fx-accent: red");
+		overdriveIndicator.setMaxWidth(10);
 		this.setVgap(5);
-		this.add(deviceNameField, 0, 0);
+		this.setHgap(3);
+		this.add(deviceNameField, 0, 0, 2, 1);
 		this.add(soundLevelBar, 0, 1);
+		this.add(overdriveIndicator, 1, 1);
 		GridPane.setHalignment(soundLevelBar, HPos.CENTER);
 
 		this.dataQueue = dataQueue;
@@ -61,6 +67,11 @@ public class SoundLevelDisplayItem extends GridPane {
 				maxValue = -30;
 			}
 			this.soundLevelBar.setProgress((30 + maxValue) / 30);
+			if (maxValue > -3) {
+				overdriveIndicator.setProgress(100);
+			} else {
+				overdriveIndicator.setProgress(0);
+			}
 			internalBuffer.clear();
 		}
 	}
