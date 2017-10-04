@@ -82,4 +82,13 @@ public class GainBlock implements SigproPlugin {
 		this.name = name;
 	}
 
+	@Override
+	public HashSet<String> getInputConfig() {
+		
+		HashSet<String> inputInfo = new HashSet<>();
+		inputInfo.add("In");
+		
+		return inputInfo;
+	}
+
 }

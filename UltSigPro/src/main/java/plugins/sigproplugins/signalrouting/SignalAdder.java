@@ -22,7 +22,7 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class SignalAdder implements SigproPlugin {
 
-	private HashMap<String, LinkedBlockingQueue<int[]>> inputs = new HashMap<>();
+	private HashSet<String> inputs = new HashSet<>();
 	private HashMap<String, double[]> dataBuffer = new HashMap<>();
 
 	private boolean play = false;
@@ -36,20 +36,6 @@ public class SignalAdder implements SigproPlugin {
 	 */
 	public SignalAdder() {
 		
-	}
-	
-	/**
-	 * Creates a new add block.
-	 * 
-	 * @param size
-	 *            The number of inputs.
-	 */
-	public SignalAdder(int size) {
-
-		for (int i = 0; i < size; i++) {
-			inputs.put(new Integer(i).toString(), new LinkedBlockingQueue<int[]>());
-		}
-
 	}
 
 	@Override
@@ -87,18 +73,7 @@ public class SignalAdder implements SigproPlugin {
 	}
 
 	private void stop() {
-		play = false;
 
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		for (LinkedBlockingQueue<int[]> queue : inputs.values()) {
-			queue.clear();
-		}
 	}
 
 	@Override
@@ -142,6 +117,12 @@ public class SignalAdder implements SigproPlugin {
 	public void setName(String name) {
 		
 		this.name = name;
+	}
+
+	@Override
+	public HashSet<String> getInputConfig() {
+		
+		return inputs;
 	}
 
 }

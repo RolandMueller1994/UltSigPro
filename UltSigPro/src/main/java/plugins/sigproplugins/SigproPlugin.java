@@ -28,11 +28,12 @@ public interface SigproPlugin extends PluginInterface {
 	 */
 	@Nonnull
 	String getName();
-	
+
 	/**
 	 * Sets the name of the plugin.
 	 * 
-	 * @param name The name
+	 * @param name
+	 *            The name
 	 */
 	void setName(@Nonnull String name);
 
@@ -58,7 +59,8 @@ public interface SigproPlugin extends PluginInterface {
 	 * Will be called by the underlying signal processing system. The
 	 * implementation of this method must execute the signal processing and
 	 * write the data to the outputs.
-	 * @param input 
+	 * 
+	 * @param input
 	 * 
 	 * @param data
 	 *            The new data package.
@@ -74,6 +76,16 @@ public interface SigproPlugin extends PluginInterface {
 	 */
 	@Nonnull
 	HashSet<String> getOutputConfig();
+
+	/**
+	 * Provides the config for the inputs. Each input is market by a
+	 * {@link String}.
+	 * 
+	 * @return a {@link HashSet} of {@link String}s which contains the markers
+	 *         for the outputs. Won't be null.
+	 */
+	@Nonnull
+	HashSet<String> getInputConfig();
 
 	/**
 	 * Triggers the calculation of data in the plugin.
