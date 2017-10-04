@@ -139,6 +139,10 @@ public class ChannelPane extends TitledPane {
 		channel.delete();
 		USPGui.deleteChannel(this);
 	}
+	
+	public Channel getChannel() {
+		return channel;
+	}
 
 	private class InputPane extends Pane {
 

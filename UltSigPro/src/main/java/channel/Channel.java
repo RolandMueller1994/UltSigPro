@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import inputhandler.InputAdministrator;
 import outputhandler.OutputAdministrator;
+import plugins.sigproplugins.SigproPlugin;
 
 public class Channel implements InputDataListener, OutputDataSpeaker {
 
@@ -107,7 +108,40 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		}
 		this.play = play;
 	}
+	
+	public SigproPlugin getPluginInput() {
+		return pluginInput;
+	}
+	
+	public SigproPlugin getPluginOutput() {
+		return pluginOutput;
+	}
+	
+	public void addPluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
+		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
+		
+		if(!dataflowMap.containsKey(outputWrapper)) {
+			dataflowMap.put(outputWrapper, new LinkedList<InputInfoWrapper>());
+		}
+		
+		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
+		
+		dataflowMap.get(outputWrapper).add(inputWrapper);
+	}
 
+	public void removePluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
+		
+		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
+		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
+		
+		if(dataflowMap.containsKey(outputWrapper)) {
+			dataflowMap.get(outputWrapper).remove(inputWrapper);
+			if(dataflowMap.get(outputWrapper).isEmpty()) {
+				dataflowMap.remove(outputWrapper);
+			}
+		}	
+	}
+	
 	private class DataflowRunnable implements Runnable {
 
 		@Override

@@ -12,6 +12,9 @@ import javax.imageio.ImageIO;
 
 import channel.ChannelConfig;
 import channel.ChannelPane;
+import channel.gui.Input;
+import channel.gui.Output;
+import channel.gui.PluginConfigGroup;
 import gui.menubar.MenuBarCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
@@ -168,8 +171,15 @@ public class USPGui extends Application {
 
 	public static void addChannel(ChannelConfig config) {
 		try {
-			channelBox.getChildren().add(new ChannelPane(config));
+			ChannelPane channelPane = new ChannelPane(config);
+			channelBox.getChildren().add(channelPane);
 			Tab curTab = new Tab(config.getName());
+			
+			ScrollPane scroll = new ScrollPane();
+			scroll.setContent(new PluginConfigGroup(channelPane.getChannel()));
+			
+			curTab.setContent(scroll);
+			
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);
