@@ -15,8 +15,13 @@ import javafx.scene.text.Font;
 
 public class Input extends Pane {
 
-	private final int yOffset = 25;
-	private final int height = yOffset + 10;
+	private static final int yOffset = 25;
+	private static final int height = yOffset + 10;
+	
+	private int position;
+	private int parentWidht;
+	private int parentHeight;
+	private double inputOffset;
 	
 	private String name;
 	private Label nameLabel;
@@ -25,9 +30,13 @@ public class Input extends Pane {
 	
 	private LinkedList<Line> lines = new LinkedList<>();
 	
-	public Input(String name) {
+	public Input(String name, double parentX, double parentY, int position, int parentWidth, int parentHeight, double inputOffset) {
 		super();
 		this.name = name;
+		this.position = position;
+		this.parentWidht  = parentWidth;
+		this.parentHeight = parentHeight;
+		this.inputOffset = inputOffset;
 		
 		nameLabel = new Label(name);
 		
@@ -36,10 +45,10 @@ public class Input extends Pane {
 		
 		nameWidth = (int) fontLoader.computeStringWidth(name, font);
 		
-		if(nameWidth > 20) {
+		if(nameWidth > 10) {
 			setPrefSize(nameWidth + 10, height);
 			setMaxSize(nameWidth + 10, height);
-			width = nameWidth;
+			width = nameWidth + 10;
 		} else {
 			setPrefSize(20, height);
 			setMaxSize(20, height);
@@ -88,5 +97,15 @@ public class Input extends Pane {
 				}
 			}
 		});
+		
+		double xPosition = parentX - width;
+		setLayoutX(xPosition);
+		
+		double yPosition = parentY + position * inputOffset + inputOffset / 2 - yOffset;
+		setLayoutY(yPosition);
+	}
+	
+	public static double getHeightOfInput() {
+		return height;
 	}
 }

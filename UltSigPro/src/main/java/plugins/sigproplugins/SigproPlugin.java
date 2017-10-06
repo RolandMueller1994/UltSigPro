@@ -96,4 +96,18 @@ public interface SigproPlugin extends PluginInterface {
 	 */
 	void setPlay(boolean play);
 
+	/**
+	 * The default width of this plugins GUI.
+	 * 
+	 * @return the width
+	 */
+	int getWidth();
+
+	/**
+	 * The default height of this plugins GUI.
+	 * 
+	 * @return the height
+	 */
+	int getHeight();
+
 }

@@ -63,8 +63,8 @@ public class USPMain {
 			PluginManager.getInstance();
 			
 			// Register internal plugins
-			PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
-			PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
+			//PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
+			//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
 
 			// Setup the LanguageResourceHandler
 			// TODO Read configured language

@@ -15,8 +15,13 @@ import javafx.scene.text.Font;
 
 public class Output extends Pane {
 
-	private final int yOffset = 25;
-	private final int height = yOffset + 10;
+	private static final int yOffset = 25;
+	private static final int height = yOffset + 10;
+	
+	int position;
+	int parentWidth;
+	int parentHeight;
+	double outputOffset;
 	
 	private String name;
 	private Label nameLabel;
@@ -25,9 +30,13 @@ public class Output extends Pane {
 	
 	private LinkedList<Line> lines = new LinkedList<>();
 	
-	public Output(String name) {
+	public Output(String name, double parentX, double parentY, int position, int parentWidth, int parentHeight, double outputOffset) {
 		super();
 		this.name = name;
+		this.position = position;
+		this.parentWidth = parentWidth;
+		this.parentHeight = parentHeight;
+		this.outputOffset = outputOffset;
 		
 		nameLabel = new Label(name);
 		
@@ -36,10 +45,10 @@ public class Output extends Pane {
 		
 		nameWidth = (int) fontLoader.computeStringWidth(name, font);
 		
-		if(nameWidth > 20) {
+		if(nameWidth > 10) {
 			setPrefSize(nameWidth + 10, height);
 			setMaxSize(nameWidth + 10, height);
-			width = nameWidth;
+			width = nameWidth + 10;
 		} else {
 			setPrefSize(20, height);
 			setMaxSize(20, height);
@@ -64,7 +73,7 @@ public class Output extends Pane {
 		lines.add(line);
 		getChildren().add(line);
 		
-		nameLabel.setLayoutX(0);
+		nameLabel.setLayoutX(10);
 		nameLabel.setLayoutY(0);
 		
 		addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent> () {
@@ -88,5 +97,15 @@ public class Output extends Pane {
 				}
 			}
 		});
+		
+		double xPosition = parentX + parentWidth;
+		setLayoutX(xPosition);
+		
+		double yPosition = parentY + position * outputOffset + outputOffset / 2 - yOffset;
+		setLayoutY(yPosition);
 	}	
+	
+	public static double getHeightOfOutput() {
+		return height;
+	}
 }
