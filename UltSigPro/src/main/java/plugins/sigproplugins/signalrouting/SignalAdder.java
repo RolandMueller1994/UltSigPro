@@ -20,7 +20,7 @@ import plugins.sigproplugins.SigproPlugin;
  * @author roland
  *
  */
-public class SignalAdder implements SigproPlugin {
+public class SignalAdder extends SigproPlugin {
 
 	private HashSet<String> inputs = new HashSet<>();
 	private HashMap<String, double[]> dataBuffer = new HashMap<>();

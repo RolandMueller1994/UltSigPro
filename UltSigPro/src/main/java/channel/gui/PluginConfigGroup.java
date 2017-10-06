@@ -50,6 +50,7 @@ public class PluginConfigGroup extends Pane {
 		for(String input : inputs) {
 			Input inputGUI = new Input(input, internalX, internalY, i, width, height, inputOffset);
 			getChildren().add(inputGUI);
+			plugin.addInput(inputGUI);
 			i++;
 		}
 		
@@ -57,6 +58,8 @@ public class PluginConfigGroup extends Pane {
 		for(String output : outputs) {
 			Output outputGUI = new Output(output, internalX, internalY, i, width, height, outputOffset);
 			getChildren().add(outputGUI);
+			plugin.addOutput(outputGUI);
+			i++;
 		}
 	}
 	

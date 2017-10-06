@@ -98,14 +98,19 @@ public class Output extends Pane {
 			}
 		});
 		
+		updatePosition(parentX, parentY);
+	}	
+	
+	public static double getHeightOfOutput() {
+		return height;
+	}
+	
+	public void updatePosition(double parentX, double parentY) {
+
 		double xPosition = parentX + parentWidth;
 		setLayoutX(xPosition);
 		
 		double yPosition = parentY + position * outputOffset + outputOffset / 2 - yOffset;
 		setLayoutY(yPosition);
-	}	
-	
-	public static double getHeightOfOutput() {
-		return height;
 	}
 }

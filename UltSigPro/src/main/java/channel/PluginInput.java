@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
 
-public class PluginInput implements SigproPlugin {
+public class PluginInput extends SigproPlugin {
 
 	private String name = "Input";
 	

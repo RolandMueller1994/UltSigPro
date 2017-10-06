@@ -98,14 +98,19 @@ public class Input extends Pane {
 			}
 		});
 		
+		updatePosition(parentX, parentY);
+	}
+	
+	public static double getHeightOfInput() {
+		return height;
+	}
+	
+	public void updatePosition(double parentX, double parentY) {
+
 		double xPosition = parentX - width;
 		setLayoutX(xPosition);
 		
 		double yPosition = parentY + position * inputOffset + inputOffset / 2 - yOffset;
 		setLayoutY(yPosition);
-	}
-	
-	public static double getHeightOfInput() {
-		return height;
 	}
 }

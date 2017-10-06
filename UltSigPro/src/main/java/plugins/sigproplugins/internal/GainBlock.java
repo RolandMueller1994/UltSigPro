@@ -29,7 +29,7 @@ import plugins.sigproplugins.SigproPlugin;
  * @author roland
  *
  */
-public class GainBlock implements SigproPlugin {
+public class GainBlock extends SigproPlugin {
 
 	private double gain = 1.0;
 	
@@ -44,8 +44,6 @@ public class GainBlock implements SigproPlugin {
 	private Rectangle onRect = new Rectangle(width - 10, 25);
 	
 	private boolean on = false;
-	
-	private Pane gui;
 
 	/**
 	 * Empty default constructor. Needed for instantiation by reflection. 
@@ -91,7 +89,7 @@ public class GainBlock implements SigproPlugin {
 	public Pane getGUI() {
 		
 		if(gui == null) {
-			gui = new Pane();
+			gui = getInternalGUI();
 			gui.setPrefSize(width, height);
 			gui.setMaxSize(width, height);
 			
@@ -132,7 +130,7 @@ public class GainBlock implements SigproPlugin {
 	public HashSet<String> getOutputConfig() {
 
 		HashSet<String> outputs = new HashSet<>();
-		outputs.add("out");
+		outputs.add("Out");
 
 		return outputs;
 	}
