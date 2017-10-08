@@ -73,6 +73,13 @@ public abstract class SigproPlugin implements PluginInterface {
 					double xPosition = event.getSceneX() - mouseOffsetX - offsetX;
 					double yPosition = event.getSceneY() - mouseOffsetY - offsetY;
 					
+					if(xPosition < 0) {
+						xPosition = 0;
+					}
+					if(yPosition < 0) {
+						yPosition = 0;
+					}
+					
 					gui.setLayoutX(xPosition);
 					gui.setLayoutY(yPosition);
 					
@@ -84,6 +91,7 @@ public abstract class SigproPlugin implements PluginInterface {
 					for(Output output : outputs) {
 						output.updatePosition(xPosition, yPosition);
 					}
+					
 				}
 				
 			});

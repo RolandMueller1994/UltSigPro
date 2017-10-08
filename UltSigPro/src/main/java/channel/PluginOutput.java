@@ -3,12 +3,24 @@ package channel;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import javafx.geometry.Insets;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import plugins.sigproplugins.SigproPlugin;
 
 public class PluginOutput extends SigproPlugin {
 
 	private String name = "Output";
+	
+	private Label label = new Label(name);
+	
+	private final int height = 30;
+	private final int width = 55;
 	
 	@Override
 	public String getName() {
@@ -30,8 +42,20 @@ public class PluginOutput extends SigproPlugin {
 
 	@Override
 	public Pane getGUI() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if (gui == null) {
+			gui = getInternalGUI();
+			gui.setPrefSize(width, height);
+			gui.setMaxSize(width, height);
+
+			GridPane grid = new GridPane();
+			grid.setPadding(new Insets(5));
+			grid.add(label, 0, 0);
+
+			gui.getChildren().add(grid);
+			gui.setBackground(new Background(new BackgroundFill(Color.DARKGRAY, new CornerRadii(3), Insets.EMPTY)));
+		}
+		return gui;
 	}
 
 	@Override
@@ -51,7 +75,7 @@ public class PluginOutput extends SigproPlugin {
 	@Override
 	public HashSet<String> getOutputConfig() {
 
-		return null;
+		return new HashSet<String>();
 	}
 
 	@Override
@@ -70,14 +94,14 @@ public class PluginOutput extends SigproPlugin {
 
 	@Override
 	public int getWidth() {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		return width;
 	}
 
 	@Override
 	public int getHeight() {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		return height;
 	}
 
 }

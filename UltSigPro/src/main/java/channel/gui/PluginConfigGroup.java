@@ -4,6 +4,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import channel.Channel;
+import channel.PluginInput;
+import channel.PluginOutput;
+import gui.USPGui;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
 import plugins.sigproplugins.internal.GainBlock;
@@ -17,7 +20,10 @@ public class PluginConfigGroup extends Pane {
 	public PluginConfigGroup(Channel channel) {
 		this.channel = channel;
 		
-		addPlugin(new GainBlock(), 100, 100);
+		addPlugin(new PluginInput(), 50, 100);
+		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 50, 100);
+		
+		addPlugin(new GainBlock(), 300, 100);
 	}
 	
 	private void addPlugin(SigproPlugin plugin, double xCoord, double yCoord) {
@@ -41,26 +47,29 @@ public class PluginConfigGroup extends Pane {
 				
 		int numberOfInputs = inputs.size();
 		int numberOfOutputs = outputs.size();
-		
-		double inputOffset = height / numberOfInputs;
-		double outputOffset = height / numberOfOutputs;
-		
+
 		int i = 0;
 		
-		for(String input : inputs) {
-			Input inputGUI = new Input(input, internalX, internalY, i, width, height, inputOffset);
-			getChildren().add(inputGUI);
-			plugin.addInput(inputGUI);
-			i++;
+		if(numberOfInputs > 0) {
+			double inputOffset = height / numberOfInputs;			
+			for(String input : inputs) {
+				Input inputGUI = new Input(input, internalX, internalY, i, width, height, inputOffset);
+				getChildren().add(inputGUI);
+				plugin.addInput(inputGUI);
+				i++;
+			}
 		}
 		
-		i = 0;
-		for(String output : outputs) {
-			Output outputGUI = new Output(output, internalX, internalY, i, width, height, outputOffset);
-			getChildren().add(outputGUI);
-			plugin.addOutput(outputGUI);
-			i++;
-		}
+		if(numberOfOutputs > 0) {
+			double outputOffset = height / numberOfOutputs;			
+			i = 0;
+			for(String output : outputs) {
+				Output outputGUI = new Output(output, internalX, internalY, i, width, height, outputOffset);
+				getChildren().add(outputGUI);
+				plugin.addOutput(outputGUI);
+				i++;
+			}
+		}		
 	}
 	
 }
