@@ -47,6 +47,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
+import plugins.PluginManager;
+import plugins.sigproplugins.internal.GainBlock;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -87,6 +89,13 @@ public class USPGui extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
+		// Initialize plugin manager
+		PluginManager.getInstance();
+		
+		// Register internal plugins
+		PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
+		//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
+		
 		stage = primaryStage;
 		
 		Image icon = new Image("file:icon.png");

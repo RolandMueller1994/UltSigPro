@@ -58,13 +58,6 @@ public class USPMain {
 				logDir.mkdir();
 			}
 			resProv.registerResource("loggingPath", current);
-			
-			// Initialize plugin manager
-			PluginManager.getInstance();
-			
-			// Register internal plugins
-			//PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
-			//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
 
 			// Setup the LanguageResourceHandler
 			// TODO Read configured language

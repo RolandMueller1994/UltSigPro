@@ -107,6 +107,23 @@ public abstract class SigproPlugin implements PluginInterface {
 		outputs.add(output);
 	}
 	
+	public boolean checkHovered() {
+		
+		for(Input input : inputs) {
+			if(input.isHovered()) {
+				return true;
+			}
+		}
+		
+		for(Output output : outputs) {
+			if(output.isHovered()) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * Returns the name of the plugin. The name will be displayed in the header
 	 * of the external gui.
