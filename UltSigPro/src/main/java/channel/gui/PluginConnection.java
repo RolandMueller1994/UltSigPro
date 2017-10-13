@@ -26,6 +26,8 @@ public class PluginConnection {
 		this.configGroup = configGroup;
 		actLine = new ConnectionLine(this, endpoint, startX, startY, true);
 
+		addLine(actLine);
+		
 		configGroup.getChildren().add(actLine);
 	}
 
@@ -36,11 +38,12 @@ public class PluginConnection {
 			ConnectionLine newLine = new ConnectionLine(this, actLine, actLine.getEndX(), y, actHorizontal);
 			actLine.setCoordinatesLine(newLine, x, y);
 			actLine = newLine;
+			addLine(newLine);
 		} else {
 			ConnectionLine newLine = new ConnectionLine(this, actLine, x, actLine.getEndY(), actHorizontal);
 			actLine.setCoordinatesLine(newLine, x, y);
-			;
 			actLine = newLine;
+			addLine(newLine);
 		}
 
 		configGroup.getChildren().add(actLine);
@@ -49,9 +52,15 @@ public class PluginConnection {
 	public ConnectionLine getActLine() {
 		return actLine;
 	}
+	
+	private void addLine(ConnectionLine line) {
+		
+		lines.add(line);
+		line.registerMaxCoordinatesUpdateListener(configGroup);
+	}
 
 	public void endPluginConnection(ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
-		lines.add(actLine);
+		addLine(actLine);
 		actLine.setCoordinatesFinal(endpoint, xCoord, yCoord);
 		actLine = null;
 	}
@@ -80,10 +89,12 @@ public class PluginConnection {
 			ConnectionLine newLine = new ConnectionLine(this, actLine, stepX, stepY, false);
 			actLine.setCoordinatesLine(newLine, stepX, stepY);
 			configGroup.getChildren().add(newLine);
+			addLine(newLine);
 			
 			actLine = new ConnectionLine(this, newLine, stepX, y, true);
 			actLine.setCoordinates(x, y);
 			configGroup.getChildren().add(actLine);
+			addLine(actLine);
 			newLine.setCoordinatesLine(actLine, stepX, y);
 		} else {
 			ConnectionLine newLine = new ConnectionLine(this, actLine, actLine.getEndX(), y, true);
@@ -92,10 +103,11 @@ public class PluginConnection {
 			newLine.setCoordinates(x, y);
 			actLine = newLine;
 			configGroup.getChildren().add(actLine);
+			addLine(actLine);
 		}		
 	}
 
-	class ConnectionLine extends Line {
+	class ConnectionLine extends Line implements MaxCoordinatesInterface {
 
 		private static final double minLength = 10;
 
@@ -108,6 +120,8 @@ public class PluginConnection {
 		private boolean horizontal;
 
 		private PluginConnection parent;
+		
+		private PluginConfigGroup coordinatesListener;
 
 		public ConnectionLine(PluginConnection parent, ConnectionLineEndpointInterface firstEnd, double x, double y,
 				boolean horizontal) {
@@ -166,6 +180,8 @@ public class PluginConnection {
 			} else {
 				setEndY(getStartY());
 			}
+			
+			coordinatesListener.updateMaxCoordinatesOfComponent(this);
 		}
 
 		public void updateCoordinates(ConnectionLine line, double x, double y) {
@@ -182,6 +198,8 @@ public class PluginConnection {
 					setEndY(y);
 				}
 			}
+			
+			coordinatesListener.updateMaxCoordinatesOfComponent(this);
 		}
 		
 		/**
@@ -207,6 +225,8 @@ public class PluginConnection {
 						vertLine.setCoordinatesLine(this, getStartX() + length/2, y);
 						
 						parent.configGroup.getChildren().addAll(newLine, vertLine);
+						addLine(newLine);
+						addLine(vertLine);
 						
 						secondEnd.addLine(newLine);
 						
@@ -240,6 +260,8 @@ public class PluginConnection {
 						vertLine.setCoordinatesLine(this, getStartX() + length/2, y);
 						
 						parent.configGroup.getChildren().addAll(newLine, vertLine);
+						addLine(newLine);
+						addLine(vertLine);
 						
 						firstEnd.addLine(newLine);
 						
@@ -262,6 +284,8 @@ public class PluginConnection {
 					setEndX(getEndX());
 				}
 			}
+			
+			coordinatesListener.updateMaxCoordinatesOfComponent(this);
 		}
 
 		/**
@@ -316,10 +340,30 @@ public class PluginConnection {
 				setEndY(y);
 				setEndX(getEndX());
 			}
+			
+			coordinatesListener.updateMaxCoordinatesOfComponent(this);
 		}
 
 		public void setParent(PluginConnection parent) {
 			this.parent = parent;
+		}
+
+		@Override
+		public double getMaxX() {
+			
+			return getStartX() > getEndX() ? getStartX() : getEndX();
+		}
+
+		@Override
+		public double getMaxY() {
+			
+			return getStartY() > getEndY() ? getStartY() : getEndY();
+		}
+
+		@Override
+		public void registerMaxCoordinatesUpdateListener(PluginConfigGroup coordinatesListener) {
+			
+			this.coordinatesListener = coordinatesListener;
 		}
 
 	}

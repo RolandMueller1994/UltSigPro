@@ -111,4 +111,16 @@ public class PluginInput extends SigproPlugin {
 		return height;
 	}
 
+	@Override
+	public double getMaxX() {
+		
+		return gui.getLayoutX() + width;
+	}
+
+	@Override
+	public double getMaxY() {
+		
+		return gui.getLayoutY() + height;
+	}
+
 }

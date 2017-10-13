@@ -9,7 +9,9 @@ import javax.annotation.Nonnull;
 
 import channel.OutputDataWrapper;
 import channel.gui.Input;
+import channel.gui.MaxCoordinatesInterface;
 import channel.gui.Output;
+import channel.gui.PluginConfigGroup;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -22,7 +24,7 @@ import pluginframework.PluginInterface;
  * @author roland
  *
  */
-public abstract class SigproPlugin implements PluginInterface {
+public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInterface {
 
 	protected Pane gui;
 	
@@ -37,6 +39,8 @@ public abstract class SigproPlugin implements PluginInterface {
 	private double offsetY;
 	private double mouseOffsetX;
 	private double mouseOffsetY;
+	
+	private PluginConfigGroup coordinatesListener;
 	
 	protected Pane getInternalGUI() {
 		if(gui == null) {
@@ -83,6 +87,8 @@ public abstract class SigproPlugin implements PluginInterface {
 					gui.setLayoutX(xPosition);
 					gui.setLayoutY(yPosition);
 					
+					fireUpdateMaxCoordinates();
+					
 					// Update the position of ports
 					for(Input input : inputs) {
 						input.updatePosition(xPosition, yPosition);
@@ -97,6 +103,10 @@ public abstract class SigproPlugin implements PluginInterface {
 			});
 		}
 		return gui;
+	}
+	
+	private void fireUpdateMaxCoordinates() {
+		coordinatesListener.updateMaxCoordinatesOfComponent(this);
 	}
 	
 	public void addInput(Input input) {
@@ -122,6 +132,12 @@ public abstract class SigproPlugin implements PluginInterface {
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public void registerMaxCoordinatesUpdateListener(PluginConfigGroup coordinatesListener) {
+	
+		this.coordinatesListener = coordinatesListener;
 	}
 	
 	/**

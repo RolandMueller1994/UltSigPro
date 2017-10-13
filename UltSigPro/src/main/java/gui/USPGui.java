@@ -20,6 +20,8 @@ import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
@@ -185,7 +187,8 @@ public class USPGui extends Application {
 			Tab curTab = new Tab(config.getName());
 			
 			ScrollPane scroll = new ScrollPane();
-			scroll.setContent(new PluginConfigGroup(channelPane.getChannel()));
+			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
+			scroll.setContent(configGroup);
 			
 			curTab.setContent(scroll);
 			

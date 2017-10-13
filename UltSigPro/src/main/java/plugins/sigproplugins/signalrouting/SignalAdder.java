@@ -137,4 +137,16 @@ public class SignalAdder extends SigproPlugin {
 		return 0;
 	}
 
+	@Override
+	public double getMaxX() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getMaxY() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }
