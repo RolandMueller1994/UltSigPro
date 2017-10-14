@@ -1,8 +1,10 @@
 package channel.gui;
 
 import java.awt.MouseInfo;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import channel.Channel;
 import channel.PluginInput;
@@ -11,6 +13,7 @@ import gui.USPGui;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -28,6 +31,12 @@ public class PluginConfigGroup extends Pane {
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
+	
+	private MaxCoordinatesInterface maxXComponent;
+	private MaxCoordinatesInterface maxYComponent;
+	private HashMap<MaxCoordinatesInterface, Point2D> componentMaxPositions = new HashMap<>();
+	double maxX;
+	double maxY;
 
 	public PluginConfigGroup(Channel channel, ScrollPane parent) {
 		this.channel = channel;
@@ -97,9 +106,7 @@ public class PluginConfigGroup extends Pane {
 					}
 				}
 			}
-
 		});
-
 	}
 
 	public boolean checkForHover() {
@@ -192,13 +199,85 @@ public class PluginConfigGroup extends Pane {
 
 	public void updateMaxCoordinatesOfComponent(MaxCoordinatesInterface component) {
 
-		if (component.getMaxX() + scrollOffset > getWidth()) {
+		updateMaxCoordinatesInternal(component);
+		
+		componentMaxPositions.put(component, new Point2D(component.getMaxX(), component.getMaxY()));
+	}
+	
+	private void updateMaxCoordinatesInternal(MaxCoordinatesInterface component) {
+		
+		boolean checkMaxX = false;
+		boolean checkMaxY = false;
+		boolean checkGreaterX = false;
+		boolean checkGreaterY = false;
+		
+		if(maxXComponent == null) {
+			maxXComponent = component;
 			setPrefWidth(component.getMaxX() + scrollOffset);
+			maxX = maxXComponent.getMaxX();
+		} else {
+			checkMaxX = true;
 		}
-
-		if (component.getMaxY() + scrollOffset > getHeight()) {
+		
+		if(maxYComponent == null) {
+			maxYComponent = component;
 			setPrefHeight(component.getMaxY() + scrollOffset);
+			maxY = maxYComponent.getMaxY();
+		} else {
+			checkMaxY = true;
 		}
+		
+		if(checkMaxX && maxXComponent.equals(component)) {
+			checkMaxX();
+		} else {
+			checkGreaterX = true;
+		}
+		
+		if(checkMaxY && maxYComponent.equals(component)) {
+			checkMaxY();
+		} else {
+			checkGreaterY = true;
+		}
+		
+		if(checkMaxX && checkGreaterX && component.getMaxX() > maxX) {
+			setPrefWidth(component.getMaxX() + scrollOffset);
+			maxXComponent = component;
+			maxX = maxXComponent.getMaxX();
+		}
+		
+		if(checkMaxY && checkGreaterY && component.getMaxY() > maxY) {
+			setPrefHeight(component.getMaxY() + scrollOffset);
+			maxYComponent = component;
+			maxY = maxYComponent.getMaxY();
+		}
+	}
+	
+	private void checkMaxX() {
+		
+		if(!(maxXComponent.getMaxX() > maxX)) {
+			for(Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
+				if(entry.getValue().getX() > maxXComponent.getMaxX()) {
+					maxXComponent = entry.getKey();
+				}
+			}			
+		}
+		
+		setPrefWidth(maxXComponent.getMaxX() + scrollOffset);
+		maxX = maxXComponent.getMaxX();
+	}
+	
+	private void checkMaxY() {
+		
+		if(!(maxYComponent.getMaxY() > maxY)) {
+			for(Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
+				if(entry.getValue().getY() > maxXComponent.getMaxY()) {
+					maxYComponent = entry.getKey();
+				}
+			}			
+		}
+		
+		setPrefHeight(maxYComponent.getMaxY() + scrollOffset);
+		maxY = maxYComponent.getMaxY();
 	}
 
 	public boolean isDrawing() {
