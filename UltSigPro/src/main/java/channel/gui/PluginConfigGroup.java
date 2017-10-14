@@ -10,6 +10,7 @@ import channel.Channel;
 import channel.PluginInput;
 import channel.PluginOutput;
 import gui.USPGui;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -57,10 +58,16 @@ public class PluginConfigGroup extends Pane {
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 
 				parent.setVvalue(parent.getVmax());
-				drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
-						MouseInfo.getPointerInfo().getLocation().getY());
-			}
+				Platform.runLater(new Runnable() {
 
+					@Override
+					public void run() {
+						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
+								MouseInfo.getPointerInfo().getLocation().getY());
+					}
+					
+				});
+			}
 		});
 
 		widthProperty().addListener(new ChangeListener<Number>() {
@@ -69,8 +76,15 @@ public class PluginConfigGroup extends Pane {
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 
 				parent.setHvalue(parent.getHmax());
-				drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
-						MouseInfo.getPointerInfo().getLocation().getY());
+				Platform.runLater(new Runnable() {
+
+					@Override
+					public void run() {
+						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
+								MouseInfo.getPointerInfo().getLocation().getY());
+					}
+					
+				});
 			}
 
 		});

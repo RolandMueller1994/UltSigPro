@@ -181,7 +181,9 @@ public class PluginConnection {
 				setEndY(getStartY());
 			}
 			
-			coordinatesListener.updateMaxCoordinatesOfComponent(this);
+			if(coordinatesListener != null) {
+				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			}
 		}
 
 		public void updateCoordinates(ConnectionLine line, double x, double y) {
@@ -199,7 +201,9 @@ public class PluginConnection {
 				}
 			}
 			
-			coordinatesListener.updateMaxCoordinatesOfComponent(this);
+			if(coordinatesListener != null) {
+				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			}
 		}
 		
 		/**
@@ -285,7 +289,9 @@ public class PluginConnection {
 				}
 			}
 			
-			coordinatesListener.updateMaxCoordinatesOfComponent(this);
+			if(coordinatesListener != null) {
+				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			}
 		}
 
 		/**
@@ -341,7 +347,9 @@ public class PluginConnection {
 				setEndX(getEndX());
 			}
 			
-			coordinatesListener.updateMaxCoordinatesOfComponent(this);
+			if(coordinatesListener != null) {
+				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			}
 		}
 
 		public void setParent(PluginConnection parent) {
