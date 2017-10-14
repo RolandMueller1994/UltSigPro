@@ -141,7 +141,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			inputDevicesList.get(device).add(config.getName());
 		}
 
-		for (String device : config.getWaveFiles().keySet()) {
+		for (String device : config.getInputWaveFiles().keySet()) {
+			
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
@@ -169,6 +170,20 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 			// add channel name to this device
 			outputDevicesList.get(device).add(config.getName());
+		}
+		
+		for (String device : config.getOutputWaveFiles().keySet()) {
+			
+			// new output device entry
+			if (!outputDevicesList.containsKey(device)) {
+				outputDevicesList.put(device, new LinkedList<>());
+				
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+				
+				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputQueues.put(device, queue);
+			}
 		}
 
 	}

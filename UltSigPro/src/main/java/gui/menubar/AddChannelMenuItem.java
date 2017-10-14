@@ -11,7 +11,6 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableArray;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -102,7 +101,8 @@ public class AddChannelMenuItem extends MenuItem {
 
 		private List<ChoiceBox<String>> inputBoxes = new LinkedList<>();
 		private List<ChoiceBox<String>> outputBoxes = new LinkedList<>();
-		private HashMap<String, File> waveFiles = new HashMap<>();
+		private HashMap<String, File> inputWaveFiles = new HashMap<>();
+		private HashMap<String, File> outputWaveFiles = new HashMap<>();
 		private TextField titleTextField;
 
 		private GridPane gridPane;
@@ -211,13 +211,14 @@ public class AddChannelMenuItem extends MenuItem {
 		public ChannelConfig getConfig() {
 			List<String> inputDevices = new LinkedList<>();
 			List<String> outputDevices = new LinkedList<>();
-			HashMap<String, File> choosedWaveFiles = new HashMap<>();
+			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
+			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
 
 			for (ChoiceBox<String> choiceBox : inputBoxes) {
 				String cur;
 				if ((cur = choiceBox.getSelectionModel().getSelectedItem()) != null) {
-					if (waveFiles.containsKey(cur)) {
-						choosedWaveFiles.put(cur, waveFiles.get(cur));
+					if (inputWaveFiles.containsKey(cur)) {
+						choosedInputWaveFiles.put(cur, inputWaveFiles.get(cur));
 					} else {
 						inputDevices.add(cur);
 					}
@@ -227,11 +228,15 @@ public class AddChannelMenuItem extends MenuItem {
 			for (ChoiceBox<String> choiceBox : outputBoxes) {
 				String cur;
 				if ((cur = choiceBox.getSelectionModel().getSelectedItem()) != null) {
-					outputDevices.add(cur);
+					if (outputWaveFiles.containsKey(cur)) {
+						choosedOutputWaveFiles.put(cur, outputWaveFiles.get(cur));
+					} else {
+						outputDevices.add(cur);
+					}
 				}
 			}
 
-			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices, choosedWaveFiles);
+			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices, choosedInputWaveFiles, choosedOutputWaveFiles);
 		}
 
 		private GridPane getInputPane() {
@@ -261,13 +266,14 @@ public class AddChannelMenuItem extends MenuItem {
 					if (firstBox.getSelectionModel().getSelectedItem()
 							.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 						FileChooser fileChooser = new FileChooser();
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 						File waveFile = fileChooser.showOpenDialog(USPGui.stage);
 						if (waveFile != null) {
 							list.add(waveFile.getName());
 							firstBox.setItems(list);
 							firstBox.setValue(waveFile.getName());
-							if (!waveFiles.containsKey(waveFile.getName())) {
-								waveFiles.put(waveFile.getName(), waveFile);
+							if (!inputWaveFiles.containsKey(waveFile.getName())) {
+								inputWaveFiles.put(waveFile.getName(), waveFile);
 							}
 						}
 					}
@@ -294,13 +300,14 @@ public class AddChannelMenuItem extends MenuItem {
 							if (box.getSelectionModel().getSelectedItem()
 									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 								FileChooser fileChooser = new FileChooser();
+								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 								File waveFile = fileChooser.showOpenDialog(USPGui.stage);
 								if (waveFile != null) {
 									list.add(waveFile.getName());
 									box.setItems(list);
 									box.setValue(waveFile.getName());
-									if (!waveFiles.containsKey(waveFile.getName())) {
-										waveFiles.put(waveFile.getName(), waveFile);
+									if (!inputWaveFiles.containsKey(waveFile.getName())) {
+										inputWaveFiles.put(waveFile.getName(), waveFile);
 									}
 								}
 							}
@@ -353,7 +360,30 @@ public class AddChannelMenuItem extends MenuItem {
 			firstBox.setMaxWidth(Double.MAX_VALUE);
 			outputPane.add(firstBox, 1, 0);
 			// TODO Get items from output handler
-			firstBox.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
+			ObservableList<String> list = FXCollections.observableArrayList(outputAdmin.getOutputDevices());
+			list.add("Wave " + lanHandler.getLocalizedText("file"));
+			firstBox.setItems(list);
+			
+			firstBox.setOnAction(new EventHandler<ActionEvent>() {
+
+				@Override
+				public void handle(ActionEvent event) {
+					if (firstBox.getSelectionModel().getSelectedItem()
+							.equals("Wave " + lanHandler.getLocalizedText("file"))) {
+						FileChooser fileChooser = new FileChooser();
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+						File waveFile = fileChooser.showSaveDialog(USPGui.stage);
+						if (waveFile != null) {
+							list.add(waveFile.getName());
+							firstBox.setItems(list);
+							firstBox.setValue(waveFile.getName());
+							if (!outputWaveFiles.containsKey(waveFile.getName())) {
+								outputWaveFiles.put(waveFile.getName(), waveFile);
+							}
+						}
+					}
+				}
+			});
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
@@ -364,7 +394,30 @@ public class AddChannelMenuItem extends MenuItem {
 				@Override
 				public void handle(ActionEvent event) {
 					ChoiceBox<String> box = new ChoiceBox<>();
-					box.setItems(FXCollections.observableArrayList(outputAdmin.getOutputDevices()));
+					ObservableList<String> list = FXCollections.observableArrayList(outputAdmin.getOutputDevices());
+					list.add("Wave " + lanHandler.getLocalizedText("file"));
+					box.setItems(list);
+					
+					box.setOnAction(new EventHandler<ActionEvent>() {
+
+						@Override
+						public void handle(ActionEvent event) {
+							if (box.getSelectionModel().getSelectedItem()
+									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
+								FileChooser fileChooser = new FileChooser();
+								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+								File waveFile = fileChooser.showSaveDialog(USPGui.stage);
+								if (waveFile != null) {
+									list.add(waveFile.getName());
+									box.setItems(list);
+									box.setValue(waveFile.getName());
+									if (!outputWaveFiles.containsKey(waveFile.getName())) {
+										outputWaveFiles.put(waveFile.getName(), waveFile);
+									}
+								}
+							}
+						}
+					});
 					outputBoxes.add(box);
 					GridPane.setHgrow(box, Priority.ALWAYS);
 					box.setMaxWidth(Double.MAX_VALUE);
