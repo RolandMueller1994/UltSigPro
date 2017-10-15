@@ -197,41 +197,51 @@ public class OutputAdministrator {
 		}
 	}
 
-	public void stopPlayback() {
-
-		executor.shutdownNow();
-
+	private void createWaveFiles() {
+		
 		for (Map.Entry<String, FileOutputStream> entry : waveFileStreams.entrySet()) {
 			DataOutputStream output = new DataOutputStream(entry.getValue());
 			try {
+				int waveSize = waveData.get(entry.getKey()).size(); 
+				
+				// RIFF section
 				writeString(output, "RIFF");
-				writeInt(output, waveData.get(entry.getKey()).size() * byteBufferSize * 2 + 36); // chunk
-				// size
-				writeString(output, "WAVE"); // format
-				writeString(output, "fmt "); // subchunk 1 id
-				writeInt(output, 16); // subchunk 1 size
+				writeInt(output, waveSize * byteBufferSize * 2 + 36);
+				writeString(output, "WAVE");
+				
+				// format section
+				writeString(output, "fmt "); // header signature (space necessary)
+				writeInt(output, 16); // following format section size
 				writeShort(output, (short) 1); // audio format (1 = PCM)
 				writeShort(output, (short) 1); // number of channels
 				writeInt(output, 44100); // sample rate
-				writeInt(output, 44100 * 2); // byte rate
-				writeShort(output, (short) 2); // block align
+				writeInt(output, 44100 * 2); // byte rate (byte/second)
+				writeShort(output, (short) 2); // frame size
 				writeShort(output, (short) 16); // bits per sample
-				writeString(output, "data"); // subchunk 2 id
-				writeInt(output, waveData.get(entry.getKey()).size() * 200); // subchunk
-																				// 2
-																				// size
+				
+				// data section
+				writeString(output, "data"); // header signature
+				writeInt(output, waveSize * byteBufferSize * 2); // following data section size 				
 				while (!waveData.get(entry.getKey()).isEmpty()) {
 					byte[] b = waveData.get(entry.getKey()).removeFirst();
 					output.write(b);
 				}
 
 				entry.getValue().close();
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} // chunk id
+			}
 
 		}
+	}
+	
+	public void stopPlayback() {
+
+		executor.shutdownNow();
+		createWaveFiles();
+		
 	}
 
 	/**
@@ -275,7 +285,7 @@ public class OutputAdministrator {
 		}
 	}
 
-	public synchronized void createWaveFiles(HashMap<String, File> waveFiles, OutputDataSpeaker speaker) {
+	public synchronized void setWaveFileEntries(HashMap<String, File> waveFiles, OutputDataSpeaker speaker) {
 
 		Collection<String> fileNames = waveFiles.keySet();
 		distributionMap.put(speaker, fileNames);
