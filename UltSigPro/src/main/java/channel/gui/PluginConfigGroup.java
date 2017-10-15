@@ -139,13 +139,6 @@ public class PluginConfigGroup extends Pane {
 		});
 	}
 
-	public boolean checkForHover() {
-		if (workCon == null || workCon.getActLine().isHorizontal()) {
-			return true;
-		}
-		return false;
-	}
-
 	private void drawLine(MouseEvent event) {
 		drawLine(event.getScreenX(), event.getScreenY());
 	}
@@ -168,6 +161,10 @@ public class PluginConfigGroup extends Pane {
 			workCon = new PluginConnection(this, endpoint, xCoord, yCoord);
 			endpoint.addLine(workCon.getActLine());
 		} else {
+			if(!workCon.getActLine().isHorizontal()) {
+				workCon.changeOrientation(xCoord, yCoord);
+			}
+			
 			if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
 				workCon.devideActLine(xCoord, yCoord);
 			}

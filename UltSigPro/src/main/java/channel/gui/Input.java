@@ -97,13 +97,10 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 
-				if(configGroup.checkForHover()) {
-					for (Line line : lines) {
-						line.setStroke(Color.RED);
-					}
-					System.out.println("Mouse entered");
-					hovered = true;					
+				for (Line line : lines) {
+					line.setStroke(Color.RED);
 				}
+				hovered = true;	
 			}
 		});
 
@@ -115,7 +112,6 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 				for (Line line : lines) {
 					line.setStroke(Color.BLACK);
 				}
-				System.out.println("Mouse leaved");
 				hovered = false;
 			}
 		});

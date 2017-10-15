@@ -98,12 +98,11 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 
-				if(configGroup.checkForHover()) {
-					for (Line line : lines) {
-						line.setStroke(Color.RED);
-					}
-					hovered = true;					
+				for (Line line : lines) {
+					line.setStroke(Color.RED);
 				}
+				hovered = true;					
+			
 			}
 		});
 
