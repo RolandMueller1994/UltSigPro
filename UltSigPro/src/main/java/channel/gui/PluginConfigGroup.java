@@ -64,6 +64,14 @@ public class PluginConfigGroup extends Pane {
 					public void run() {
 						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
 								MouseInfo.getPointerInfo().getLocation().getY());
+						
+						for(SigproPlugin plugin : plugins) {
+							if(plugin.isDragged()) {
+								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
+										MouseInfo.getPointerInfo().getLocation().getY());
+								return;
+							}
+						}
 					}
 					
 				});
@@ -82,6 +90,14 @@ public class PluginConfigGroup extends Pane {
 					public void run() {
 						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
 								MouseInfo.getPointerInfo().getLocation().getY());
+						
+						for(SigproPlugin plugin : plugins) {
+							if(plugin.isDragged()) {
+								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
+										MouseInfo.getPointerInfo().getLocation().getY());
+								return;
+							}
+						}
 					}
 					
 				});

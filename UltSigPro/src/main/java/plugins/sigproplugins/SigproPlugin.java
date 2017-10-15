@@ -28,6 +28,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 
 	protected Pane gui;
 	
+	private boolean dragged = false;
+	
 	private LinkedList<Input> inputs = new LinkedList<> ();
 	private LinkedList<Output> outputs = new LinkedList<> ();
 
@@ -62,42 +64,19 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				@Override
 				public void handle(MouseEvent event) {
 					
-					localPositionX = gui.getLayoutX();
-					localPositionY = gui.getLayoutY();
+					dragged = true;
 					
-					// Absolute position in scene
-					absolutPositionX = gui.localToScene(gui.getLayoutBounds()).getMinX();
-					absolutPositionY = gui.localToScene(gui.getLayoutBounds()).getMinY();
+					drag(event.getScreenX(), event.getScreenY());
+				}
+				
+			});
+			
+			gui.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+
+				@Override
+				public void handle(MouseEvent event) {
 					
-					// Difference between absolute position and local position
-					offsetX = absolutPositionX - localPositionX;
-					offsetY = absolutPositionY - localPositionY;
-	
-					// Calculate the local position
-					double xPosition = event.getSceneX() - mouseOffsetX - offsetX;
-					double yPosition = event.getSceneY() - mouseOffsetY - offsetY;
-					
-					if(xPosition < 0) {
-						xPosition = 0;
-					}
-					if(yPosition < 0) {
-						yPosition = 0;
-					}
-					
-					gui.setLayoutX(xPosition);
-					gui.setLayoutY(yPosition);
-					
-					fireUpdateMaxCoordinates();
-					
-					// Update the position of ports
-					for(Input input : inputs) {
-						input.updatePosition(xPosition, yPosition);
-					}
-					
-					for(Output output : outputs) {
-						output.updatePosition(xPosition, yPosition);
-					}
-					
+					dragged = false;
 				}
 				
 			});
@@ -105,8 +84,50 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		return gui;
 	}
 	
+	public void drag(double screenX, double screenY) {
+		localPositionX = gui.getLayoutX();
+		localPositionY = gui.getLayoutY();
+		
+		// Absolute position in scene
+		absolutPositionX = gui.localToScreen(gui.getLayoutBounds()).getMinX();
+		absolutPositionY = gui.localToScreen(gui.getLayoutBounds()).getMinY();
+		
+		// Difference between absolute position and local position
+		offsetX = absolutPositionX - localPositionX;
+		offsetY = absolutPositionY - localPositionY;
+
+		// Calculate the local position
+		double xPosition = screenX - mouseOffsetX - offsetX;
+		double yPosition = screenY - mouseOffsetY - offsetY;
+		
+		if(xPosition < 0) {
+			xPosition = 0;
+		}
+		if(yPosition < 0) {
+			yPosition = 0;
+		}
+		
+		gui.setLayoutX(xPosition);
+		gui.setLayoutY(yPosition);
+		
+		fireUpdateMaxCoordinates();
+		
+		// Update the position of ports
+		for(Input input : inputs) {
+			input.updatePosition(xPosition, yPosition);
+		}
+		
+		for(Output output : outputs) {
+			output.updatePosition(xPosition, yPosition);
+		}
+	}
+	
 	private void fireUpdateMaxCoordinates() {
 		coordinatesListener.updateMaxCoordinatesOfComponent(this);
+	}
+	
+	public boolean isDragged() {
+		return dragged;
 	}
 	
 	public void addInput(Input input) {
