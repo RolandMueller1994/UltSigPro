@@ -518,12 +518,10 @@ public class OutputAdministrator {
 							waveByteData[2 * i] = outByteData[2 * i + 1];
 						}
 		
-						for (String file : distributionMap.get(speaker)) {
-							waveData.get(file).add(waveByteData);
-							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(file, soundValueData, false);
-						}
-						
-						if (!waveFileStreams.containsKey(entry.getKey())) {
+						if (waveFileStreams.containsKey(entry.getKey())) {
+							waveData.get(entry.getKey()).add(waveByteData);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+						} else {							
 							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
 						}
