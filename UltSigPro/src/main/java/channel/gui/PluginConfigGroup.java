@@ -26,7 +26,8 @@ public class PluginConfigGroup extends Pane {
 	private Channel channel;
 	private ScrollPane parent;
 
-	private static double scrollOffset = 40;
+	private static final double scrollOffset = 10;
+	private static final long scrollSpeed = 10;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 
@@ -57,6 +58,13 @@ public class PluginConfigGroup extends Pane {
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 
+				try {
+					Thread.sleep(scrollSpeed);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				parent.setVvalue(parent.getVmax());
 				Platform.runLater(new Runnable() {
 
@@ -83,6 +91,13 @@ public class PluginConfigGroup extends Pane {
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 
+				try {
+					Thread.sleep(scrollSpeed);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				parent.setHvalue(parent.getHmax());
 				Platform.runLater(new Runnable() {
 
