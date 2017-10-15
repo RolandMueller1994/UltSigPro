@@ -205,7 +205,7 @@ public class OutputAdministrator {
 			DataOutputStream output = new DataOutputStream(entry.getValue());
 			try {
 				writeString(output, "RIFF");
-				writeInt(output, waveData.get(entry.getKey()).size() * 200 + 36); // chunk
+				writeInt(output, waveData.get(entry.getKey()).size() * byteBufferSize * 2 + 36); // chunk
 				// size
 				writeString(output, "WAVE"); // format
 				writeString(output, "fmt "); // subchunk 1 id
@@ -280,12 +280,10 @@ public class OutputAdministrator {
 		Collection<String> fileNames = waveFiles.keySet();
 		distributionMap.put(speaker, fileNames);
 		for (String fileName : fileNames) {
-
-			/*if (!distributionQueue.containsKey(fileName)) {
+			if (!distributionQueue.containsKey(fileName)) {
 				distributionQueue.put(fileName, new HashSet<OutputDataSpeaker>());
 			}
 			distributionQueue.get(fileName).add(speaker);
-*/
 			waveData.put(fileName, new LinkedList<>());
 			try {
 				waveFileStreams.put(fileName, new FileOutputStream(waveFiles.get(fileName)));
@@ -293,6 +291,7 @@ public class OutputAdministrator {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			allSpeaker.add(speaker);
 		}
 	}
 
@@ -425,7 +424,7 @@ public class OutputAdministrator {
 
 		private boolean first = true;
 		private boolean firstOutput = true;
-		private int inputPackageSize = 100;
+		private int inputPackageSize = byteBufferSize;
 		private int outputPackageSize = inputPackageSize * 2;
 
 		private HashMap<OutputDataSpeaker, int[]> data = new HashMap<>();
@@ -508,16 +507,18 @@ public class OutputAdministrator {
 							waveByteData[2 * i + 1] = outByteData[2 * i];
 							waveByteData[2 * i] = outByteData[2 * i + 1];
 						}
-
+		
 						for (String file : distributionMap.get(speaker)) {
 							waveData.get(file).add(waveByteData);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(file, soundValueData, false);
 						}
-						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+						
+						if (!waveFileStreams.containsKey(entry.getKey())) {
+							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
+						}
 					}
 				}
-
 				data.clear();
 			}
 		}
