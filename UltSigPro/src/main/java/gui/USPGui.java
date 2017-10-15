@@ -1,7 +1,14 @@
 package gui;
 
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import javax.imageio.ImageIO;
 
 import channel.ChannelConfig;
 import channel.ChannelPane;
@@ -25,9 +32,13 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -74,13 +85,22 @@ public class USPGui extends Application {
 	public void start(Stage primaryStage) throws Exception {
 
 		stage = primaryStage;
+		
+		Image icon = new Image("file:icon.png");
+		
+		primaryStage.getIcons().add(icon);
 
 		LanguageResourceHandler languageRes = LanguageResourceHandler.getInstance();
 
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
-
+		
+		GridPane topGrid = new GridPane();
+		
 		VBox vBox = new VBox();
+		ImageView iconView = new ImageView(icon);
+		
+		topGrid.add(vBox, 0, 0);
 
 		MenuBar buttonMenu = new MenuBar();
 		Menu startMenu = new Menu();
@@ -122,7 +142,8 @@ public class USPGui extends Application {
 
 		BorderPane pane = new BorderPane();
 
-		pane.setTop(vBox);
+		pane.setTop(topGrid);
+		GridPane.setHgrow(vBox, Priority.ALWAYS);
 
 		// Build Channels
 		SplitPane centerSplit = new SplitPane();

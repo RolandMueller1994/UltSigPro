@@ -1,6 +1,7 @@
 package gui.soundLevelDisplay;
 
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -18,24 +19,29 @@ import javafx.scene.layout.HBox;
 public class SoundLevelDisplayItem extends GridPane {
 
 	private Label deviceNameField;
-	private ProgressBar soundLevel;
+	private ProgressBar soundLevelBar;
+	private ProgressBar overdriveIndicator;
 	private LinkedList<LinkedList<Integer>> dataQueue;
 
 	private LinkedList<Integer> internalBuffer = new LinkedList<>();
-
 	private ScheduledThreadPoolExecutor executor;
-
+	
 	private boolean playInternally = false;
 
 	public SoundLevelDisplayItem(String deviceName, LinkedList<LinkedList<Integer>> dataQueue) {
 
 		deviceNameField = new Label(deviceName);
-		soundLevel = new ProgressBar(0.1);
-		soundLevel.setStyle("-fx-accent: green");
+		soundLevelBar = new ProgressBar(0.1);
+		soundLevelBar.setStyle("-fx-accent: green");
+		overdriveIndicator = new ProgressBar(0);
+		overdriveIndicator.setStyle("-fx-accent: red");
+		overdriveIndicator.setMaxWidth(10);
 		this.setVgap(5);
-		this.add(deviceNameField, 0, 0);
-		this.add(soundLevel, 0, 1);
-		GridPane.setHalignment(soundLevel, HPos.CENTER);
+		this.setHgap(3);
+		this.add(deviceNameField, 0, 0, 2, 1);
+		this.add(soundLevelBar, 0, 1);
+		this.add(overdriveIndicator, 1, 1);
+		GridPane.setHalignment(soundLevelBar, HPos.CENTER);
 
 		this.dataQueue = dataQueue;
 	}
@@ -44,13 +50,13 @@ public class SoundLevelDisplayItem extends GridPane {
 
 		internalBuffer.addAll(soundValues);
 
-		if (internalBuffer.size() > 6000) {
+		int bufferSize = internalBuffer.size();
+		if (bufferSize > 2500) {
 			double maxValue = 0;
-
 			// look for the max value
-			for (int i = 0; i < soundValues.size(); i++) {
-				if (maxValue < soundValues.get(i)) {
-					maxValue = soundValues.get(i);
+			for (int curValue : internalBuffer) {
+				if (maxValue < curValue) {
+					maxValue = curValue;
 				}
 			}
 
@@ -60,15 +66,12 @@ public class SoundLevelDisplayItem extends GridPane {
 			if (maxValue < -30) {
 				maxValue = -30;
 			}
-			this.soundLevel.setProgress((30 + maxValue) / 30);
+			this.soundLevelBar.setProgress((30 + maxValue) / 30);
 			if (maxValue > -3) {
-				this.soundLevel.setStyle("-fx-accent: red");
-			} else if (maxValue > -6) {
-				this.soundLevel.setStyle("-fx-accent: orange");
+				overdriveIndicator.setProgress(100);
 			} else {
-				this.soundLevel.setStyle("-fx-accent: green");
+				overdriveIndicator.setProgress(0);
 			}
-
 			internalBuffer.clear();
 		}
 	}

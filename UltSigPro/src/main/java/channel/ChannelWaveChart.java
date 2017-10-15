@@ -28,7 +28,7 @@ import javafx.util.Duration;
 public class ChannelWaveChart extends Pane {
 	
 	private int count;
-	private int seconds = 120;
+	private int seconds = 20;
 	private int samplingFreq = 44100;
 	
 	private int verticalSize;
@@ -46,36 +46,25 @@ public class ChannelWaveChart extends Pane {
 	
 	private Pane curPane;
 	
-	private boolean first;
+	private boolean play;
 	
 	private HBox hBox = new HBox();
 	
 	public ChannelWaveChart () {
 		widthProperty().addListener(new ResizeListener());
 		heightProperty().addListener(new ResizeListener());
+		getChildren().add(hBox);
 	}
 	
 	public synchronized void setPlay(boolean play) {
-		first = play;
+		this.play = play;
+		hBox.getChildren().clear();
 		if(play) {
 			curPane = null;
 			sliceCount = 0;
 			sliceCount = 0;
 			barCount = 0;
 			rms = 0;
-			ObservableList<Node> nodes = getChildren();
-			Iterator<Node> iter = nodes.iterator();
-			
-			LinkedList<Node> removeList = new LinkedList<>();
-			
-			while(iter.hasNext()) {
-				removeList.add(iter.next());
-			}
-			nodes.removeAll(removeList);
-			
-			hBox = new HBox();
-			
-			getChildren().add(hBox);
 			
 			executeResize();
 		}
@@ -91,12 +80,7 @@ public class ChannelWaveChart extends Pane {
 					curPane.setPrefWidth(barsPerSlice * pixelsPerBar);
 					barCount = 0;
 					
-					if(sliceCount>=slices) {
-						Platform.runLater(new SliceAddRunnable(curPane, true));
-					} else {
-						Platform.runLater(new SliceAddRunnable(curPane, false));
-						sliceCount++;
-					}
+					Platform.runLater(new SliceAddRunnable(curPane));
 				}
 				
 				double normValue = ((double)data[i]) / Short.MAX_VALUE;
@@ -156,21 +140,42 @@ public class ChannelWaveChart extends Pane {
 			return;
 		}
 		
-		slices = ((int)((double) horizontalSize) / maxSliceWidth) + 1;
-		
-		ObservableList<Node> nodes = hBox.getChildren();
-		if(nodes != null && nodes.size() > slices) {
-			nodes.remove(0, nodes.size() - slices);
+		if(play) {
+			slices = horizontalSize / (barsPerSlice * pixelsPerBar);
+		} else {
+			slices = ((int)((double) horizontalSize) / maxSliceWidth) + 1;			
 		}
 		
-		samplesPerBar = (seconds*samplingFreq) / (verticalSize * pixelsPerBar);
-		barsPerSlice = horizontalSize / (slices * pixelsPerBar);
+		ObservableList<Node> nodes = hBox.getChildren();
+		if(nodes.size() > slices && play) {
+			nodes.remove(0, nodes.size() - slices);
+			sliceCount = nodes.size();
+		} else if(!play) {
+			nodes.clear();
+			sliceCount = 0;
+		}
+		
+		if(!play) {
+			barsPerSlice = horizontalSize / (slices * pixelsPerBar);			
+			samplesPerBar = (seconds * samplingFreq) / (slices * barsPerSlice);
+		}
 		
 		System.out.println("VerticalSize: " + verticalSize);
 		System.out.println("HorizontalSize: " + horizontalSize);
 		System.out.println("Slices: " + slices);
 		System.out.println("SamplesPerBar: " + samplesPerBar);
 		System.out.println("BarsPerSlice: " + barsPerSlice);
+	}
+	
+	private synchronized boolean checkSliceRemove(Pane slice) {
+		if(sliceCount<slices) {
+			hBox.getChildren().add(slice);
+			sliceCount++;
+			return false;
+		}
+		hBox.getChildren().remove(0);
+		hBox.getChildren().add(slice);
+		return true;
 	}
 	
 	private class ResizeListener implements ChangeListener<Number> {
@@ -202,21 +207,14 @@ public class ChannelWaveChart extends Pane {
 	private class SliceAddRunnable implements Runnable {
 
 		private Pane slice;
-		private boolean remove;
 		
-		public SliceAddRunnable(Pane slice, boolean remove) {
+		public SliceAddRunnable(Pane slice) {
 			this.slice = slice;
-			this.remove = remove;
 		}
 		
 		@Override
 		public void run() {
-			if(remove) {
-				hBox.getChildren().remove(0);
-				hBox.getChildren().add(slice);
-			} else {
-				hBox.getChildren().add(slice);
-			}
+			checkSliceRemove(slice);
 		}
 		
 	}
