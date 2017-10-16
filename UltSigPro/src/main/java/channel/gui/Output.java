@@ -36,7 +36,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	
 	private Output thisOutput;
 	
-	private ConnectionLine line;
+	private ConnectionLine conLine;
 	
 	private boolean hovered = false;
 
@@ -98,10 +98,12 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 
-				for (Line line : lines) {
-					line.setStroke(Color.RED);
+				if(conLine == null) {
+					for (Line line : lines) {
+						line.setStroke(Color.RED);
+					}
+					hovered = true;									
 				}
-				hovered = true;					
 			
 			}
 		});
@@ -147,8 +149,8 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
-		if(line != null) {			
-			line.updateCoordinates(this, conPosX, conPosY);
+		if(conLine != null) {			
+			conLine.updateCoordinates(this, conPosX, conPosY);
 		}
 	}
 
@@ -159,9 +161,9 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	}
 
 	@Override
-	public void addLine(ConnectionLine line) {
+	public void addLine(ConnectionLine conLine) {
 		
-		this.line = line;
+		this.conLine = conLine;
 	}
 	
 	public boolean isHovered() {
