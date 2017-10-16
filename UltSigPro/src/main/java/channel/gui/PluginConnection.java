@@ -4,8 +4,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
 public class PluginConnection {
@@ -207,6 +212,8 @@ public class PluginConnection {
 			if(coordinatesListener != null) {
 				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
 			}
+			
+			updateDragPane();
 		}
 		
 		/**
@@ -295,6 +302,8 @@ public class PluginConnection {
 			if(coordinatesListener != null) {
 				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
 			}
+			
+			updateDragPane();
 		}
 
 		/**
@@ -311,6 +320,7 @@ public class PluginConnection {
 			this.secondEnd = secondEnd;
 			
 			updateCoordinates(secondEnd, x, y);
+			updateDragPane();
 		}
 		
 		public boolean checkCoordinates(double x, double y) {
@@ -353,6 +363,7 @@ public class PluginConnection {
 			if(coordinatesListener != null) {
 				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
 			}
+			updateDragPane();
 		}
 
 		public void setParent(PluginConnection parent) {
@@ -375,6 +386,63 @@ public class PluginConnection {
 		public void registerMaxCoordinatesUpdateListener(PluginConfigGroup coordinatesListener) {
 			
 			this.coordinatesListener = coordinatesListener;
+		}
+		
+		private void updateCoordinatesInternal(double x, double y) {
+			if(firstEnd == null && secondEnd == null) {
+				double localX = coordinatesListener.screenToLocal(x, y).getX();
+				double localY = coordinatesListener.screenToLocal(x, y).getY();
+				
+				if(horizontal) {
+					setStartY(localY);
+					setEndY(localY);
+				} else {
+					setStartX(localX);
+					setEndX(localX);
+				}
+				
+				if(firstLine != null) {
+					firstLine.updateCoordinates(this, localX, localY);
+				}
+				if(secondLine != null) {
+					secondLine.updateCoordinates(this, localX, localY);
+				}
+				
+				updateDragPane();
+			}
+		}
+		
+		private void updateDragPane() {
+			
+			if(dragPane == null) {
+				dragPane = new Pane();
+				coordinatesListener.getChildren().add(dragPane);
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						updateCoordinatesInternal(event.getScreenX(), event.getScreenY());
+					}
+					
+				});
+			}
+			
+			double layoutX = getStartX() < getEndX() ? getStartX() : getEndX();
+			double layoutY = getStartY() < getEndY() ? getStartY() : getEndY(); 
+			double width = horizontal ? Math.abs(getStartX() - getEndX()) - 6 : 6;
+			double height = !horizontal ? Math.abs(getStartY() - getEndY()) - 6: 6;
+			
+			if(horizontal) {
+				dragPane.setLayoutX(layoutX + 3);
+				dragPane.setLayoutY(layoutY - 3);
+			} else {
+				dragPane.setLayoutX(layoutX - 3);
+				dragPane.setLayoutY(layoutY + 3); 
+			}
+			
+			dragPane.setPrefSize(width, height);
 		}
 
 	}
