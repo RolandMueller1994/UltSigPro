@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
 
 public class PluginConnection {
@@ -116,6 +117,8 @@ public class PluginConnection {
 
 		private ConnectionLine firstLine;
 		private ConnectionLine secondLine;
+		
+		private Pane dragPane;
 
 		private boolean horizontal;
 
