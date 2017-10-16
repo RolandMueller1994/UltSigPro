@@ -2,10 +2,7 @@ package channel;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
-
 import javax.annotation.Nonnull;
-
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
@@ -26,9 +23,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -74,8 +68,8 @@ public class ChannelPane extends TitledPane {
 		super.setContent(centralPane);
 		this.config = config;
 		name = config.getName();
-		inputPane = new InputPane(config.getInputDevices(), config.getWaveFiles().keySet());
-		outputPane = new OutputPane(config.getOutputDevices());
+		inputPane = new InputPane(config.getInputDevices(), config.getInputWaveFiles().keySet());
+		outputPane = new OutputPane(config.getOutputDevices(), config.getOutputWaveFiles().keySet());
 		
 		centralPane.add(inputPane, 0, 0);
 		centralPane.add(outputPane, 2, 0);
@@ -95,7 +89,6 @@ public class ChannelPane extends TitledPane {
 			}
 
 		});
-
 		contextMenu = new ContextMenu();
 		contextMenu.getItems().add(deleteMenuItem);
 
@@ -243,7 +236,7 @@ public class ChannelPane extends TitledPane {
 		private Button addButton;
 		private Button removeButton;
 
-		public OutputPane(Collection<String> outputDevices) {
+		public OutputPane(Collection<String> outputDevices, Collection<String> waveFiles) {
 			addButton = new Button("+");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -268,6 +261,10 @@ public class ChannelPane extends TitledPane {
 			table.setPrefSize(200, 100);
 			
 			for (String cur : outputDevices) {
+				table.getItems().add(cur);
+			}
+			
+			for (String cur : waveFiles) {
 				table.getItems().add(cur);
 			}
 

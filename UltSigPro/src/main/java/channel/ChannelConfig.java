@@ -19,7 +19,8 @@ public class ChannelConfig {
 	private String name;
 	private Collection<String> inputDevices;
 	private Collection<String> outputDevices;
-	private HashMap<String, File> waveFiles;
+	private HashMap<String, File> inputWaveFiles;
+	private HashMap<String, File> outputWaveFiles;
 
 	/**
 	 * Creates a new ChannelConfig with the given values.
@@ -32,10 +33,14 @@ public class ChannelConfig {
 	 * @param outputDevices
 	 *            The output devices on which this channel will write data. Can
 	 *            be null.
-	 * @param choosedWaveFiles
+	 * @param inputWaveFiles
+	 *            The file paths to the wave files which should be read.
+	 * @param outputWaveFiles
+	 *            The file paths of the wave files to be created.
 	 */
 	public ChannelConfig(@Nonnull String name, @Nullable Collection<String> inputDevices,
-			@Nullable Collection<String> outputDevices, HashMap<String, File> waveFiles) {
+			@Nullable Collection<String> outputDevices, HashMap<String, File> inputWaveFiles,
+			HashMap<String, File> outputWaveFiles) {
 		this.name = name;
 		if (inputDevices != null) {
 			this.inputDevices = inputDevices;
@@ -47,10 +52,15 @@ public class ChannelConfig {
 		} else {
 			this.outputDevices = new HashSet<String>();
 		}
-		if (!waveFiles.isEmpty()) {
-			this.waveFiles = waveFiles;
+		if (!inputWaveFiles.isEmpty()) {
+			this.inputWaveFiles = inputWaveFiles;
 		} else {
-			this.waveFiles = new HashMap<String, File>();
+			this.inputWaveFiles = new HashMap<String, File>();
+		}
+		if (!outputWaveFiles.isEmpty()) {
+			this.outputWaveFiles = outputWaveFiles;
+		} else {
+			this.outputWaveFiles = new HashMap<String, File>();
 		}
 	}
 
@@ -80,8 +90,18 @@ public class ChannelConfig {
 	 * @return {@linkplain HashMap} with file name as key and file path as
 	 *         object.
 	 */
-	public HashMap<String, File> getWaveFiles() {
-		return waveFiles;
+	public HashMap<String, File> getInputWaveFiles() {
+		return inputWaveFiles;
+	}
+
+	/**
+	 * Get the selected to be created wave files.
+	 * 
+	 * @return {@linkplain HashMap} with file name as key and file path as
+	 *         object.
+	 */
+	public HashMap<String, File> getOutputWaveFiles() {
+		return outputWaveFiles;
 	}
 
 	/**

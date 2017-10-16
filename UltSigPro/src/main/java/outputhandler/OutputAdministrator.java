@@ -1,5 +1,11 @@
 package outputhandler;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,6 +18,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
@@ -19,6 +26,7 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
 import channel.Channel;
+import channel.InputDataListener;
 import channel.OutputDataSpeaker;
 import gui.USPGui;
 import gui.soundLevelDisplay.SoundLevelBar;
@@ -46,6 +54,7 @@ public class OutputAdministrator {
 	private static HashMap<String, Mixer> selectedDevices;
 	private static HashMap<String, SourceDataLine> sourceDataLines;
 	private static boolean stopped = false;
+	private static HashMap<String, FileOutputStream> waveFileStreams;
 
 	private ScheduledThreadPoolExecutor executor;
 
@@ -56,6 +65,9 @@ public class OutputAdministrator {
 	private HashMap<String, HashSet<OutputDataSpeaker>> distributionQueue = new HashMap<>();
 	private HashSet<OutputDataSpeaker> allSpeaker = new HashSet<>();
 
+	private HashMap<OutputDataSpeaker, Collection<String>> distributionMap = new HashMap<>();
+	private HashMap<String, LinkedList<byte[]>> waveData = new HashMap<>();
+
 	public static OutputAdministrator getOutputAdministrator() {
 
 		if (outputAdministrator == null) {
@@ -63,14 +75,15 @@ public class OutputAdministrator {
 			allSoundOutputDevices = new HashMap<>();
 			selectedDevices = new HashMap<>();
 			sourceDataLines = new HashMap<>();
+			waveFileStreams = new HashMap<>();
 		}
 		return outputAdministrator;
 	}
 
 	private OutputAdministrator() {
 		GlobalResourceProvider resProv = GlobalResourceProvider.getInstance();
-		
-		if(resProv.checkRegistered("latency")) {
+
+		if (resProv.checkRegistered("latency")) {
 			try {
 				latency = (long) resProv.getResource("latency");
 			} catch (ResourceProviderException e) {
@@ -166,9 +179,69 @@ public class OutputAdministrator {
 		executor.scheduleAtFixedRate(new OutputRunnable(), 0, 1, TimeUnit.MILLISECONDS);
 	}
 
+	private void writeInt(final DataOutputStream output, final int value) throws IOException {
+		output.write(value >> 0);
+		output.write(value >> 8);
+		output.write(value >> 16);
+		output.write(value >> 24);
+	}
+
+	private void writeShort(final DataOutputStream output, final short value) throws IOException {
+		output.write(value >> 0);
+		output.write(value >> 8);
+	}
+
+	private void writeString(final DataOutputStream output, final String value) throws IOException {
+		for (int i = 0; i < value.length(); i++) {
+			output.write(value.charAt(i));
+		}
+	}
+
+	private void createWaveFiles() {
+		
+		for (Map.Entry<String, FileOutputStream> entry : waveFileStreams.entrySet()) {
+			DataOutputStream output = new DataOutputStream(entry.getValue());
+			try {
+				int waveSize = waveData.get(entry.getKey()).size(); 
+				
+				// RIFF section
+				writeString(output, "RIFF");
+				writeInt(output, waveSize * byteBufferSize * 2 + 36);
+				writeString(output, "WAVE");
+				
+				// format section
+				writeString(output, "fmt "); // header signature (space necessary)
+				writeInt(output, 16); // following format section size
+				writeShort(output, (short) 1); // audio format (1 = PCM)
+				writeShort(output, (short) 1); // number of channels
+				writeInt(output, 44100); // sample rate
+				writeInt(output, 44100 * 2); // byte rate (byte/second)
+				writeShort(output, (short) 2); // frame size
+				writeShort(output, (short) 16); // bits per sample
+				
+				// data section
+				writeString(output, "data"); // header signature
+				writeInt(output, waveSize * byteBufferSize * 2); // following data section size 				
+				while (!waveData.get(entry.getKey()).isEmpty()) {
+					byte[] b = waveData.get(entry.getKey()).removeFirst();
+					output.write(b);
+				}
+
+				entry.getValue().close();
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
 	public void stopPlayback() {
 
 		executor.shutdownNow();
+		createWaveFiles();
+		
 	}
 
 	/**
@@ -212,6 +285,26 @@ public class OutputAdministrator {
 		}
 	}
 
+	public synchronized void setWaveFileEntries(HashMap<String, File> waveFiles, OutputDataSpeaker speaker) {
+
+		Collection<String> fileNames = waveFiles.keySet();
+		distributionMap.put(speaker, fileNames);
+		for (String fileName : fileNames) {
+			if (!distributionQueue.containsKey(fileName)) {
+				distributionQueue.put(fileName, new HashSet<OutputDataSpeaker>());
+			}
+			distributionQueue.get(fileName).add(speaker);
+			waveData.put(fileName, new LinkedList<>());
+			try {
+				waveFileStreams.put(fileName, new FileOutputStream(waveFiles.get(fileName)));
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			allSpeaker.add(speaker);
+		}
+	}
+
 	/**
 	 * Is called, when a new {@linkplain Channel}/{@linkplain OutputDataSpeaker}
 	 * is created. Sets entries in the distributionQueue for the new
@@ -224,6 +317,7 @@ public class OutputAdministrator {
 	 *            added
 	 */
 	public synchronized void registerOutputDevices(OutputDataSpeaker speaker, Collection<String> devices) {
+
 		for (String device : devices) {
 			setSelectedDevice(device);
 			if (!distributionQueue.containsKey(device)) {
@@ -245,7 +339,6 @@ public class OutputAdministrator {
 	 *            added
 	 */
 	public synchronized void addSoundOutputDeviceToSpeaker(OutputDataSpeaker speaker, String device) {
-
 		// Checks, if there is already an existing entry for this
 		// SoundOutputDevice
 		if (!distributionQueue.containsKey(device)) {
@@ -341,7 +434,7 @@ public class OutputAdministrator {
 
 		private boolean first = true;
 		private boolean firstOutput = true;
-		private int inputPackageSize = 100;
+		private int inputPackageSize = byteBufferSize;
 		private int outputPackageSize = inputPackageSize * 2;
 
 		private HashMap<OutputDataSpeaker, int[]> data = new HashMap<>();
@@ -411,6 +504,7 @@ public class OutputAdministrator {
 						LinkedList<Integer> soundValueData = new LinkedList<>();
 
 						byte[] outByteData = new byte[outputPackageSize];
+						byte[] waveByteData = new byte[outputPackageSize];
 
 						for (int i = 0; i < inputPackageSize; i++) {
 							int intSample = outData[i];
@@ -419,13 +513,20 @@ public class OutputAdministrator {
 
 							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
 							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
-						}
 
-						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+							waveByteData[2 * i + 1] = outByteData[2 * i];
+							waveByteData[2 * i] = outByteData[2 * i + 1];
+						}
+		
+						if (waveFileStreams.containsKey(entry.getKey())) {
+							waveData.get(entry.getKey()).add(waveByteData);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+						} else {							
+							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
+						}
 					}
 				}
-
 				data.clear();
 			}
 		}

@@ -1,7 +1,5 @@
 package channel;
 
-import java.util.LinkedList;
-
 /**
  * Interface between {@link Channel} class and {@link OutputAdministrator}
  * class. Allows the OutputAdministrator to fetch signal processed data from

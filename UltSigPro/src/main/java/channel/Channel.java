@@ -43,7 +43,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
 		outputAdmin = OutputAdministrator.getOutputAdministrator();
 		outputAdmin.registerOutputDevices(this, config.getOutputDevices());
-		inputAdmin.openWaveFiles(config.getWaveFiles(), this);
+		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
+		outputAdmin.setWaveFileEntries(config.getOutputWaveFiles(), this);
 
 		pluginInput = new PluginInput();
 		pluginOutput = new PluginOutput();
@@ -51,7 +52,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		LinkedList<InputInfoWrapper> testList = new LinkedList<>();
 		testList.add(new InputInfoWrapper(pluginOutput, "Output"));
 
-		dataflowMap.put(new OutputInfoWrapper(pluginInput, "Input"), testList);
+		dataflowMap.put(new OutputInfoWrapper(pluginInput, "Input"), testList);	
 	}
 
 	@Override
