@@ -4,6 +4,8 @@
 	<menu>
 		<title>filemenutitle</title>
 		<class>gui.menubar.FileMenuItem</class>
+		<class>gui.menubar.SaveMenuItem</class>
+		<class>gui.menubar.SaveAsMenuItem</class>
 	</menu>
 	<menu>
 		<title>pluginmenutitle</title>
