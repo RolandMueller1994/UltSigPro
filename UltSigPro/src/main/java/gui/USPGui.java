@@ -12,11 +12,16 @@ import javax.imageio.ImageIO;
 
 import channel.ChannelConfig;
 import channel.ChannelPane;
+import channel.gui.Input;
+import channel.gui.Output;
+import channel.gui.PluginConfigGroup;
 import gui.menubar.MenuBarCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
@@ -44,6 +49,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
+import plugins.PluginManager;
+import plugins.sigproplugins.internal.GainBlock;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -84,6 +91,13 @@ public class USPGui extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
+		// Initialize plugin manager
+		PluginManager.getInstance();
+		
+		// Register internal plugins
+		PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
+		//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
+		
 		stage = primaryStage;
 		
 		Image icon = new Image("file:icon.png");
@@ -168,8 +182,16 @@ public class USPGui extends Application {
 
 	public static void addChannel(ChannelConfig config) {
 		try {
-			channelBox.getChildren().add(new ChannelPane(config));
+			ChannelPane channelPane = new ChannelPane(config);
+			channelBox.getChildren().add(channelPane);
 			Tab curTab = new Tab(config.getName());
+			
+			ScrollPane scroll = new ScrollPane();
+			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
+			scroll.setContent(configGroup);
+			
+			curTab.setContent(scroll);
+			
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);

@@ -1,11 +1,27 @@
 package plugins.sigproplugins.internal;
 
+
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
+import channel.OutputDataWrapper;
+import channel.OutputInfoWrapper;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import plugins.sigproplugins.SigproPlugin;
-import plugins.sigproplugins.signalrouting.DataDestinationInterface;
 
 /**
  * Internal plugin. Proceeds a clean gain operation.
@@ -13,22 +29,54 @@ import plugins.sigproplugins.signalrouting.DataDestinationInterface;
  * @author roland
  *
  */
-public class GainBlock implements SigproPlugin {
+public class GainBlock extends SigproPlugin {
 
 	private double gain = 1.0;
-	private DataDestinationInterface dest;
+	
+	private String name = "Gain";
+	
+	private final int width = 100;
+	private final int height = 120;
+	
+	private Label nameLabel = new Label(name);
+	private TextField gainTextField = new TextField();
+	private Button onButton = new Button("On");
+	private Rectangle onRect = new Rectangle(width - 10, 25);
+	
+	private boolean on = false;
 
 	/**
 	 * Empty default constructor. Needed for instantiation by reflection. 
 	 */
 	public GainBlock() {
-
+		onButton.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				
+				on = !on;
+				
+				if(on) {
+					onRect.setFill(Color.GREEN);
+				} else {
+					onRect.setFill(Color.GREY);
+				}
+				
+			}
+		});
+		
+		nameLabel.setMaxWidth(width - 10);
+		onButton.setMaxWidth(width - 10);
+		gainTextField.setMaxWidth(width - 10);
+		onRect.setFill(Color.GREY);
+		onRect.setArcHeight(3);
+		onRect.setArcWidth(3);
 	}
 
 	@Override
 	public String getName() {
 
-		return "Gain";
+		return name;
 	}
 
 	@Override
@@ -39,42 +87,50 @@ public class GainBlock implements SigproPlugin {
 
 	@Override
 	public Pane getGUI() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if(gui == null) {
+			gui = getInternalGUI();
+			gui.setPrefSize(width, height);
+			gui.setMaxSize(width, height);
+			
+			GridPane grid = new GridPane();
+			
+			grid.add(nameLabel, 0, 0);
+			grid.add(gainTextField, 0, 1);
+			grid.add(onButton, 0, 2);
+			grid.add(onRect, 0, 3);
+			grid.setPadding(new Insets(5));
+			grid.setVgap(5);
+			
+			gui.getChildren().add(grid);
+			gui.setBackground(new Background(new BackgroundFill(Color.DARKGRAY, new CornerRadii(3), Insets.EMPTY)));
+		}
+		
+		return gui;
 	}
 
 	@Override
-	public void putData(String input, int[] data) {
+	public LinkedList<OutputDataWrapper> putData(String input, double[] data) {
 
-		if (input.contentEquals("in") && dest != null) {
-			for (int i = 0; i < data.length; i++) {
-				data[i] = (int) (gain * data[i]);
-			}
+		if(on) {
+			if (input.contentEquals("in")) {
+				for (int i = 0; i < data.length; i++) {
+					data[i] = gain * data[i];
+				}
+			}			
 		}
 
-		dest.putData(data);
-	}
-
-	@Override
-	public void setOutputConfig(HashMap<String, DataDestinationInterface> outputConfig) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void addOutputConfig(String output, DataDestinationInterface dest) {
-
-		if (output.equals("out")) {
-			this.dest = dest;
-		}
-
+		LinkedList<OutputDataWrapper> output = new LinkedList<> ();
+		output.add(new OutputDataWrapper(new OutputInfoWrapper(this, "out"), data));
+		
+		return output;
 	}
 
 	@Override
 	public HashSet<String> getOutputConfig() {
 
 		HashSet<String> outputs = new HashSet<>();
-		outputs.add("out");
+		outputs.add("Out");
 
 		return outputs;
 	}
@@ -83,6 +139,45 @@ public class GainBlock implements SigproPlugin {
 	public void setPlay(boolean play) {
 		// Nothing to do here
 
+	}
+
+	@Override
+	public void setName(String name) {
+	
+		this.name = name;
+	}
+
+	@Override
+	public HashSet<String> getInputConfig() {
+		
+		HashSet<String> inputInfo = new HashSet<>();
+		inputInfo.add("In");
+		
+		return inputInfo;
+	}
+
+	@Override
+	public int getWidth() {
+		
+		return width;
+	}
+
+	@Override
+	public int getHeight() {
+		
+		return height;
+	}
+
+	@Override
+	public double getMaxX() {
+		
+		return gui.getLayoutX() + width;
+	}
+
+	@Override
+	public double getMaxY() {
+		
+		return gui.getLayoutY() + height;
 	}
 
 }

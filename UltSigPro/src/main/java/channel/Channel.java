@@ -3,13 +3,16 @@ package channel;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import inputhandler.InputAdministrator;
 import outputhandler.OutputAdministrator;
+import plugins.sigproplugins.SigproPlugin;
 
 public class Channel implements InputDataListener, OutputDataSpeaker {
 
@@ -19,14 +22,19 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private String name;
 	private ChannelPane pane;
 
+	private PluginInput pluginInput;
+	private PluginOutput pluginOutput;
+
+	private ScheduledThreadPoolExecutor executor;
+
 	private boolean firstFetch = true;
+
+	private HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataflowMap = new HashMap<>();
 
 	// private LinkedBlockingQueue<LinkedList<Integer>> outputQueue = new
 	// LinkedBlockingQueue<>();
 	private LinkedList<int[]> inputQueue = new LinkedList<>();
-
-	private int remaining = 0;
-	int distance = (int) (44100 / 44);
+	private LinkedList<int[]> outputQueue = new LinkedList<>();
 
 	public Channel(ChannelPane pane, ChannelConfig config) {
 		this.name = config.getName();
@@ -36,51 +44,32 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		outputAdmin = OutputAdministrator.getOutputAdministrator();
 		outputAdmin.registerOutputDevices(this, config.getOutputDevices());
 		inputAdmin.openWaveFiles(config.getWaveFiles(), this);
+
+		pluginInput = new PluginInput();
+		pluginOutput = new PluginOutput();
+
+		LinkedList<InputInfoWrapper> testList = new LinkedList<>();
+		testList.add(new InputInfoWrapper(pluginOutput, "Output"));
+
+		dataflowMap.put(new OutputInfoWrapper(pluginInput, "Input"), testList);
 	}
 
 	@Override
 	public int[] fetchData() {
-		// passes data from channel to OutputAdmin
-		/*
-		 * LinkedList<Integer> data = new LinkedList<> ();
-		 * 
-		 * try { Thread.sleep(10); } catch (InterruptedException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); }
-		 * 
-		 * //TODO replace sinus values with real sound values for (double i = 0;
-		 * i<628*2; i+=2) { data.add((int) (Short.MAX_VALUE*(Math.sin(i/100))));
-		 * }
-		 */
 
-		// TODO outputQueue
-		synchronized (inputQueue) {
-			return inputQueue.poll();
+		synchronized (outputQueue) {
+			return outputQueue.poll();
 		}
 	}
 
 	@Override
 	public void putData(int[] data) {
 
-		/*
-		 * LinkedList<Double> waveChartData = new LinkedList<> ();
-		 * 
-		 * int pos = 0;
-		 * 
-		 * if(distance-remaining < data.length) { waveChartData.add(((double)
-		 * data[distance-remaining])/(double) Short.MAX_VALUE); pos =
-		 * distance-remaining;
-		 * 
-		 * while(pos + distance < data.length) { waveChartData.add(((double)
-		 * data[pos + distance])/(double) Short.MAX_VALUE); pos = pos +
-		 * distance; } remaining = data.length - pos; } else { remaining =
-		 * remaining + (data.length - pos); }
-		 */
 		pane.insertWaveChartData(data);
 
 		synchronized (inputQueue) {
 			inputQueue.add(data);
 		}
-		
 
 		// pane.insertWaveChartData(waveChartData);
 	}
@@ -108,8 +97,159 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	public synchronized void setPlay(boolean play) {
 		if (play) {
 			inputQueue.clear();
+			outputQueue.clear();
 			firstFetch = true;
+			executor = new ScheduledThreadPoolExecutor(1);
+
+			executor.scheduleAtFixedRate(new DataflowRunnable(), 0, 1, TimeUnit.MILLISECONDS);
+		} else {
+			if (executor != null) {
+				executor.shutdownNow();
+			}
 		}
 		this.play = play;
+	}
+	
+	public SigproPlugin getPluginInput() {
+		return pluginInput;
+	}
+	
+	public SigproPlugin getPluginOutput() {
+		return pluginOutput;
+	}
+	
+	public void addPluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
+		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
+		
+		if(!dataflowMap.containsKey(outputWrapper)) {
+			dataflowMap.put(outputWrapper, new LinkedList<InputInfoWrapper>());
+		}
+		
+		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
+		
+		dataflowMap.get(outputWrapper).add(inputWrapper);
+	}
+
+	public void removePluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
+		
+		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
+		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
+		
+		if(dataflowMap.containsKey(outputWrapper)) {
+			dataflowMap.get(outputWrapper).remove(inputWrapper);
+			if(dataflowMap.get(outputWrapper).isEmpty()) {
+				dataflowMap.remove(outputWrapper);
+			}
+		}	
+	}
+	
+	private class DataflowRunnable implements Runnable {
+
+		@Override
+		public void run() {
+
+			try {
+				LinkedList<int[]> curData;
+
+				synchronized (inputQueue) {
+					if (inputQueue.isEmpty()) {
+						return;
+					}
+
+					curData = new LinkedList<>();
+
+					while (inputQueue.size() > 0) {
+						curData.add(inputQueue.poll());
+					}
+				}
+
+				LinkedList<double[]> exeData = new LinkedList<>();
+
+				for (int[] inputArray : curData) {
+					double[] exeArray = new double[inputArray.length];
+
+					for (int i = 0; i < inputArray.length; i++) {
+						exeArray[i] = (double) inputArray[i];
+					}
+
+					exeData.add(exeArray);
+				}
+
+				for (double[] inputData : exeData) {
+					double[] sigflowOutputData = executeSignalProcessing(inputData);
+
+					if (sigflowOutputData != null) {
+						int[] outputData = new int[inputData.length];
+
+						for (int i = 0; i < sigflowOutputData.length; i++) {
+							outputData[i] = (int) sigflowOutputData[i];
+						}
+
+						synchronized (outputQueue) {
+							outputQueue.add(outputData);
+						}
+					}
+				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+
+		}
+
+		private double[] executeSignalProcessing(double[] inputData) {
+
+			double[] outputData = null;
+
+			LinkedList<OutputDataWrapper> outputDataWrappers = pluginInput.putData("Input", inputData);
+
+			for (OutputDataWrapper outputWrapper : outputDataWrappers) {
+				LinkedList<InputInfoWrapper> inputInfoList = dataflowMap.get(outputWrapper.getOutputInfo());
+
+				for (InputInfoWrapper inputInfo : inputInfoList) {
+					double[] newData = new double[inputData.length];
+					System.arraycopy(inputData, 0, newData, 0, inputData.length);
+
+					double[] recursivOutputData = recursiveSignalProcessing(inputInfo, newData);
+
+					if (recursivOutputData != null) {
+						outputData = recursivOutputData;
+					}
+				}
+			}
+
+			return outputData;
+		}
+
+		private double[] recursiveSignalProcessing(InputInfoWrapper inputInfo, double[] data) {
+
+			double[] outputData = null;
+
+			LinkedList<OutputDataWrapper> outputDataWrappers = inputInfo.getDestPlugin()
+					.putData(inputInfo.getDestInput(), data);
+
+			for (OutputDataWrapper outputWrapper : outputDataWrappers) {
+				if (outputWrapper.getOutputInfo().getSourcePlugin().equals(pluginOutput)) {
+					outputData = outputWrapper.getOutputData();
+				} else {
+					LinkedList<InputInfoWrapper> inputInfoWrapperList = dataflowMap.get(outputWrapper.getOutputInfo());
+
+					for (InputInfoWrapper inputInfoWrapper : inputInfoWrapperList) {
+
+						double[] newData = new double[outputWrapper.getOutputData().length];
+						System.arraycopy(outputWrapper.getOutputData(), 0, newData, 0,
+								outputWrapper.getOutputData().length);
+
+						double[] recursiveOutputData = recursiveSignalProcessing(inputInfoWrapper, newData);
+
+						if (recursiveOutputData != null) {
+							outputData = recursiveOutputData;
+						}
+					}
+				}
+			}
+
+			return outputData;
+		}
+
 	}
 }
