@@ -16,6 +16,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import plugins.sigproplugins.SigproPlugin;
@@ -152,6 +154,14 @@ public class PluginConfigGroup extends Pane {
 				}
 			}
 		});
+		
+	}
+	
+	public void escapeLineDrawing() {
+		if(workCon != null && workCon.getActLine() != null) {
+			workCon.getActLine().delete();
+			workCon = null;
+		}
 	}
 
 	private void drawLine(MouseEvent event) {

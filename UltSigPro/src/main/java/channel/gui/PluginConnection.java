@@ -21,10 +21,6 @@ public class PluginConnection {
 	private ConnectionLine actLine = null;
 	private boolean actHorizontal = true;;
 
-	private PluginConnection snappedLine = null;
-
-	private HashSet<PluginConnection> snapListeners = new HashSet<>();
-
 	private PluginConfigGroup configGroup;
 
 	public PluginConnection(PluginConfigGroup configGroup, ConnectionLineEndpointInterface endpoint, double startX,
@@ -154,6 +150,41 @@ public class PluginConnection {
 		
 		public boolean isHorizontal() {
 			return horizontal;
+		}
+		
+		public void delete() {
+			lines.remove(this);
+			coordinatesListener.getChildren().remove(dragPane);
+			dragPane = null;
+			coordinatesListener.getChildren().remove(this);			
+			coordinatesListener = null;
+			
+			if(firstEnd != null) {
+				firstEnd.addLine(null);
+				firstEnd = null;
+			}
+			if(secondEnd != null) {
+				secondEnd.addLine(null);
+				secondEnd = null;
+			}
+			if(firstLine != null) {
+				firstLine.removeLine(this);
+				firstLine.delete();
+				firstLine = null;
+			}
+			if(secondLine != null) {
+				secondLine.removeLine(this);
+				secondLine.delete();
+				secondLine = null;
+			}
+		}
+		
+		public void removeLine(ConnectionLine line) {
+			if(firstLine != null && firstLine.equals(line)) {
+				firstLine = null;
+			} else if(secondLine != null && secondLine.equals(line)) {
+				secondLine = null;
+			}
 		}
 
 		/**
