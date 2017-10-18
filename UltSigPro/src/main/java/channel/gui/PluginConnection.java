@@ -26,7 +26,7 @@ public class PluginConnection {
 	public PluginConnection(PluginConfigGroup configGroup, ConnectionLineEndpointInterface endpoint, double startX,
 			double startY) {
 		this.configGroup = configGroup;
-		actLine = new ConnectionLine(this, endpoint, startX, startY, true);
+		actLine = new ConnectionLine(configGroup, this, endpoint, startX, startY, true);
 
 		addLine(actLine);
 		
@@ -37,12 +37,12 @@ public class PluginConnection {
 		actHorizontal = !actHorizontal;
 		actLine.setCoordinatesLine(actLine, x, y);
 		if (actHorizontal) {
-			ConnectionLine newLine = new ConnectionLine(this, actLine, actLine.getEndX(), y, actHorizontal);
+			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, actLine.getEndX(), y, actHorizontal);
 			actLine.setCoordinatesLine(newLine, x, y);
 			actLine = newLine;
 			addLine(newLine);
 		} else {
-			ConnectionLine newLine = new ConnectionLine(this, actLine, x, actLine.getEndY(), actHorizontal);
+			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, x, actLine.getEndY(), actHorizontal);
 			actLine.setCoordinatesLine(newLine, x, y);
 			actLine = newLine;
 			addLine(newLine);
@@ -88,18 +88,18 @@ public class PluginConnection {
 			
 			actLine.setEndX(stepX);
 			
-			ConnectionLine newLine = new ConnectionLine(this, actLine, stepX, stepY, false);
+			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, stepX, stepY, false);
 			actLine.setCoordinatesLine(newLine, stepX, stepY);
 			configGroup.getChildren().add(newLine);
 			addLine(newLine);
 			
-			actLine = new ConnectionLine(this, newLine, stepX, y, true);
+			actLine = new ConnectionLine(configGroup, this, newLine, stepX, y, true);
 			actLine.setCoordinates(x, y);
 			configGroup.getChildren().add(actLine);
 			addLine(actLine);
 			newLine.setCoordinatesLine(actLine, stepX, y);
 		} else {
-			ConnectionLine newLine = new ConnectionLine(this, actLine, actLine.getEndX(), y, true);
+			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, actLine.getEndX(), y, true);
 			actLine.setCoordinatesLine(newLine, x, y);
 			
 			newLine.setCoordinates(x, y);
@@ -125,23 +125,25 @@ public class PluginConnection {
 
 		private PluginConnection parent;
 		
-		private PluginConfigGroup coordinatesListener;
+		private PluginConfigGroup parentPane;
 
-		public ConnectionLine(PluginConnection parent, ConnectionLineEndpointInterface firstEnd, double x, double y,
+		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLineEndpointInterface firstEnd, double x, double y,
 				boolean horizontal) {
 			this.parent = parent;
 			this.firstEnd = firstEnd;
 			this.horizontal = horizontal;
+			this.parentPane = parentPane;
 			setStartX(x);
 			setStartY(y);
 			setEndX(x);
 			setEndY(y);
 		}
 
-		public ConnectionLine(PluginConnection parent, ConnectionLine line, double x, double y, boolean horizontal) {
+		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine line, double x, double y, boolean horizontal) {
 			this.parent = parent;
 			this.firstLine = line;
 			this.horizontal = horizontal;
+			this.parentPane = parentPane;
 			setStartX(x);
 			setStartY(y);
 			setEndX(x);
@@ -154,10 +156,10 @@ public class PluginConnection {
 		
 		public void delete() {
 			lines.remove(this);
-			coordinatesListener.getChildren().remove(dragPane);
+			parentPane.getChildren().remove(dragPane);
 			dragPane = null;
-			coordinatesListener.getChildren().remove(this);			
-			coordinatesListener = null;
+			parentPane.getChildren().remove(this);			
+			parentPane = null;
 			
 			if(firstEnd != null) {
 				firstEnd.addLine(null);
@@ -220,8 +222,8 @@ public class PluginConnection {
 				setEndY(getStartY());
 			}
 			
-			if(coordinatesListener != null) {
-				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			if(parentPane != null) {
+				parentPane.updateMaxCoordinatesOfComponent(this);				
 			}
 		}
 
@@ -240,8 +242,8 @@ public class PluginConnection {
 				}
 			}
 			
-			if(coordinatesListener != null) {
-				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			if(parentPane != null) {
+				parentPane.updateMaxCoordinatesOfComponent(this);				
 			}
 			
 			updateDragPane();
@@ -264,8 +266,8 @@ public class PluginConnection {
 					if(!(y == getStartY())) {
 						double length = getEndX() - getStartX();
 						
-						ConnectionLine newLine = new ConnectionLine(parent, secondEnd, getEndX(), getStartY(), true);
-						ConnectionLine vertLine = new ConnectionLine(parent, newLine, getStartX() + length/2, getEndY(), false);
+						ConnectionLine newLine = new ConnectionLine(parentPane, parent, secondEnd, getEndX(), getStartY(), true);
+						ConnectionLine vertLine = new ConnectionLine(parentPane, parent, newLine, getStartX() + length/2, getEndY(), false);
 						newLine.setCoordinatesLine(vertLine, getStartX() + length/2, getEndY());
 						vertLine.setCoordinatesLine(this, getStartX() + length/2, y);
 						
@@ -299,8 +301,8 @@ public class PluginConnection {
 					if(!(y == getStartY())) {
 						double length = getEndX() - getStartX();
 						
-						ConnectionLine newLine = new ConnectionLine(parent, firstEnd, getStartX(), getStartY(), true);
-						ConnectionLine vertLine = new ConnectionLine(parent, newLine, getStartX() + length/2, getEndY(), false);
+						ConnectionLine newLine = new ConnectionLine(parentPane, parent, firstEnd, getStartX(), getStartY(), true);
+						ConnectionLine vertLine = new ConnectionLine(parentPane, parent, newLine, getStartX() + length/2, getEndY(), false);
 						newLine.setCoordinatesLine(vertLine, getStartX() + length/2, getEndY());
 						vertLine.setCoordinatesLine(this, getStartX() + length/2, y);
 						
@@ -330,8 +332,8 @@ public class PluginConnection {
 				}
 			}
 			
-			if(coordinatesListener != null) {
-				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			if(parentPane != null) {
+				parentPane.updateMaxCoordinatesOfComponent(this);				
 			}
 			
 			updateDragPane();
@@ -391,8 +393,8 @@ public class PluginConnection {
 				setEndX(getEndX());
 			}
 			
-			if(coordinatesListener != null) {
-				coordinatesListener.updateMaxCoordinatesOfComponent(this);				
+			if(parentPane != null) {
+				parentPane.updateMaxCoordinatesOfComponent(this);				
 			}
 			updateDragPane();
 		}
@@ -416,13 +418,13 @@ public class PluginConnection {
 		@Override
 		public void registerMaxCoordinatesUpdateListener(PluginConfigGroup coordinatesListener) {
 			
-			this.coordinatesListener = coordinatesListener;
+			this.parentPane = parentPane;
 		}
 		
 		private void updateCoordinatesInternal(double x, double y) {
 			if(firstEnd == null && secondEnd == null) {
-				double localX = coordinatesListener.screenToLocal(x, y).getX();
-				double localY = coordinatesListener.screenToLocal(x, y).getY();
+				double localX = parentPane.screenToLocal(x, y).getX();
+				double localY = parentPane.screenToLocal(x, y).getY();
 				
 				if(horizontal) {
 					setStartY(localY);
@@ -447,7 +449,7 @@ public class PluginConnection {
 			
 			if(dragPane == null) {
 				dragPane = new Pane();
-				coordinatesListener.getChildren().add(dragPane);
+				parentPane.getChildren().add(dragPane);
 				
 				dragPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent> () {
 
