@@ -99,6 +99,14 @@ public class ChannelPane extends TitledPane {
 		setPlay(false);
 	}
 	
+	public OutputPane getOutputPane() {
+		return outputPane;
+	}
+
+	public InputPane getInputPane() {
+		return inputPane;
+	}
+
 	public void insertWaveChartData(int[] data) {
 		waveChart.insertData(data);
 	}
@@ -137,7 +145,7 @@ public class ChannelPane extends TitledPane {
 		return channel;
 	}
 
-	private class InputPane extends Pane {
+	public class InputPane extends Pane {
 
 		private ListView<String> table;
 		private Button addButton;
@@ -230,7 +238,7 @@ public class ChannelPane extends TitledPane {
 		}
 	}
 
-	private class OutputPane extends Pane {
+	public class OutputPane extends Pane {
 
 		private ListView<String> table;
 		private Button addButton;
