@@ -1,7 +1,10 @@
 package gui.menubar;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,7 +28,14 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.stage.FileChooser;
+import pluginframework.PluginInterface;
+import pluginframework.PluginLoader;
+import plugins.PluginManager;
+import plugins.sigproplugins.SigproPlugin;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
@@ -44,7 +54,7 @@ public class SaveMenuItem extends MenuItem {
 
 	public SaveMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(SaveMenuItem.class, TITLE));
-
+		super.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
 		super.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -147,12 +157,25 @@ public class SaveMenuItem extends MenuItem {
 				channelName.appendChild(inputDeviceName);
 			}
 
-			// output device element
+			// output device elements
 			ObservableList<String> outputDevices = curElement.getOutputPaneTableItems();
 			for (String outputDevice : outputDevices) {
 				Element outputDeviceName = doc.createElement("outputDevice");
 				outputDeviceName.appendChild(doc.createTextNode(outputDevice));
 				channelName.appendChild(outputDeviceName);
+			}
+			
+			// plugin elements
+			HashMap<String, Class<SigproPlugin>> plugins = PluginManager.getInstance().getSigproLoader().getInternalPluginMap();
+			for (Map.Entry<String, Class<SigproPlugin>> plugin : plugins.entrySet()) {
+				Element pluginElement = doc.createElement("plugin");
+				Element pluginName = doc.createElement("name");
+				Element pluginClass = doc.createElement("class");
+				pluginName.appendChild(doc.createTextNode(plugin.getKey()));
+				pluginClass.appendChild(doc.createTextNode(plugin.getValue().toString()));
+				pluginElement.appendChild(pluginName);
+				pluginElement.appendChild(pluginClass);
+				channelName.appendChild(pluginElement);
 			}
 		}
 		return doc;
