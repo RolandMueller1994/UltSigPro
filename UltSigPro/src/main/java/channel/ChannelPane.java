@@ -7,6 +7,7 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -99,12 +100,12 @@ public class ChannelPane extends TitledPane {
 		setPlay(false);
 	}
 	
-	public OutputPane getOutputPane() {
-		return outputPane;
+	public ObservableList<String> getOutputPaneTableItems() {
+		return outputPane.getTable().getItems();
 	}
 
-	public InputPane getInputPane() {
-		return inputPane;
+	public ObservableList<String> getInputPaneTableItems() {
+		return inputPane.getTable().getItems();
 	}
 
 	public void insertWaveChartData(int[] data) {
@@ -145,7 +146,7 @@ public class ChannelPane extends TitledPane {
 		return channel;
 	}
 
-	public class InputPane extends Pane {
+	private class InputPane extends Pane {
 
 		private ListView<String> table;
 		private Button addButton;
@@ -238,7 +239,7 @@ public class ChannelPane extends TitledPane {
 		}
 	}
 
-	public class OutputPane extends Pane {
+	private class OutputPane extends Pane {
 
 		private ListView<String> table;
 		private Button addButton;

@@ -91,7 +91,7 @@ public class SaveMenuItem extends MenuItem {
 				// channelName.setAttribute("id", "1");
 
 				// input device elements
-				ObservableList<String> inputDevices = curElement.getInputPane().getTable().getItems();
+				ObservableList<String> inputDevices = curElement.getInputPaneTableItems();
 				for (String inputDevice : inputDevices) {
 					Element inputDeviceName = doc.createElement("inputDevice");
 					inputDeviceName.appendChild(doc.createTextNode(inputDevice));
@@ -99,7 +99,7 @@ public class SaveMenuItem extends MenuItem {
 				}
 
 				// output device element
-				ObservableList<String> outputDevices = curElement.getOutputPane().getTable().getItems();
+				ObservableList<String> outputDevices = curElement.getOutputPaneTableItems();
 				for (String outputDevice : outputDevices) {
 					Element outputDeviceName = doc.createElement("outputDevice");
 					outputDeviceName.appendChild(doc.createTextNode(outputDevice));
