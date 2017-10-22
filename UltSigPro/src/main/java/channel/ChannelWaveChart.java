@@ -47,12 +47,12 @@ public class ChannelWaveChart extends Pane {
 	private Pane curPane;
 	
 	private boolean play;
+	private boolean firstLayout = true;
 	
 	private HBox hBox = new HBox();
 	
 	public ChannelWaveChart () {
 		widthProperty().addListener(new ResizeListener());
-		heightProperty().addListener(new ResizeListener());
 		getChildren().add(hBox);
 	}
 	
@@ -133,8 +133,8 @@ public class ChannelWaveChart extends Pane {
 	}
 	
 	private void executeResize() {
-		verticalSize = (int) getHeight();
 		horizontalSize = (int) getWidth();
+		verticalSize = 140;
 		
 		if(verticalSize == 0 || horizontalSize == 0) {
 			return;
