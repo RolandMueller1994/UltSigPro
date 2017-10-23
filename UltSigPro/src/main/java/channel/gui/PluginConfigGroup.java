@@ -36,6 +36,8 @@ public class PluginConfigGroup extends Pane {
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
 	
+	private boolean lineHovered = false;
+	
 	private MaxCoordinatesInterface maxXComponent;
 	private MaxCoordinatesInterface maxYComponent;
 	private HashMap<MaxCoordinatesInterface, Point2D> componentMaxPositions = new HashMap<>();
@@ -146,7 +148,7 @@ public class PluginConfigGroup extends Pane {
 					}
 				}
 
-				if (!hovered) {
+				if (!hovered && !lineHovered) {
 					if (workCon != null) {
 						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
 								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
@@ -157,11 +159,24 @@ public class PluginConfigGroup extends Pane {
 		
 	}
 	
+	public void setLineHovered(boolean hovered) {
+		lineHovered = hovered;
+	}
+	
 	public void escapeLineDrawing() {
 		if(workCon != null && workCon.getActLine() != null) {
 			workCon.getActLine().delete();
 			workCon = null;
 		}
+	}
+	
+	public PluginConnection getWorkCon() {
+		
+		return workCon;
+	}
+	
+	public void finalizeDrawing() {
+		workCon = null;
 	}
 
 	private void drawLine(MouseEvent event) {

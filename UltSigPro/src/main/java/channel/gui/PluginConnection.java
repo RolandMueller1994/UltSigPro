@@ -11,6 +11,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 public class PluginConnection {
@@ -19,7 +20,9 @@ public class PluginConnection {
 	private HashSet<LineDevider> deviders = new HashSet<>();
 
 	private ConnectionLine actLine = null;
-	private boolean actHorizontal = true;;
+	private boolean actHorizontal = true;
+	
+	private boolean hovered = false;
 
 	private PluginConfigGroup configGroup;
 
@@ -294,7 +297,8 @@ public class PluginConnection {
 					setEndY(y);
 				} else {
 					setStartY(y);
-					setStartX(getStartX());
+					setStartX(x);
+					setEndX(x);
 				}
 			} else if (secondEnd != null && endpoint.equals(secondEnd)) {
 				if(firstEnd != null) {
@@ -328,7 +332,8 @@ public class PluginConnection {
 					setStartY(y);
 				} else {
 					setEndY(y);
-					setEndX(getEndX());
+					setEndX(x);
+					setStartX(x);
 				}
 			}
 			
@@ -421,6 +426,16 @@ public class PluginConnection {
 			this.parentPane = parentPane;
 		}
 		
+		public boolean isUpDown() {
+			
+			return getEndY() > getStartY();
+		}
+		
+		public boolean isLeftRight() {
+			
+			return getEndX() > getStartX();
+		}
+		
 		private void updateCoordinatesInternal(double x, double y) {
 			if(firstEnd == null && secondEnd == null) {
 				double localX = parentPane.screenToLocal(x, y).getX();
@@ -458,6 +473,38 @@ public class PluginConnection {
 						
 						updateCoordinatesInternal(event.getScreenX(), event.getScreenY());
 					}
+				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						if(parentPane.getWorkCon() != null && !parentPane.getWorkCon().equals(parent) && parentPane.getWorkCon().getActLine().isHorizontal() != horizontal) {
+							parentPane.setLineHovered(true);
+							setStroke(Color.RED);
+							hovered = true;
+						}
+					}
+				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						parentPane.setLineHovered(false);
+						hovered = false;
+						setStroke(Color.BLACK);
+					}
+				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						addLineDevider(event.getScreenX(), event.getScreenY());
+					}
 					
 				});
 			}
@@ -477,46 +524,210 @@ public class PluginConnection {
 			
 			dragPane.setPrefSize(width, height);
 		}
+		
+		private void addLineDevider(double x, double y) {
+			
+			double localX = screenToLocal(x, y).getX();
+			double localY = screenToLocal(x, y).getY();
+			
+			if(hovered) {
+				if(horizontal) {
+					ConnectionLine leftLine;
+					ConnectionLine rightLine;
+					ConnectionLine verticalLine;
+					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, localX, getStartY());
+					
+					if(getEndX() > getStartX()) {
+						// Left to right
+						rightLine = new ConnectionLine(parentPane, parent, devider, localX, getEndY(), horizontal);
+						if(secondLine != null) {
+							rightLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
+							if(this.equals(secondLine.firstLine)) {
+								secondLine.firstLine = rightLine;
+							} else {
+								secondLine.secondLine = rightLine;
+							}
+						} else {
+							rightLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
+							secondEnd.addLine(rightLine);
+						}
+						leftLine = this;
+						setEndX(localX);
+						secondLine = null;
+						secondEnd = devider;
+						
+						parentPane.getChildren().add(rightLine);
+					} else {
+						// Right to left
+						leftLine = new ConnectionLine(parentPane, parent, devider, localX, getEndY(), horizontal);
+						if(secondLine != null) {
+							leftLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
+							if(this.equals(secondLine.firstLine)) {
+								secondLine.firstLine = leftLine;
+							} else {
+								secondLine.secondLine = leftLine;
+							}
+						} else {
+							leftLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
+							secondEnd.addLine(leftLine);
+						}
+						rightLine = this;
+						setEndX(localX);
+						secondLine = null;
+						secondEnd = devider;
+						
+						parentPane.getChildren().add(leftLine);
+					}
+					
+					verticalLine = parentPane.getWorkCon().getActLine();
+					verticalLine.setCoordinatesFinal(devider, localX, getEndY());
+					
+					if(verticalLine.isUpDown()) {
+						devider.addLineWithPos(LineDeviderPosition.NORTH, verticalLine);
+					} else {
+						devider.addLineWithPos(LineDeviderPosition.SOUTH, verticalLine);
+					}
+					
+					devider.addLineWithPos(LineDeviderPosition.WEST, leftLine);
+					devider.addLineWithPos(LineDeviderPosition.EAST, rightLine);
+					
+					addLine(leftLine);
+					addLine(rightLine);
+					addLine(verticalLine);
+					
+					
+					for(ConnectionLine workLine : parentPane.getWorkCon().lines) {
+						addLine(workLine);
+						workLine.parent = parent;
+					}
+					
+					parentPane.finalizeDrawing();
+				} else {
+					ConnectionLine upperLine;
+					ConnectionLine lowerLine;
+					ConnectionLine horizontalLine;
+					
+					if(parentPane.getWorkCon().getActLine().isLeftRight()) {
+						
+					} else {
+						
+					}
+				}
+			}
+		}
 
 	}
 
-	private class LineDevider implements ConnectionLineEndpointInterface {
+	private class LineDevider extends Circle implements ConnectionLineEndpointInterface {
 
 		private HashMap<LineDeviderPosition, ConnectionLine> connectionLines = new HashMap<>();
 
+		private static final double DIAMETER = 10;
+		
 		private PluginConnection parent;
-
-		public LineDevider(PluginConnection parent, ConnectionLine north, ConnectionLine east, ConnectionLine south,
-				ConnectionLine west) {
+		private PluginConfigGroup parentPane;
+		
+		private Pane dragPane;
+		
+		public LineDevider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north, ConnectionLine east, ConnectionLine south,
+				ConnectionLine west, double x, double y) {
+			this.parentPane = parentPane;
 			this.parent = parent;
 			addConnectionInternally(north, LineDeviderPosition.NORTH);
 			addConnectionInternally(east, LineDeviderPosition.EAST);
 			addConnectionInternally(south, LineDeviderPosition.SOUTH);
 			addConnectionInternally(west, LineDeviderPosition.WEST);
+			
+			setCenterX(x);
+			setCenterY(y);
+			setRadius(DIAMETER/2);
+			
+			parentPane.getChildren().addAll(this);
+			
+			updateDragPane();
+		}
+		
+		private void updateCoordinatesInternal(double screenX, double screenY) {
+			double localX = parentPane.screenToLocal(screenX, screenY).getX();
+			double localY = parentPane.screenToLocal(screenX, screenY).getY();
+			
+			setCenterX(localX);
+			setCenterY(localY);
+			
+			updateDragPane();
+			
+			for(ConnectionLine line : connectionLines.values()) {
+				line.updateCoordinates(this, localX, localY);
+			}
 		}
 
+		private void updateDragPane() {
+			if(dragPane == null) {
+				dragPane = new Pane();
+				parentPane.getChildren().add(dragPane);
+				dragPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						updateCoordinatesInternal(event.getScreenX(), event.getScreenY());
+					}
+					
+				});
+			}
+			
+			dragPane.setPrefSize(DIAMETER, DIAMETER);
+			dragPane.setLayoutX(getCenterX() - DIAMETER/2);
+			dragPane.setLayoutY(getCenterY() - DIAMETER/2);
+		}
+		
 		public void setParent(PluginConnection parent) {
 			this.parent = parent;
 		}
 
 		private void addConnectionInternally(ConnectionLine line, LineDeviderPosition position) {
-
+			if(line != null) {
+				connectionLines.put(position, line);				
+			}
 		}
 
 		private void removeConnection(ConnectionLine line) {
-
+			LineDeviderPosition removePos = null;
+			
+			for(LineDeviderPosition pos : connectionLines.keySet()) {
+				if(connectionLines.get(pos).equals(line)) {
+					removePos = pos;
+					break;
+				}
+			}
+			
+			if(removePos != null) {
+				connectionLines.remove(removePos);
+			}
 		}
 
 		@Override
 		public boolean setCoordinates(ConnectionLine line, double x, double y) {
-			// TODO Auto-generated method stub
+			// Can't move this object from outside -> so we return false
 			return false;
+		}
+		
+		private void updateConnectionLinePos() {
+			for(ConnectionLine line : connectionLines.values()) {
+				line.updateCoordinates(this, getCenterX(), getCenterX());
+			}
 		}
 
 		@Override
 		public void addLine(ConnectionLine line) {
 			// TODO Auto-generated method stub
 
+		}
+		
+		public void addLineWithPos(LineDeviderPosition pos, ConnectionLine line) {
+			
+			connectionLines.put(pos, line);
+			line.updateCoordinates(this, getCenterX(), getCenterY());
 		}
 	}
 
