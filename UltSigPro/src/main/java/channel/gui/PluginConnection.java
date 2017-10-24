@@ -3,12 +3,10 @@ package channel.gui;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import channel.PluginInput;
+import channel.PluginOutput;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -66,6 +64,25 @@ public class PluginConnection {
 		line.registerMaxCoordinatesUpdateListener(configGroup);
 	}
 
+	public boolean hasInput() {
+		
+		for(ConnectionLine actLine : lines) {
+			if(actLine.getFirstEnd() != null && actLine.getFirstEnd() instanceof Output) {
+				return true;
+			}
+			
+			if(actLine.getSecondEnd() != null && actLine.getSecondEnd() instanceof Output) {
+				return true;
+			}
+		}
+		 
+		return false;
+	}
+
+	private void addDevider(LineDevider devider) {
+		deviders.add(devider);
+	}
+
 	public void endPluginConnection(ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
 		addLine(actLine);
 		actLine.setCoordinatesFinal(endpoint, xCoord, yCoord);
@@ -74,15 +91,6 @@ public class PluginConnection {
 
 	public void drawLine(double xCoord, double yCoord) {
 		actLine.setCoordinates(xCoord, yCoord);
-	}
-
-	public void unifyConnections(PluginConnection other) {
-
-	}
-
-	public boolean checkForInput() {
-
-		return false;
 	}
 
 	public void devideActLine(double x, double y) {
@@ -154,6 +162,14 @@ public class PluginConnection {
 			setStartY(y);
 			setEndX(x);
 			setEndY(y);
+		}
+
+		public ConnectionLineEndpointInterface getFirstEnd() {
+			return firstEnd;
+		}
+
+		public ConnectionLineEndpointInterface getSecondEnd() {
+			return secondEnd;
 		}
 
 		public boolean isHorizontal() {
@@ -488,7 +504,8 @@ public class PluginConnection {
 					public void handle(MouseEvent event) {
 
 						if (parentPane.getWorkCon() != null && !parentPane.getWorkCon().equals(parent)
-								&& parentPane.getWorkCon().getActLine().isHorizontal() != horizontal) {
+								&& parentPane.getWorkCon().getActLine().isHorizontal() != horizontal
+								&& !(parent.hasInput() && parentPane.getWorkCon().hasInput())) {
 							parentPane.setLineHovered(true);
 							setStroke(Color.RED);
 							hovered = true;
@@ -545,6 +562,7 @@ public class PluginConnection {
 					ConnectionLine verticalLine;
 					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, localX,
 							getStartY());
+					addDevider(devider);
 
 					if (getEndX() > getStartX()) {
 						// Left to right
@@ -614,12 +632,74 @@ public class PluginConnection {
 					ConnectionLine upperLine;
 					ConnectionLine lowerLine;
 					ConnectionLine horizontalLine;
+					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, getStartX(),
+							localX);
+					addDevider(devider);
+
+					if (getEndY() > getStartY()) {
+						// Top to bottom
+						lowerLine = new ConnectionLine(parentPane, parent, devider, getEndX(), localY, horizontal);
+						if (secondLine != null) {
+							lowerLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
+							if (this.equals(secondLine.firstLine)) {
+								secondLine.firstLine = lowerLine;
+							} else {
+								secondLine.secondLine = lowerLine;
+							}
+						} else {
+							lowerLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
+							secondEnd.addLine(lowerLine);
+						}
+						upperLine = this;
+						setEndY(localY);
+						secondLine = null;
+						secondEnd = devider;
+
+						parentPane.getChildren().add(lowerLine);
+					} else {
+						// Bottom to top
+						upperLine = new ConnectionLine(parentPane, parent, devider, getEndX(), localY, horizontal);
+						if (secondLine != null) {
+							upperLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
+							if (this.equals(secondLine.firstLine)) {
+								secondLine.firstLine = upperLine;
+							} else {
+								secondLine.secondLine = upperLine;
+							}
+						} else {
+							upperLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
+							secondEnd.addLine(upperLine);
+						}
+						lowerLine = this;
+						setEndY(localY);
+						secondLine = null;
+						secondEnd = devider;
+
+						parentPane.getChildren().add(upperLine);
+					}
+
+					horizontalLine = parentPane.getWorkCon().getActLine();
+					horizontalLine.setCoordinatesFinal(devider, getEndX(), localY);
 
 					if (parentPane.getWorkCon().getActLine().isLeftRight()) {
-
+						devider.addLineWithPos(LineDeviderPosition.WEST, horizontalLine);
 					} else {
-
+						devider.addLineWithPos(LineDeviderPosition.EAST, horizontalLine);
 					}
+
+					devider.addLineWithPos(LineDeviderPosition.NORTH, upperLine);
+					devider.addLineWithPos(LineDeviderPosition.SOUTH, lowerLine);
+
+					addLine(upperLine);
+					addLine(lowerLine);
+					addLine(horizontalLine);
+
+					for (ConnectionLine workLine : parentPane.getWorkCon().lines) {
+						addLine(workLine);
+						workLine.parent = parent;
+					}
+
+					parentPane.finalizeDrawing();
 				}
 			}
 		}
