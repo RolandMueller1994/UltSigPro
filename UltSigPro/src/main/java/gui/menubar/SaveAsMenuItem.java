@@ -27,10 +27,10 @@ public class SaveAsMenuItem extends MenuItem {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
-					File file = XMLFileCreator.getFileCreator().createFile();
+					File file = USPFileCreator.getFileCreator().createFile();
 					if (file != null) {
-						Document doc = XMLFileCreator.collectProjectSettings();
-						XMLFileCreator.createXMLFile(doc, XMLFileCreator.getFile());
+						Document doc = USPFileCreator.collectProjectSettings();
+						USPFileCreator.createXMLFile(doc, USPFileCreator.getFile());
 					}
 				} catch (ResourceProviderException | ParserConfigurationException | TransformerException e) {
 					// TODO Auto-generated catch block

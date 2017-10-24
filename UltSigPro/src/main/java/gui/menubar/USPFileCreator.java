@@ -29,20 +29,20 @@ import plugins.PluginManager;
 import plugins.sigproplugins.SigproPlugin;
 import resourceframework.ResourceProviderException;
 
-public class XMLFileCreator {
+public class USPFileCreator {
 
-	private static XMLFileCreator fileCreator;
+	private static USPFileCreator fileCreator;
 	private static File file;
 
-	public static XMLFileCreator getFileCreator() {
+	public static USPFileCreator getFileCreator() {
 
 		if (fileCreator == null) {
-			fileCreator = new XMLFileCreator();
+			fileCreator = new USPFileCreator();
 		}
 		return fileCreator;
 	}
 	
-	private XMLFileCreator() {
+	private USPFileCreator() {
 		
 	}
 	
