@@ -56,6 +56,7 @@ public class PluginConfigGroup extends Pane {
 		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 50, 100);
 
 		addPlugin(new GainBlock(), 300, 100);
+		addPlugin(new GainBlock(), 600, 100);
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 

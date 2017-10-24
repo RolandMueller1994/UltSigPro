@@ -633,7 +633,7 @@ public class PluginConnection {
 					ConnectionLine lowerLine;
 					ConnectionLine horizontalLine;
 					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, getStartX(),
-							localX);
+							localY);
 					addDevider(devider);
 
 					if (getEndY() > getStartY()) {
@@ -715,6 +715,8 @@ public class PluginConnection {
 		private PluginConnection parent;
 		private PluginConfigGroup parentPane;
 
+		private boolean hovered = false;
+		
 		private Pane dragPane;
 
 		public LineDevider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
@@ -762,11 +764,98 @@ public class PluginConnection {
 					}
 
 				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						if(parentPane.getWorkCon() != null) {
+							
+							ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
+							
+							if(workingLine != null) {
+								if(workingLine.isHorizontal()) {
+									if(workingLine.isLeftRight() && connectionLines.containsKey(LineDeviderPosition.WEST)) {
+										return;
+									} else if(connectionLines.containsKey(LineDeviderPosition.EAST)) {
+										return;
+									}
+								} else {
+									if(workingLine.isUpDown() && connectionLines.containsKey(LineDeviderPosition.NORTH)) {
+										return;
+									} else if(connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
+										return;
+									}
+								}
+								
+								hovered = true;
+								parentPane.setLineHovered(true);
+								setFill(Color.RED);							
+							}
+						}
+					}
+				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+						hovered = false;
+						parentPane.setLineHovered(false);
+						setFill(Color.BLACK);
+					}
+				});
+				
+				dragPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						addExternalLine();
+						
+					}
+					
+				});
 			}
 
 			dragPane.setPrefSize(DIAMETER, DIAMETER);
 			dragPane.setLayoutX(getCenterX() - DIAMETER / 2);
 			dragPane.setLayoutY(getCenterY() - DIAMETER / 2);
+		}
+		
+		private void addExternalLine() {
+			if(hovered) {
+				ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
+				
+				if(!workingLine.isHorizontal()) {
+					if(workingLine.isUpDown()) {
+						connectionLines.put(LineDeviderPosition.NORTH, workingLine);
+					} else {
+						connectionLines.put(LineDeviderPosition.SOUTH, workingLine);
+					}									
+				} else {
+					if(workingLine.isLeftRight()) {
+						connectionLines.put(LineDeviderPosition.WEST, workingLine);
+					} else {
+						connectionLines.put(LineDeviderPosition.EAST, workingLine);
+					}
+				}
+				
+				workingLine.setCoordinatesFinal(this, getCenterX(), getCenterY());
+				
+				for(ConnectionLine workLine : parentPane.getWorkCon().lines) {
+					addLine(workLine);
+					workLine.parent = parent;
+				}
+				
+				for(LineDevider devider : parentPane.getWorkCon().deviders) {
+					addDevider(devider);
+					devider.parent = parent;
+				}
+				
+				parentPane.finalizeDrawing();
+			}
 		}
 
 		public void setParent(PluginConnection parent) {
@@ -798,12 +887,6 @@ public class PluginConnection {
 		public boolean setCoordinates(ConnectionLine line, double x, double y) {
 			// Can't move this object from outside -> so we return false
 			return false;
-		}
-
-		private void updateConnectionLinePos() {
-			for (ConnectionLine line : connectionLines.values()) {
-				line.updateCoordinates(this, getCenterX(), getCenterX());
-			}
 		}
 
 		@Override
