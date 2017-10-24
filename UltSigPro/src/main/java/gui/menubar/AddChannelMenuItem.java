@@ -10,6 +10,7 @@ import channel.ChannelConfig;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -115,6 +116,15 @@ public class AddChannelMenuItem extends MenuItem {
 
 			Label titleLabel = new Label(lanHandler.getLocalizedText(AddChannelDialog.class, TITLE_LABEL) + ": *");
 			titleTextField = new TextField();
+			
+			Platform.runLater(new Runnable() {
+
+				@Override
+				public void run() {
+					titleTextField.requestFocus();
+				}
+				
+			});
 
 			inputBoxes.add(new ChoiceBox<String>());
 			outputBoxes.add(new ChoiceBox<String>());
@@ -281,7 +291,9 @@ public class AddChannelMenuItem extends MenuItem {
 			});
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			addButton.setFocusTraversable(false);
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			removeButton.setFocusTraversable(false);
 			GridPane.getHgrow(removeButton);
 			removeButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -386,7 +398,9 @@ public class AddChannelMenuItem extends MenuItem {
 			});
 
 			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			addButton.setFocusTraversable(false);
 			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			removeButton.setFocusTraversable(false);
 			GridPane.getHgrow(removeButton);
 			removeButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
