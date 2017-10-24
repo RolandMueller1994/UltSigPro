@@ -58,127 +58,38 @@ public class SaveMenuItem extends MenuItem {
 		super.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				LanguageResourceHandler lanHandler;
-				try {
-					lanHandler = LanguageResourceHandler.getInstance();
 
-					GlobalResourceProvider prov = GlobalResourceProvider.getInstance();
-					if (prov.checkRegistered("projectFile")) {
-						File file = (File) prov.getResource("projectFile");
-						Document doc = collectProjectSettings();
-						createXMLFile(doc, file);
-
-					} else {
-						FileChooser fileChooser = new FileChooser();
-						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-								"UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
-						File file = fileChooser.showSaveDialog(USPGui.stage);
-
-						if (file != null) {
-							prov.registerResource("projectFile", file);
-							Document doc = collectProjectSettings();
-							createXMLFile(doc, file);
-						}
+				if (XMLFileCreator.getFile() != null) {
+					try {
+						Document doc = XMLFileCreator.collectProjectSettings();
+						XMLFileCreator.createXMLFile(doc, XMLFileCreator.getFile());
+					} catch (ParserConfigurationException | TransformerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-
-				} catch (ResourceProviderException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ParserConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (TransformerConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (TransformerException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				} else {
+					try {
+						XMLFileCreator fileCreator = XMLFileCreator.getFileCreator();
+						fileCreator.createFile();
+						if (XMLFileCreator.getFile() != null) {
+							Document doc = XMLFileCreator.collectProjectSettings();
+							XMLFileCreator.createXMLFile(doc, XMLFileCreator.getFile());
+						}
+					} catch (ResourceProviderException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (ParserConfigurationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (TransformerConfigurationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (TransformerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		});
 	}
-
-	/**
-	 * Creates an XML file at the specified path with the given text and
-	 * structure.
-	 * 
-	 * @param doc
-	 *            Contains the structure and elements which have to be written
-	 *            into the file.
-	 * @param file
-	 *            Is the file with the file name and path.
-	 * @throws TransformerConfigurationException
-	 * @throws TransformerException
-	 */
-	private void createXMLFile(Document doc, File file) throws TransformerConfigurationException, TransformerException {
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		Transformer transformer;
-		transformer = transformerFactory.newTransformer();
-		transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");
-		DOMSource source = new DOMSource(doc);
-		StreamResult result = new StreamResult(file);
-		transformer.transform(source, result);
-	}
-
-	/**
-	 * Collects the informations of every {@linkplain Channel} and builds the
-	 * structure for an XML file.
-	 * 
-	 * @return The structure with the values for the XML file.
-	 * @throws ParserConfigurationException
-	 */
-	private Document collectProjectSettings() throws ParserConfigurationException {
-
-		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-		Document doc = docBuilder.newDocument();
-
-		// root elements
-		Element rootElement = doc.createElement("UspProjectFile");
-		doc.appendChild(rootElement);
-
-		Iterator<Node> iterChannelName = USPGui.getChannelBox().getChildren().iterator();
-		while (iterChannelName.hasNext()) {
-			ChannelPane curElement = (ChannelPane) iterChannelName.next();
-			// channel elements
-			Element channelName = doc.createElement(curElement.getName());
-			rootElement.appendChild(channelName);
-
-			// set attribute to channelName element
-			// channelName.setAttribute("id", "1");
-
-			// input device elements
-			ObservableList<String> inputDevices = curElement.getInputPaneTableItems();
-			for (String inputDevice : inputDevices) {
-				Element inputDeviceName = doc.createElement("inputDevice");
-				inputDeviceName.appendChild(doc.createTextNode(inputDevice));
-				channelName.appendChild(inputDeviceName);
-			}
-
-			// output device elements
-			ObservableList<String> outputDevices = curElement.getOutputPaneTableItems();
-			for (String outputDevice : outputDevices) {
-				Element outputDeviceName = doc.createElement("outputDevice");
-				outputDeviceName.appendChild(doc.createTextNode(outputDevice));
-				channelName.appendChild(outputDeviceName);
-			}
-			
-			// plugin elements
-			HashMap<String, Class<SigproPlugin>> plugins = PluginManager.getInstance().getSigproLoader().getInternalPluginMap();
-			for (Map.Entry<String, Class<SigproPlugin>> plugin : plugins.entrySet()) {
-				Element pluginElement = doc.createElement("plugin");
-				Element pluginName = doc.createElement("name");
-				Element pluginClass = doc.createElement("class");
-				pluginName.appendChild(doc.createTextNode(plugin.getKey()));
-				pluginClass.appendChild(doc.createTextNode(plugin.getValue().toString()));
-				pluginElement.appendChild(pluginName);
-				pluginElement.appendChild(pluginClass);
-				channelName.appendChild(pluginElement);
-			}
-		}
-		return doc;
-	}
-
 }
