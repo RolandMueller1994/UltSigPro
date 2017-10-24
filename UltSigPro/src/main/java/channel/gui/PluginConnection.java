@@ -3,8 +3,8 @@ package channel.gui;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import channel.PluginInput;
-import channel.PluginOutput;
+import javax.annotation.Nonnull;
+
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -12,6 +12,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
+/**
+ * This class manages the drawing of lines between plugins. Each connection is
+ * connected to exactly one {@link Output} and multiple {@link Input}s. The
+ * signal flow configuration for this connection will be generated from the
+ * connection itself.
+ * 
+ * @author roland
+ *
+ */
 public class PluginConnection {
 
 	private HashSet<ConnectionLine> lines = new HashSet<>();
@@ -24,8 +33,23 @@ public class PluginConnection {
 
 	private PluginConfigGroup configGroup;
 
-	public PluginConnection(PluginConfigGroup configGroup, ConnectionLineEndpointInterface endpoint, double startX,
-			double startY) {
+	/**
+	 * Creates a new connection which starts at a
+	 * {@link ConnectionLineEndpointInterface}.
+	 * 
+	 * @param configGroup
+	 *            The parent {@link Pane} to which lines will be added. Must not
+	 *            be null.
+	 * @param endpoint
+	 *            The {@link ConnectionLineEndpointInterface} where the
+	 *            connection will start. Must not be null.
+	 * @param startX
+	 *            The x-coordinate at which the connection should start.
+	 * @param startY
+	 *            The y-coordinate at which teh connection should start.
+	 */
+	public PluginConnection(@Nonnull PluginConfigGroup configGroup, @Nonnull ConnectionLineEndpointInterface endpoint,
+			double startX, double startY) {
 		this.configGroup = configGroup;
 		actLine = new ConnectionLine(configGroup, this, endpoint, startX, startY, true);
 
@@ -34,9 +58,22 @@ public class PluginConnection {
 		configGroup.getChildren().add(actLine);
 	}
 
+	/**
+	 * Changes the orientation of the current line for horizontal to vertical
+	 * and vertical to horizontal at the given coordinates if we draw a new
+	 * line.
+	 * 
+	 * @param x
+	 *            The x-coordinate where the orientation should be changed.
+	 * @param y
+	 *            The y-coordinate where the orientation should be changed.
+	 */
 	public void changeOrientation(double x, double y) {
+		// Change the current orientation flag and finalize the current line.
 		actHorizontal = !actHorizontal;
 		actLine.setCoordinatesLine(actLine, x, y);
+
+		// Create new lines
 		if (actHorizontal) {
 			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, actLine.getEndX(), y,
 					actHorizontal);
@@ -54,6 +91,12 @@ public class PluginConnection {
 		configGroup.getChildren().add(actLine);
 	}
 
+	/**
+	 * Return the current line which is used for drawing and hasn't been
+	 * finalized.
+	 * 
+	 * @return The current {@link ConnectionLine}
+	 */
 	public ConnectionLine getActLine() {
 		return actLine;
 	}
@@ -64,18 +107,23 @@ public class PluginConnection {
 		line.registerMaxCoordinatesUpdateListener(configGroup);
 	}
 
+	/**
+	 * Proves if this connection has already got a source for date.
+	 * 
+	 * @return True if there is already a input. Else false.
+	 */
 	public boolean hasInput() {
-		
-		for(ConnectionLine actLine : lines) {
-			if(actLine.getFirstEnd() != null && actLine.getFirstEnd() instanceof Output) {
+
+		for (ConnectionLine actLine : lines) {
+			if (actLine.getFirstEnd() != null && actLine.getFirstEnd() instanceof Output) {
 				return true;
 			}
-			
-			if(actLine.getSecondEnd() != null && actLine.getSecondEnd() instanceof Output) {
+
+			if (actLine.getSecondEnd() != null && actLine.getSecondEnd() instanceof Output) {
 				return true;
 			}
 		}
-		 
+
 		return false;
 	}
 
@@ -83,16 +131,46 @@ public class PluginConnection {
 		deviders.add(devider);
 	}
 
-	public void endPluginConnection(ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
+	/**
+	 * Finalize the drawing of a line at a
+	 * {@link ConnectionLineEndpointInterface}.
+	 * 
+	 * @param endpoint
+	 *            The {@link ConnectionLineEndpointInterface} at which this
+	 *            connection should end. Must not be null.
+	 * @param xCoord
+	 *            The x-coordinate at which the connection should end.
+	 * @param yCoord
+	 *            The y-coordinate at which the connection should end.
+	 */
+	public void endPluginConnection(@Nonnull ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
 		addLine(actLine);
 		actLine.setCoordinatesFinal(endpoint, xCoord, yCoord);
 		actLine = null;
 	}
 
+	/**
+	 * Updates the coordinates of the line which is the current line for
+	 * drawing.
+	 * 
+	 * @param xCoord
+	 *            The new x-coordinate.
+	 * @param yCoord
+	 *            The new y-coordinate.
+	 */
 	public void drawLine(double xCoord, double yCoord) {
 		actLine.setCoordinates(xCoord, yCoord);
 	}
 
+	/**
+	 * Divides the {@link ConnectionLine} which is used for drawing into tree
+	 * lines where the last line ends at the given coordinates.
+	 * 
+	 * @param x
+	 *            The x-coordinate where the current line should end.
+	 * @param y
+	 *            the y-coordinate where the current line should end.
+	 */
 	public void devideActLine(double x, double y) {
 
 		if (actHorizontal) {
@@ -706,7 +784,7 @@ public class PluginConnection {
 
 	}
 
-	private class LineDevider extends Circle implements ConnectionLineEndpointInterface {
+	class LineDevider extends Circle implements ConnectionLineEndpointInterface {
 
 		private HashMap<LineDeviderPosition, ConnectionLine> connectionLines = new HashMap<>();
 
@@ -716,7 +794,7 @@ public class PluginConnection {
 		private PluginConfigGroup parentPane;
 
 		private boolean hovered = false;
-		
+
 		private Pane dragPane;
 
 		public LineDevider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
@@ -764,39 +842,41 @@ public class PluginConnection {
 					}
 
 				});
-				
+
 				dragPane.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
 
 					@Override
 					public void handle(MouseEvent event) {
-						
-						if(parentPane.getWorkCon() != null) {
-							
+
+						if (parentPane.getWorkCon() != null) {
+
 							ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
-							
-							if(workingLine != null) {
-								if(workingLine.isHorizontal()) {
-									if(workingLine.isLeftRight() && connectionLines.containsKey(LineDeviderPosition.WEST)) {
+
+							if (workingLine != null) {
+								if (workingLine.isHorizontal()) {
+									if (workingLine.isLeftRight()
+											&& connectionLines.containsKey(LineDeviderPosition.WEST)) {
 										return;
-									} else if(connectionLines.containsKey(LineDeviderPosition.EAST)) {
+									} else if (connectionLines.containsKey(LineDeviderPosition.EAST)) {
 										return;
 									}
 								} else {
-									if(workingLine.isUpDown() && connectionLines.containsKey(LineDeviderPosition.NORTH)) {
+									if (workingLine.isUpDown()
+											&& connectionLines.containsKey(LineDeviderPosition.NORTH)) {
 										return;
-									} else if(connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
+									} else if (connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
 										return;
 									}
 								}
-								
+
 								hovered = true;
 								parentPane.setLineHovered(true);
-								setFill(Color.RED);							
+								setFill(Color.RED);
 							}
 						}
 					}
 				});
-				
+
 				dragPane.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent>() {
 
 					@Override
@@ -806,16 +886,16 @@ public class PluginConnection {
 						setFill(Color.BLACK);
 					}
 				});
-				
+
 				dragPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
 					@Override
 					public void handle(MouseEvent event) {
-						
+
 						addExternalLine();
-						
+
 					}
-					
+
 				});
 			}
 
@@ -823,37 +903,37 @@ public class PluginConnection {
 			dragPane.setLayoutX(getCenterX() - DIAMETER / 2);
 			dragPane.setLayoutY(getCenterY() - DIAMETER / 2);
 		}
-		
+
 		private void addExternalLine() {
-			if(hovered) {
+			if (hovered) {
 				ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
-				
-				if(!workingLine.isHorizontal()) {
-					if(workingLine.isUpDown()) {
+
+				if (!workingLine.isHorizontal()) {
+					if (workingLine.isUpDown()) {
 						connectionLines.put(LineDeviderPosition.NORTH, workingLine);
 					} else {
 						connectionLines.put(LineDeviderPosition.SOUTH, workingLine);
-					}									
+					}
 				} else {
-					if(workingLine.isLeftRight()) {
+					if (workingLine.isLeftRight()) {
 						connectionLines.put(LineDeviderPosition.WEST, workingLine);
 					} else {
 						connectionLines.put(LineDeviderPosition.EAST, workingLine);
 					}
 				}
-				
+
 				workingLine.setCoordinatesFinal(this, getCenterX(), getCenterY());
-				
-				for(ConnectionLine workLine : parentPane.getWorkCon().lines) {
+
+				for (ConnectionLine workLine : parentPane.getWorkCon().lines) {
 					addLine(workLine);
 					workLine.parent = parent;
 				}
-				
-				for(LineDevider devider : parentPane.getWorkCon().deviders) {
+
+				for (LineDevider devider : parentPane.getWorkCon().deviders) {
 					addDevider(devider);
 					devider.parent = parent;
 				}
-				
+
 				parentPane.finalizeDrawing();
 			}
 		}
@@ -891,8 +971,8 @@ public class PluginConnection {
 
 		@Override
 		public void addLine(ConnectionLine line) {
-			// TODO Auto-generated method stub
-
+			
+			// Nothing to do, won't be called.
 		}
 
 		public void addLineWithPos(LineDeviderPosition pos, ConnectionLine line) {
