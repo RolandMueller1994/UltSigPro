@@ -213,6 +213,7 @@ public class PluginConnection {
 		private Pane dragPane;
 
 		private boolean horizontal;
+		private boolean hoveredForDeletion = false;
 
 		private PluginConnection parent;
 
@@ -255,6 +256,8 @@ public class PluginConnection {
 		}
 
 		public void delete() {
+			parentPane.removeDeletionLine();
+
 			lines.remove(this);
 			parentPane.getChildren().remove(dragPane);
 			dragPane = null;
@@ -262,11 +265,11 @@ public class PluginConnection {
 			parentPane = null;
 
 			if (firstEnd != null) {
-				firstEnd.addLine(null);
+				firstEnd.removeLine(this);
 				firstEnd = null;
 			}
 			if (secondEnd != null) {
-				secondEnd.addLine(null);
+				secondEnd.removeLine(this);
 				secondEnd = null;
 			}
 			if (firstLine != null) {
@@ -595,9 +598,11 @@ public class PluginConnection {
 
 					@Override
 					public void handle(MouseEvent event) {
-						parentPane.setLineHovered(false);
-						hovered = false;
-						setStroke(Color.BLACK);
+						if (!hoveredForDeletion) {
+							parentPane.setLineHovered(false);
+							hovered = false;
+							setStroke(Color.BLACK);
+						}
 					}
 				});
 
@@ -606,7 +611,9 @@ public class PluginConnection {
 					@Override
 					public void handle(MouseEvent event) {
 
-						addLineDevider(event.getScreenX(), event.getScreenY());
+						if (!addLineDevider(event.getScreenX(), event.getScreenY())) {
+							setHoveredForDeletion(null, !hoveredForDeletion);
+						}
 					}
 
 				});
@@ -628,7 +635,35 @@ public class PluginConnection {
 			dragPane.setPrefSize(width, height);
 		}
 
-		private void addLineDevider(double x, double y) {
+		private void setHoveredForDeletion(ConnectionLine caller, boolean hoverDel) {
+
+			if (parentPane.getWorkCon() == null) {
+				if (caller == null) {
+					if (!hoveredForDeletion) {
+						parentPane.setDeletionLine(this);
+					} else {
+						parentPane.removeDeletionLine();
+					}
+				}
+
+				if (firstLine != null && !firstLine.equals(caller)) {
+					firstLine.setHoveredForDeletion(this, hoverDel);
+				}
+				if (secondLine != null && !secondLine.equals(caller)) {
+					secondLine.setHoveredForDeletion(this, hoverDel);
+				}
+
+				if (hoverDel) {
+					setStroke(Color.RED);
+					hoveredForDeletion = true;
+				} else {
+					setStroke(Color.BLACK);
+					hoveredForDeletion = false;
+				}
+			}
+		}
+
+		private boolean addLineDevider(double x, double y) {
 
 			double localX = screenToLocal(x, y).getX();
 			double localY = screenToLocal(x, y).getY();
@@ -779,7 +814,9 @@ public class PluginConnection {
 
 					parentPane.finalizeDrawing();
 				}
+				return true;
 			}
+			return false;
 		}
 
 	}
@@ -857,14 +894,16 @@ public class PluginConnection {
 									if (workingLine.isLeftRight()
 											&& connectionLines.containsKey(LineDeviderPosition.WEST)) {
 										return;
-									} else if (connectionLines.containsKey(LineDeviderPosition.EAST)) {
+									} else if (!workingLine.isLeftRight()
+											&& connectionLines.containsKey(LineDeviderPosition.EAST)) {
 										return;
 									}
 								} else {
 									if (workingLine.isUpDown()
 											&& connectionLines.containsKey(LineDeviderPosition.NORTH)) {
 										return;
-									} else if (connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
+									} else if (!workingLine.isUpDown()
+											&& connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
 										return;
 									}
 								}
@@ -971,7 +1010,7 @@ public class PluginConnection {
 
 		@Override
 		public void addLine(ConnectionLine line) {
-			
+
 			// Nothing to do, won't be called.
 		}
 
@@ -979,6 +1018,22 @@ public class PluginConnection {
 
 			connectionLines.put(pos, line);
 			line.updateCoordinates(this, getCenterX(), getCenterY());
+		}
+
+		@Override
+		public void removeLine(ConnectionLine line) {
+
+			LineDeviderPosition deletePos = null;
+
+			for (LineDeviderPosition pos : connectionLines.keySet()) {
+				if (connectionLines.get(pos).equals(line)) {
+					deletePos = pos;
+				}
+			}
+
+			if (deletePos != null) {
+				connectionLines.remove(deletePos);
+			}
 		}
 	}
 

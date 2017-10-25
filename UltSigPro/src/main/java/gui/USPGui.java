@@ -39,6 +39,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -101,12 +102,18 @@ public class USPGui extends Application {
 		
 		stage = primaryStage;
 		
-		primaryStage.addEventHandler(KeyEvent.KEY_TYPED, new EventHandler<KeyEvent>() {
+		primaryStage.addEventHandler(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 
 			@Override
 			public void handle(KeyEvent event) {
-				for(Tab tab : tabMap.values()) {
-					((PluginConfigGroup) ((ScrollPane)tab.getContent()).getContent()).escapeLineDrawing();
+				if(event.getCode().equals(KeyCode.ESCAPE)) {
+					for(Tab tab : tabMap.values()) {
+						((PluginConfigGroup) ((ScrollPane)tab.getContent()).getContent()).escapeLineDrawing();
+					}					
+				} else if(event.getCode().equals(KeyCode.DELETE)) {
+					for(Tab tab : tabMap.values()) {
+						((PluginConfigGroup) ((ScrollPane)tab.getContent()).getContent()).deleteLine();
+					}	
 				}
 			}
 			

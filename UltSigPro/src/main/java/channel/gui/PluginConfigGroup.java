@@ -44,6 +44,8 @@ public class PluginConfigGroup extends Pane {
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
+	
+	private ConnectionLine deletionLine;
 
 	private boolean lineHovered = false;
 
@@ -413,6 +415,20 @@ public class PluginConfigGroup extends Pane {
 	public boolean isDrawing() {
 
 		return workCon != null;
+	}
+	
+	public void setDeletionLine(ConnectionLine deletionLine) {
+		this.deletionLine = deletionLine;
+	}
+	
+	public void deleteLine() {
+		if(deletionLine != null) {
+			deletionLine.delete();
+		}
+	}
+	
+	public void removeDeletionLine() {
+		deletionLine = null;
 	}
 
 }
