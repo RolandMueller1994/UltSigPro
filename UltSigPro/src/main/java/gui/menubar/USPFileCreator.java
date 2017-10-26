@@ -101,8 +101,13 @@ public class USPFileCreator {
 		while (iterChannelName.hasNext()) {
 			ChannelPane curElement = (ChannelPane) iterChannelName.next();
 			// channel elements
-			Element channelName = doc.createElement(curElement.getName());
-			rootElement.appendChild(channelName);
+			Element channel = doc.createElement("channel");
+			rootElement.appendChild(channel);
+			
+			// channel name
+			Element channelName = doc.createElement("name");
+			channelName.appendChild(doc.createTextNode(curElement.getName()));
+			channel.appendChild(channelName);
 
 			// set attribute to channelName element
 			// channelName.setAttribute("id", "1");
@@ -112,7 +117,7 @@ public class USPFileCreator {
 			for (String inputDevice : inputDevices) {
 				Element inputDeviceName = doc.createElement("inputDevice");
 				inputDeviceName.appendChild(doc.createTextNode(inputDevice));
-				channelName.appendChild(inputDeviceName);
+				channel.appendChild(inputDeviceName);
 			}
 
 			// output device elements
@@ -120,7 +125,7 @@ public class USPFileCreator {
 			for (String outputDevice : outputDevices) {
 				Element outputDeviceName = doc.createElement("outputDevice");
 				outputDeviceName.appendChild(doc.createTextNode(outputDevice));
-				channelName.appendChild(outputDeviceName);
+				channel.appendChild(outputDeviceName);
 			}
 
 			// plugin elements
@@ -134,7 +139,7 @@ public class USPFileCreator {
 				pluginClass.appendChild(doc.createTextNode(plugin.getValue().toString()));
 				pluginElement.appendChild(pluginName);
 				pluginElement.appendChild(pluginClass);
-				channelName.appendChild(pluginElement);
+				channel.appendChild(pluginElement);
 			}
 		}
 		return doc;
