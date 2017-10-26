@@ -30,7 +30,7 @@ public class SaveAsMenuItem extends MenuItem {
 					File file = USPFileCreator.getFileCreator().createFile();
 					if (file != null) {
 						Document doc = USPFileCreator.collectProjectSettings();
-						USPFileCreator.createXMLFile(doc, USPFileCreator.getFile());
+						USPFileCreator.createUSPFile(doc, USPFileCreator.getFile());
 					}
 				} catch (ResourceProviderException | ParserConfigurationException | TransformerException e) {
 					// TODO Auto-generated catch block

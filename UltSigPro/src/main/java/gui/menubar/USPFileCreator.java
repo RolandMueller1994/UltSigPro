@@ -68,7 +68,7 @@ public class USPFileCreator {
 	 * @throws TransformerConfigurationException
 	 * @throws TransformerException
 	 */
-	public static void createXMLFile(Document doc, File file) throws TransformerConfigurationException, TransformerException {
+	public static void createUSPFile(Document doc, File file) throws TransformerConfigurationException, TransformerException {
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer;
 		transformer = transformerFactory.newTransformer();
