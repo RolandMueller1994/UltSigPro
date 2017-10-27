@@ -187,4 +187,11 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		}
 		
 	}
+	
+	public void delete() {
+		configGroup.getChildren().remove(this);
+		if(conLine != null) {
+			conLine.delete();
+		}
+	}
 }

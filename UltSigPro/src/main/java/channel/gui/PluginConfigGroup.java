@@ -430,5 +430,10 @@ public class PluginConfigGroup extends Pane {
 	public void removeDeletionLine() {
 		deletionLine = null;
 	}
+	
+	public void deletePlugin(SigproPlugin plugin) {
+		plugins.remove(plugin);
+		getChildren().remove(plugin.getGUI());
+	}
 
 }
