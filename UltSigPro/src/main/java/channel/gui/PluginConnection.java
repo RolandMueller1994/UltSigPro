@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import javax.annotation.Nonnull;
 
+import channel.gui.PluginConnection.ConnectionLine;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -56,6 +57,142 @@ public class PluginConnection {
 		addLine(actLine);
 
 		configGroup.getChildren().add(actLine);
+	}
+	
+	private void unifyConnectionsDevider() {
+		
+		HashSet<ConnectionLine> removeLines = new HashSet<>();
+		
+		for(ConnectionLine line : lines) {
+			
+			if(!removeLines.contains(line)) {
+				if(line.firstLine != null && line.horizontal == line.firstLine.horizontal) {
+					removeLines.add(line.firstLine);
+					
+					if(line.equals(line.firstLine.firstLine)) {
+						// We are the first line of the line to delete
+						line.setStartX(line.firstLine.getEndX());
+						line.setStartY(line.firstLine.getEndY());
+						// Now we are at the right coordinates
+						
+						if(line.firstLine.secondLine != null) {
+							// There's another line 
+							ConnectionLine nextLine = line.firstLine.secondLine;
+							if(line.firstLine.equals(nextLine.firstLine)) {
+								// We are the firstLine of the nextLine
+								nextLine.firstLine = line;
+							} else {
+								// We are the secondLIne of the nextLine
+								nextLine.secondLine = line;
+							}
+							
+							// Our first line will be nextLine
+							line.firstLine = nextLine;
+						} else {
+							// There has to be a endpoint at our firstLine -> this will be our endpoint
+							line.firstEnd = line.firstLine.secondEnd;
+							line.firstEnd.replaceLine(line.firstLine, line);
+							line.firstLine = null;
+						}
+						
+						line.updateDragPane();
+					} else if(line.equals(line.firstLine.secondLine)) {
+						// We are the second line of the line to delete
+						line.setStartX(line.firstLine.getStartX());
+						line.setStartY(line.firstLine.getStartY());
+						// Now we are at the right coordinates
+						
+						if(line.firstLine.firstLine != null) {
+							// There's another line 
+							ConnectionLine nextLine = line.firstLine.firstLine;
+							if(line.firstLine.equals(nextLine.firstLine)) {
+								// We are the firstLine of the nextLine
+								nextLine.firstLine = line;
+							} else {
+								// We are the secondLine of the nextLine
+								nextLine.secondLine = line;
+							}
+							
+							// Our first line will be nextLine
+							line.firstLine = nextLine;
+						} else {
+							
+							line.firstEnd = line.firstLine.firstEnd;
+							line.firstEnd.replaceLine(line.firstLine, line);
+							line.firstLine = null;
+						}
+						
+						line.updateDragPane();
+					}
+				} else if(line.secondLine != null && line.horizontal == line.secondLine.horizontal) {
+					removeLines.add(line.secondLine);
+					
+					if(line.equals(line.secondLine.firstLine)) {
+						// We are the first line of the line to delete
+						line.setEndX(line.secondLine.getEndX());
+						line.setEndY(line.secondLine.getEndY());
+						// Now we are at the right coordinates
+						
+						if(line.secondLine.secondLine != null) {
+							// There's another line 
+							ConnectionLine nextLine = line.secondLine.secondLine;
+							if(line.secondLine.equals(nextLine.firstLine)) {
+								// We are the firstLine of the nextLine
+								nextLine.firstLine = line;
+							} else {
+								// We are the secondLine of the firstLine
+								nextLine.secondLine = line;
+							}
+							
+							// Our first line will be nextLine
+							line.secondLine = nextLine;
+						} else {
+							// There has to be a endpoint at our secondLine -> this will be our endpoint
+							line.secondEnd = line.secondLine.secondEnd;
+							line.secondEnd.replaceLine(line.secondLine, line);
+							line.secondLine = null;
+						}
+						
+						// There has to be a endpoint at our firstLine -> this will be our endpoint
+						line.updateDragPane();
+					} else if(line.equals(line.secondLine.secondLine)) {
+						// We are the second line of the line to delete
+						line.setEndX(line.secondLine.getStartX());
+						line.setEndY(line.secondLine.getStartY());
+						// Now we are at the right coordinates
+						
+						if(line.secondLine.firstLine != null) {
+							// There's another line 
+							ConnectionLine nextLine = line.secondLine.firstLine;
+							if(line.secondLine.equals(nextLine.firstLine)) {
+								// We are the firstLine of the nextLine
+								nextLine.firstLine = line;
+							} else {
+								// We are the secondLine of the nextLine
+								nextLine.secondLine = line;
+							}
+							
+							// Our second line will be nextLine
+							line.secondLine = nextLine;
+						} else {
+							// There has to be a endpoint at our secondLine -> this will be our endpoint
+							line.secondEnd = line.secondLine.firstEnd;
+							line.secondEnd.replaceLine(line.secondLine, line);
+							line.secondLine = null;
+						}
+						
+						line.updateDragPane();
+					}
+				}
+			}
+		}
+		
+		for(ConnectionLine delete : removeLines) {
+			lines.remove(delete);
+			configGroup.getChildren().remove(delete);
+			configGroup.getChildren().remove(delete.dragPane);
+		}
+		
 	}
 
 	/**
@@ -380,7 +517,7 @@ public class PluginConnection {
 						addLine(newLine);
 						addLine(vertLine);
 
-						secondEnd.addLine(newLine);
+						secondEnd.replaceLine(this, newLine);
 
 						secondLine = vertLine;
 						secondEnd = null;
@@ -418,7 +555,7 @@ public class PluginConnection {
 						addLine(newLine);
 						addLine(vertLine);
 
-						firstEnd.addLine(newLine);
+						firstEnd.replaceLine(this, newLine);
 
 						firstLine = vertLine;
 						firstEnd = null;
@@ -560,6 +697,10 @@ public class PluginConnection {
 					secondLine.updateCoordinates(this, localX, localY);
 				}
 
+				if (firstLine == secondLine || firstLine == null || secondLine == null) {
+					System.out.println("Wrong config");
+				}
+
 				updateDragPane();
 			}
 		}
@@ -635,7 +776,7 @@ public class PluginConnection {
 			dragPane.setPrefSize(width, height);
 		}
 
-		private void setHoveredForDeletion(ConnectionLine caller, boolean hoverDel) {
+		public void setHoveredForDeletion(ConnectionLine caller, boolean hoverDel) {
 
 			if (parentPane.getWorkCon() == null) {
 				if (caller == null) {
@@ -1033,6 +1174,61 @@ public class PluginConnection {
 
 			if (deletePos != null) {
 				connectionLines.remove(deletePos);
+			}
+
+			if (connectionLines.size() == 2) {
+				// Unify to lines
+				ConnectionLine firstLine = null;
+				ConnectionLine secondLine = null;
+				boolean first = true;
+				
+				for(ConnectionLine curLine : connectionLines.values()) {
+					if(first) {
+						firstLine = curLine;
+						first = false;
+					} else {
+						secondLine = curLine;
+					}
+					
+				}
+				
+				if(firstLine != null && secondLine != null) {
+					if(this.equals(firstLine.firstEnd)) {
+						firstLine.firstLine = secondLine;
+						firstLine.firstEnd = null;
+					} else {
+						firstLine.secondLine = secondLine;
+						firstLine.secondEnd = null;
+					}
+					
+					if(this.equals(secondLine.firstEnd)) {
+						secondLine.firstLine = firstLine;
+						secondLine.firstEnd = null;
+					} else {
+						secondLine.secondLine = firstLine;
+						secondLine.secondEnd = null;
+					}
+				}
+				
+				parentPane.getChildren().remove(this);
+				parentPane.getChildren().remove(dragPane);
+
+				parent.deviders.remove(this);
+				parent.unifyConnectionsDevider();
+				
+				parentPane = null;
+				parent = null;
+			}
+		}
+
+		@Override
+		public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
+
+			for (LineDeviderPosition pos : connectionLines.keySet()) {
+				if (connectionLines.get(pos).equals(origin)) {
+					connectionLines.replace(pos, replace);
+					break;
+				}
 			}
 		}
 	}

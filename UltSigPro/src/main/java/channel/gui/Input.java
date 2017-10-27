@@ -176,4 +176,13 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		}
 		
 	}
+
+	@Override
+	public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
+		
+		if(conLine.equals(origin)) {
+			conLine = replace;
+		}
+		
+	}
 }

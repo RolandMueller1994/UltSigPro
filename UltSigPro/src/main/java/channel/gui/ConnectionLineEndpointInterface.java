@@ -17,4 +17,6 @@ public interface ConnectionLineEndpointInterface {
 	
 	void removeLine(ConnectionLine line);
 	
+	void replaceLine(ConnectionLine origin, ConnectionLine replace);
+	
 }
