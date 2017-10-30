@@ -3,6 +3,8 @@ package channel.gui;
 import java.awt.MouseInfo;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Map.Entry;
 
 import javax.annotation.CheckForNull;
@@ -14,16 +16,30 @@ import channel.PluginOutput;
 import channel.gui.PluginConnection.ConnectionLine;
 import channel.gui.PluginConnection.LineDevider;
 import gui.USPGui;
+import i18n.LanguageResourceHandler;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import plugins.PluginManager;
 import plugins.sigproplugins.SigproPlugin;
-import plugins.sigproplugins.internal.GainBlock;
+import resourceframework.ResourceProviderException;
 
 /**
  * This class is a container for plugins, their gui and connections between the
@@ -37,6 +53,8 @@ public class PluginConfigGroup extends Pane {
 	private Channel channel;
 	private ScrollPane parent;
 
+	private ContextMenu contextMenu;
+
 	private static final double scrollOffset = 10;
 	private static final long scrollSpeed = 10;
 
@@ -44,7 +62,7 @@ public class PluginConfigGroup extends Pane {
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
-	
+
 	private ConnectionLine deletionLine;
 
 	private boolean lineHovered = false;
@@ -52,8 +70,11 @@ public class PluginConfigGroup extends Pane {
 	private MaxCoordinatesInterface maxXComponent;
 	private MaxCoordinatesInterface maxYComponent;
 	private HashMap<MaxCoordinatesInterface, Point2D> componentMaxPositions = new HashMap<>();
-	double maxX;
-	double maxY;
+	private double maxX;
+	private double maxY;
+
+	private double newPluginX;
+	private double newPluginY;
 
 	/**
 	 * Creates a new {@line PluginConfigGroup}
@@ -68,14 +89,21 @@ public class PluginConfigGroup extends Pane {
 		this.channel = channel;
 		this.parent = parent;
 
+		contextMenu = new ContextMenu();
+		try {
+			contextMenu.getItems().add(new AddPluginMenuItem(this));
+		} catch (ResourceProviderException e1) {
+			// shouldn't happen
+			e1.printStackTrace();
+		}
+
 		setMaxHeight(Double.MAX_VALUE);
 		setMaxWidth(Double.MAX_VALUE);
+		
+		setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
 
 		addPlugin(new PluginInput(), 50, 100);
 		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 50, 100);
-
-		addPlugin(new GainBlock(), 300, 100);
-		addPlugin(new GainBlock(), 600, 100);
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -169,7 +197,17 @@ public class PluginConfigGroup extends Pane {
 				}
 
 				if (!hovered && !lineHovered) {
-					if (workCon != null) {
+					if (event.getButton().equals(MouseButton.SECONDARY) && workCon == null
+							&& !contextMenu.isShowing()) {
+						showContextMenu(event.getScreenX(), event.getScreenY());
+
+						Point2D point = screenToLocal(event.getScreenX(), event.getScreenY());
+						
+						newPluginX = point.getX();
+						newPluginY = point.getY();
+					} else if (workCon == null && contextMenu.isShowing()) {
+						contextMenu.hide();
+					} else if (event.getButton().equals(MouseButton.PRIMARY) && workCon != null) {
 						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
 								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
 					}
@@ -177,6 +215,11 @@ public class PluginConfigGroup extends Pane {
 			}
 		});
 
+	}
+
+	private void showContextMenu(double screenX, double screenY) {
+
+		contextMenu.show(this, screenX, screenY);
 	}
 
 	/**
@@ -416,24 +459,99 @@ public class PluginConfigGroup extends Pane {
 
 		return workCon != null;
 	}
-	
+
 	public void setDeletionLine(ConnectionLine deletionLine) {
 		this.deletionLine = deletionLine;
 	}
-	
+
 	public void deleteLine() {
-		if(deletionLine != null) {
+		if (deletionLine != null) {
 			deletionLine.delete();
 		}
 	}
-	
+
 	public void removeDeletionLine() {
 		deletionLine = null;
 	}
-	
+
 	public void deletePlugin(SigproPlugin plugin) {
 		plugins.remove(plugin);
 		getChildren().remove(plugin.getGUI());
+	}
+
+	private class AddPluginMenuItem extends MenuItem {
+
+		private static final String TITLE = "title";
+
+		private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+
+		private PluginConfigGroup parent;
+
+		private AddPluginMenuItem(PluginConfigGroup parent) throws ResourceProviderException {
+			super.setText(lanHandler.getLocalizedText(AddPluginMenuItem.class, TITLE));
+
+			this.parent = parent;
+
+			super.setOnAction(new EventHandler<ActionEvent>() {
+
+				@Override
+				public void handle(ActionEvent event) {
+
+					AddPluginDialog dialog = new AddPluginDialog();
+
+					Optional<ButtonType> result = dialog.showAndWait();
+
+					if (result.isPresent() && result.get() == ButtonType.OK) {
+
+						String selected = dialog.listView.getSelectionModel().getSelectedItem();
+
+						if (selected != null) {
+							try {
+								parent.addPlugin(PluginManager.getInstance().getSigproPlugin(selected),
+										parent.newPluginX, parent.newPluginY);
+							} catch (InstantiationException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (IllegalAccessException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+
+			});
+		}
+
+		private class AddPluginDialog extends Dialog<ButtonType> {
+
+			private static final String TITLE = "title";
+
+			private ListView<String> listView = new ListView();
+
+			private AddPluginDialog() {
+
+				try {
+					setTitle(LanguageResourceHandler.getInstance().getLocalizedText(AddPluginDialog.class, TITLE));
+				} catch (ResourceProviderException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				List<String> availPlugins = PluginManager.getInstance().getAllAvailableSigproPlugins();
+
+				for (String plugin : availPlugins) {
+					listView.getItems().add(plugin);
+				}
+
+				getDialogPane().setContent(listView);
+
+				getDialogPane().getButtonTypes().add(ButtonType.OK);
+				getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+			}
+
+		}
+
 	}
 
 }

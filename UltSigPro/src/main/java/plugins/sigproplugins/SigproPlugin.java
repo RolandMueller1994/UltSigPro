@@ -33,6 +33,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 	private ContextMenu contextMenu;
 	
 	private boolean dragged = false;
+	private boolean hovered = false;
 	
 	private LinkedList<Input> inputs = new LinkedList<> ();
 	private LinkedList<Output> outputs = new LinkedList<> ();
@@ -121,6 +122,25 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				
 			});
 			
+			gui.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent> () {
+
+				@Override
+				public void handle(MouseEvent event) {
+					
+					hovered = true;
+				}
+				
+			});
+
+			gui.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent> () {
+
+				@Override
+				public void handle(MouseEvent event) {
+					
+					hovered = false;
+				}
+				
+			});
 		}
 		return gui;
 	}
@@ -197,7 +217,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			}
 		}
 		
-		return false;
+		return hovered;
 	}
 	
 	@Override

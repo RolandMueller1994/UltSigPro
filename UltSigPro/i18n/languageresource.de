@@ -54,6 +54,9 @@ channel.ChannelPane$AddRemoveDialog.duplicateAlertTitle=Auswahl
 channel.ChannelPane$AddRemoveDialog.duplicateAlertHeader=Das ausgewählte Device ist bereits vorhanden!
 channel.ChannelPane$AddRemoveDialog.deviceLabel=Device: *
 
+channel.gui.PluginConfigGroup$AddPluginMenuItem.title=Plugin hinzufügen
+
+channel.gui.PluginConfigGroup$AddPluginMenuItem$AddPluginDialog.title=Plugin hinzufügen
 
 plugins.PluginManagerMenuItem.title=Plugin-Verwaltung
 
