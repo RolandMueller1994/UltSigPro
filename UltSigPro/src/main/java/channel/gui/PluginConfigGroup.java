@@ -55,7 +55,7 @@ public class PluginConfigGroup extends Pane {
 
 	private ContextMenu contextMenu;
 
-	private static final double scrollOffset = 10;
+	private static final double scrollOffset = 50;
 	private static final long scrollSpeed = 10;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
@@ -102,8 +102,8 @@ public class PluginConfigGroup extends Pane {
 		
 		setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
 
-		addPlugin(new PluginInput(), 50, 100);
-		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 50, 100);
+		addPlugin(new PluginInput(), 100, 100);
+		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 100, 100);
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -358,6 +358,8 @@ public class PluginConfigGroup extends Pane {
 				i++;
 			}
 		}
+		
+		updateMaxCoordinatesOfComponent(plugin);
 	}
 
 	/**
@@ -440,7 +442,7 @@ public class PluginConfigGroup extends Pane {
 
 		if (!(maxYComponent.getMaxY() > maxY)) {
 			for (Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
-				if (entry.getValue().getY() > maxXComponent.getMaxY()) {
+				if (entry.getValue().getY() > maxYComponent.getMaxY()) {
 					maxYComponent = entry.getKey();
 				}
 			}
