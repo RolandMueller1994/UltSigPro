@@ -167,4 +167,29 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	public boolean isHovered() {
 		return hovered;
 	}
+
+	@Override
+	public void removeLine(ConnectionLine line) {
+		
+		if(conLine.equals(line)) {
+			conLine = null;
+		}
+		
+	}
+
+	@Override
+	public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
+		
+		if(conLine.equals(origin)) {
+			conLine = replace;
+		}
+		
+	}
+	
+	public void delete() {
+		configGroup.getChildren().remove(this);
+		if(conLine != null) {
+			conLine.delete();
+		}
+	}
 }

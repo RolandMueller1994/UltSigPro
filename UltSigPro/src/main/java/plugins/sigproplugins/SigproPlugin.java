@@ -1,10 +1,7 @@
 package plugins.sigproplugins;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import javax.annotation.Nonnull;
 
 import channel.OutputDataWrapper;
@@ -12,7 +9,12 @@ import channel.gui.Input;
 import channel.gui.MaxCoordinatesInterface;
 import channel.gui.Output;
 import channel.gui.PluginConfigGroup;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
@@ -28,7 +30,10 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 
 	protected Pane gui;
 	
+	private ContextMenu contextMenu;
+	
 	private boolean dragged = false;
+	private boolean hovered = false;
 	
 	private LinkedList<Input> inputs = new LinkedList<> ();
 	private LinkedList<Output> outputs = new LinkedList<> ();
@@ -48,6 +53,41 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		if(gui == null) {
 			gui = new Pane();
 			
+			contextMenu = new ContextMenu();
+			MenuItem deleteItem = new MenuItem("Löschen");
+			deleteItem.setOnAction(new EventHandler<ActionEvent> () {
+
+				@Override
+				public void handle(ActionEvent event) {
+					
+					for(Input input : inputs) {
+						input.delete();
+					}
+					for(Output output : outputs) {
+						output.delete();
+					}
+					
+					delete();
+				}
+				
+			});
+			
+			contextMenu.getItems().add(deleteItem);
+			
+			gui.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+
+				@Override
+				public void handle(MouseEvent event) {
+					
+					if(contextMenu.isShowing()) {
+						contextMenu.hide();
+					} else if(MouseButton.SECONDARY.equals(event.getButton())) {
+						contextMenu.show(gui, event.getScreenX(), event.getScreenY());
+					}
+				}
+				
+			});
+			
 			// Get the mouse position within the plugin to move the plugin at clicked postion.
 			gui.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
 
@@ -56,6 +96,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 					
 					mouseOffsetX = event.getSceneX() - gui.localToScene(gui.getLayoutBounds()).getMinX();
 					mouseOffsetY = event.getSceneY() - gui.localToScene(gui.getLayoutBounds()).getMinY();
+				
 				}
 			});
 			
@@ -80,8 +121,32 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				}
 				
 			});
+			
+			gui.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent> () {
+
+				@Override
+				public void handle(MouseEvent event) {
+					
+					hovered = true;
+				}
+				
+			});
+
+			gui.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent> () {
+
+				@Override
+				public void handle(MouseEvent event) {
+					
+					hovered = false;
+				}
+				
+			});
 		}
 		return gui;
+	}
+	
+	private void delete() {
+		coordinatesListener.deletePlugin(this);
 	}
 	
 	public void drag(double screenX, double screenY) {
@@ -152,7 +217,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			}
 		}
 		
-		return false;
+		return hovered;
 	}
 	
 	@Override
