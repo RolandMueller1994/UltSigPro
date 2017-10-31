@@ -254,4 +254,8 @@ public class USPGui extends Application {
 			}
 		}
 	}
+	
+	public static VBox getChannelBox () {
+		return channelBox;
+	}
 }

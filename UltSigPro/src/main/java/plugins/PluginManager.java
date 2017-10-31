@@ -354,4 +354,8 @@ public class PluginManager {
 			}
 		}
 	}
+	
+	public PluginLoader<SigproPlugin> getSigproLoader() {
+		return sigproLoader;
+	}
 }

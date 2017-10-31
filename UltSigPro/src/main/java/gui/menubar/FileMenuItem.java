@@ -10,6 +10,7 @@ public class FileMenuItem extends MenuItem {
 	
 	public FileMenuItem() throws ResourceProviderException {		
 		super(LanguageResourceHandler.getInstance().getLocalizedText(FileMenuItem.class, TITLE));	
+		
 	}
 	
 }
