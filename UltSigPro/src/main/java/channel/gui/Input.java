@@ -106,10 +106,44 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 				
 				if(conLine == null) {
 					
-					for (Line line : lines) {
-						line.setStroke(Color.RED);
+					boolean recursivity = false;
+					
+					if(configGroup.getWorkCon() != null) {
+						HashSet<Output> outputs = plugin.getOutputs();
+						
+						HashSet<Output> conLineOutputs = configGroup.getWorkCon().getOutputs();
+						
+						for(Output conLineOutput : conLineOutputs) {
+							if(outputs.contains(conLineOutput)) {
+								recursivity = true;
+								break;
+							}
+						}
+						
+						if(!recursivity) {
+							HashSet<ConnectionLineEndpointInterface> endpoints = new HashSet<>();
+							
+							for(Output conLineOutput : conLineOutputs) {
+								endpoints.add(conLineOutput);
+							}
+							
+							for(Output output : outputs) {
+								if(output.getLine() != null) {
+									if(output.getLine().getParentConnection().checkRekusivity(endpoints, false)) {
+										recursivity = true;
+										break;
+									}
+								}
+							}
+						}
 					}
-					hovered = true;						
+					
+					if(!recursivity) {						
+						for (Line line : lines) {
+							line.setStroke(Color.RED);
+						}
+						hovered = true;						
+					}
 				}
 			}
 		});

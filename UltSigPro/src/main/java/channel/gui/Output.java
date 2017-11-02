@@ -1,5 +1,6 @@
 package channel.gui;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import com.sun.javafx.tk.FontLoader;
@@ -102,11 +103,46 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 
-				if(conLine == null) {
-					for (Line line : lines) {
-						line.setStroke(Color.RED);
+				if(conLine == null && (configGroup.getWorkCon() == null || !configGroup.getWorkCon().hasInput())) {
+					
+					boolean recursivity = false;
+					
+					if(configGroup.getWorkCon() != null) {
+						HashSet<Input> inputs = plugin.getInputs();
+						
+						HashSet<Input> conLineInputs = configGroup.getWorkCon().getInputs();
+						
+						for(Input conLineInput : conLineInputs) {
+							if(inputs.contains(conLineInput)) {
+								recursivity = true;
+								break;
+							}
+						}
+						
+						if(!recursivity) {
+							HashSet<ConnectionLineEndpointInterface> endpoints = new HashSet<>();
+							
+							for(Input conLineInput : conLineInputs) {
+								endpoints.add(conLineInput);
+							}
+							
+							for(Input input : inputs) {
+								if(input.getLine() != null) {
+									if(input.getLine().getParentConnection().checkRekusivity(endpoints, true)) {
+										recursivity = true;
+										break;
+									}
+								}
+							}
+						}
 					}
-					hovered = true;									
+					
+					if(!recursivity) {
+						for (Line line : lines) {
+							line.setStroke(Color.RED);
+						}
+						hovered = true;															
+					}
 				}
 			
 			}

@@ -473,6 +473,10 @@ public class PluginConnection {
 			setEndY(y);
 		}
 
+		public PluginConnection getParentConnection() {
+			return parent;
+		}
+		
 		public ConnectionLineEndpointInterface getFirstEnd() {
 			return firstEnd;
 		}
