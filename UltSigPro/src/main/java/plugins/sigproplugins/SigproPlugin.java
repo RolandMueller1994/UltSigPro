@@ -35,8 +35,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 	private boolean dragged = false;
 	private boolean hovered = false;
 	
-	private LinkedList<Input> inputs = new LinkedList<> ();
-	private LinkedList<Output> outputs = new LinkedList<> ();
+	private HashSet<Input> inputs = new HashSet<> ();
+	private HashSet<Output> outputs = new HashSet<> ();
 
 	private double absolutPositionX;
 	private double absolutPositionY; 
@@ -199,8 +199,16 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		inputs.add(input);
 	}
 	
+	public HashSet<Input> getInputs() {
+		return inputs;
+	}
+	
 	public void addOutput(Output output) {
 		outputs.add(output);
+	}
+	
+	public HashSet<Output> getOutputs() {
+		return outputs;
 	}
 	
 	public boolean checkHovered() {

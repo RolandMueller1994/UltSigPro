@@ -1,6 +1,9 @@
 package channel.gui;
 
+import java.util.HashSet;
 import java.util.LinkedList;
+
+import javax.annotation.CheckReturnValue;
 
 import com.sun.javafx.tk.FontLoader;
 import com.sun.javafx.tk.Toolkit;
@@ -13,6 +16,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
+import plugins.sigproplugins.SigproPlugin;
 
 public class Input extends Pane implements ConnectionLineEndpointInterface {
 
@@ -34,6 +38,8 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	
 	private PluginConfigGroup configGroup;
 	private Input thisInput;
+	
+	private SigproPlugin plugin;
 
 	private ConnectionLine conLine;
 	
@@ -42,7 +48,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	private LinkedList<Line> lines = new LinkedList<>();
 
 	@SuppressWarnings("restriction")
-	public Input(PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int parentWidth, int parentHeight,
+	public Input(SigproPlugin plugin, PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int parentWidth, int parentHeight,
 			double inputOffset) {
 		super();
 		this.configGroup = configGroup;
@@ -51,6 +57,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		this.parentWidht = parentWidth;
 		this.parentHeight = parentHeight;
 		this.inputOffset = inputOffset;
+		this.plugin = plugin;
 		
 		thisInput = this;
 
@@ -98,6 +105,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 			public void handle(MouseEvent event) {
 				
 				if(conLine == null) {
+					
 					for (Line line : lines) {
 						line.setStroke(Color.RED);
 					}
@@ -133,6 +141,14 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		updatePosition(parentX, parentY);
 	}
 
+	public SigproPlugin getPlugin() {
+		return plugin;
+	}
+	
+	public ConnectionLine getLine() {
+		return conLine;
+	}
+	
 	public static double getHeightOfInput() {
 		return height;
 	}

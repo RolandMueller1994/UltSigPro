@@ -13,6 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
+import plugins.sigproplugins.SigproPlugin;
 
 public class Output extends Pane implements ConnectionLineEndpointInterface {
 
@@ -34,6 +35,8 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	
 	private PluginConfigGroup configGroup;
 	
+	private SigproPlugin plugin;
+	
 	private Output thisOutput;
 	
 	private ConnectionLine conLine;
@@ -43,7 +46,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	private LinkedList<Line> lines = new LinkedList<>();
 
 	@SuppressWarnings("restriction")
-	public Output(PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int parentWidth, int parentHeight,
+	public Output(SigproPlugin plugin, PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int parentWidth, int parentHeight,
 			double outputOffset) {
 		super();
 		this.configGroup = configGroup;
@@ -52,6 +55,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		this.parentWidth = parentWidth;
 		this.parentHeight = parentHeight;
 		this.outputOffset = outputOffset;
+		this.plugin = plugin;
 		
 		thisOutput = this;
 
@@ -135,6 +139,14 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		updatePosition(parentX, parentY);
 	}
 
+	public SigproPlugin getPlugin() {
+		return plugin;
+	}
+	
+	public ConnectionLine getLine() {
+		return conLine;
+	}
+	
 	public static double getHeightOfOutput() {
 		return height;
 	}

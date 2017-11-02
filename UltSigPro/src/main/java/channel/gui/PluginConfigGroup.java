@@ -341,7 +341,7 @@ public class PluginConfigGroup extends Pane {
 		if (numberOfInputs > 0) {
 			double inputOffset = height / numberOfInputs;
 			for (String input : inputs) {
-				Input inputGUI = new Input(this, input, internalX, internalY, i, width, height, inputOffset);
+				Input inputGUI = new Input(plugin, this, input, internalX, internalY, i, width, height, inputOffset);
 				getChildren().add(inputGUI);
 				plugin.addInput(inputGUI);
 				i++;
@@ -352,7 +352,7 @@ public class PluginConfigGroup extends Pane {
 			double outputOffset = height / numberOfOutputs;
 			i = 0;
 			for (String output : outputs) {
-				Output outputGUI = new Output(this, output, internalX, internalY, i, width, height, outputOffset);
+				Output outputGUI = new Output(plugin, this, output, internalX, internalY, i, width, height, outputOffset);
 				getChildren().add(outputGUI);
 				plugin.addOutput(outputGUI);
 				i++;
