@@ -93,27 +93,28 @@ public class USPGui extends Application {
 
 		// Initialize plugin manager
 		PluginManager.getInstance();
-		
+
 		// Register internal plugins
 		PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
-		//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
-		
+		// PluginManager.getInstance().registerInternSigproPlugin("AddBlock",
+		// SignalAdder.class);
+
 		stage = primaryStage;
-		
+
 		Image icon = new Image("file:icon.png");
-		
+
 		primaryStage.getIcons().add(icon);
 
 		LanguageResourceHandler languageRes = LanguageResourceHandler.getInstance();
 
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
-		
+
 		GridPane topGrid = new GridPane();
-		
+
 		VBox vBox = new VBox();
 		ImageView iconView = new ImageView(icon);
-		
+
 		topGrid.add(vBox, 0, 0);
 
 		MenuBar buttonMenu = new MenuBar();
@@ -185,13 +186,13 @@ public class USPGui extends Application {
 			ChannelPane channelPane = new ChannelPane(config);
 			channelBox.getChildren().add(channelPane);
 			Tab curTab = new Tab(config.getName());
-			
+
 			ScrollPane scroll = new ScrollPane();
 			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
 			scroll.setContent(configGroup);
-			
+
 			curTab.setContent(scroll);
-			
+
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);
@@ -235,8 +236,12 @@ public class USPGui extends Application {
 			}
 		}
 	}
-	
-	public static VBox getChannelBox () {
+
+	public static VBox getChannelBox() {
 		return channelBox;
+	}
+
+	public static Stage getStage() {
+		return stage;
 	}
 }

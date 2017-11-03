@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import channel.Channel;
 import channel.PluginInput;
 import channel.PluginOutput;
@@ -33,7 +36,7 @@ public class PluginConfigGroup extends Pane {
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
-	
+
 	private MaxCoordinatesInterface maxXComponent;
 	private MaxCoordinatesInterface maxYComponent;
 	private HashMap<MaxCoordinatesInterface, Point2D> componentMaxPositions = new HashMap<>();
@@ -64,7 +67,7 @@ public class PluginConfigGroup extends Pane {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				parent.setVvalue(parent.getVmax());
 				Platform.runLater(new Runnable() {
 
@@ -72,16 +75,16 @@ public class PluginConfigGroup extends Pane {
 					public void run() {
 						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
 								MouseInfo.getPointerInfo().getLocation().getY());
-						
-						for(SigproPlugin plugin : plugins) {
-							if(plugin.isDragged()) {
+
+						for (SigproPlugin plugin : plugins) {
+							if (plugin.isDragged()) {
 								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
 										MouseInfo.getPointerInfo().getLocation().getY());
 								return;
 							}
 						}
 					}
-					
+
 				});
 			}
 		});
@@ -97,7 +100,7 @@ public class PluginConfigGroup extends Pane {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				parent.setHvalue(parent.getHmax());
 				Platform.runLater(new Runnable() {
 
@@ -105,16 +108,16 @@ public class PluginConfigGroup extends Pane {
 					public void run() {
 						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
 								MouseInfo.getPointerInfo().getLocation().getY());
-						
-						for(SigproPlugin plugin : plugins) {
-							if(plugin.isDragged()) {
+
+						for (SigproPlugin plugin : plugins) {
+							if (plugin.isDragged()) {
 								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
 										MouseInfo.getPointerInfo().getLocation().getY());
 								return;
 							}
 						}
 					}
-					
+
 				});
 			}
 
@@ -159,14 +162,14 @@ public class PluginConfigGroup extends Pane {
 	}
 
 	private void drawLine(double x, double y) {
-		if(workCon != null) {
+		if (workCon != null) {
 			double localX;
 			double localY;
-			
+
 			localX = screenToLocal(x, y).getX();
 			localY = screenToLocal(x, y).getY();
-			
-			workCon.drawLine(localX, localY);			
+
+			workCon.drawLine(localX, localY);
 		}
 	}
 
@@ -176,10 +179,10 @@ public class PluginConfigGroup extends Pane {
 			workCon = new PluginConnection(this, endpoint, xCoord, yCoord);
 			endpoint.addLine(workCon.getActLine());
 		} else {
-			if(!workCon.getActLine().isHorizontal()) {
+			if (!workCon.getActLine().isHorizontal()) {
 				workCon.changeOrientation(xCoord, yCoord);
 			}
-			
+
 			if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
 				workCon.devideActLine(xCoord, yCoord);
 			}
@@ -242,82 +245,82 @@ public class PluginConfigGroup extends Pane {
 	public void updateMaxCoordinatesOfComponent(MaxCoordinatesInterface component) {
 
 		updateMaxCoordinatesInternal(component);
-		
+
 		componentMaxPositions.put(component, new Point2D(component.getMaxX(), component.getMaxY()));
 	}
-	
+
 	private void updateMaxCoordinatesInternal(MaxCoordinatesInterface component) {
-		
+
 		boolean checkMaxX = false;
 		boolean checkMaxY = false;
 		boolean checkGreaterX = false;
 		boolean checkGreaterY = false;
-		
-		if(maxXComponent == null) {
+
+		if (maxXComponent == null) {
 			maxXComponent = component;
 			setPrefWidth(component.getMaxX() + scrollOffset);
 			maxX = maxXComponent.getMaxX();
 		} else {
 			checkMaxX = true;
 		}
-		
-		if(maxYComponent == null) {
+
+		if (maxYComponent == null) {
 			maxYComponent = component;
 			setPrefHeight(component.getMaxY() + scrollOffset);
 			maxY = maxYComponent.getMaxY();
 		} else {
 			checkMaxY = true;
 		}
-		
-		if(checkMaxX && maxXComponent.equals(component)) {
+
+		if (checkMaxX && maxXComponent.equals(component)) {
 			checkMaxX();
 		} else {
 			checkGreaterX = true;
 		}
-		
-		if(checkMaxY && maxYComponent.equals(component)) {
+
+		if (checkMaxY && maxYComponent.equals(component)) {
 			checkMaxY();
 		} else {
 			checkGreaterY = true;
 		}
-		
-		if(checkMaxX && checkGreaterX && component.getMaxX() > maxX) {
+
+		if (checkMaxX && checkGreaterX && component.getMaxX() > maxX) {
 			setPrefWidth(component.getMaxX() + scrollOffset);
 			maxXComponent = component;
 			maxX = maxXComponent.getMaxX();
 		}
-		
-		if(checkMaxY && checkGreaterY && component.getMaxY() > maxY) {
+
+		if (checkMaxY && checkGreaterY && component.getMaxY() > maxY) {
 			setPrefHeight(component.getMaxY() + scrollOffset);
 			maxYComponent = component;
 			maxY = maxYComponent.getMaxY();
 		}
 	}
-	
+
 	private void checkMaxX() {
-		
-		if(!(maxXComponent.getMaxX() > maxX)) {
-			for(Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
-				if(entry.getValue().getX() > maxXComponent.getMaxX()) {
+
+		if (!(maxXComponent.getMaxX() > maxX)) {
+			for (Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
+				if (entry.getValue().getX() > maxXComponent.getMaxX()) {
 					maxXComponent = entry.getKey();
 				}
-			}			
+			}
 		}
-		
+
 		setPrefWidth(maxXComponent.getMaxX() + scrollOffset);
 		maxX = maxXComponent.getMaxX();
 	}
-	
+
 	private void checkMaxY() {
-		
-		if(!(maxYComponent.getMaxY() > maxY)) {
-			for(Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
-				if(entry.getValue().getY() > maxXComponent.getMaxY()) {
+
+		if (!(maxYComponent.getMaxY() > maxY)) {
+			for (Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
+				if (entry.getValue().getY() > maxXComponent.getMaxY()) {
 					maxYComponent = entry.getKey();
 				}
-			}			
+			}
 		}
-		
+
 		setPrefHeight(maxYComponent.getMaxY() + scrollOffset);
 		maxY = maxYComponent.getMaxY();
 	}
@@ -325,6 +328,14 @@ public class PluginConfigGroup extends Pane {
 	public boolean isDrawing() {
 
 		return workCon != null;
+	}
+
+	public HashSet<Element> getPluginsForProjectFile(Document doc) {
+		HashSet<Element> allPlugins = new HashSet<>();
+		for (SigproPlugin plugin : plugins) {
+			allPlugins.add(doc.createElement(plugin.getName()));
+		}
+		return allPlugins;
 	}
 
 }

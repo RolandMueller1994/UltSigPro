@@ -20,6 +20,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import channel.ChannelPane;
+import channel.gui.PluginConfigGroup;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.collections.ObservableList;
@@ -41,21 +42,21 @@ public class USPFileCreator {
 		}
 		return fileCreator;
 	}
-	
+
 	private USPFileCreator() {
-		
+
 	}
-	
+
 	public File createFile() throws ResourceProviderException {
 		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-				"UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
+		fileChooser.getExtensionFilters()
+				.add(new FileChooser.ExtensionFilter("UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
 		file = fileChooser.showSaveDialog(USPGui.stage);
-		
+
 		return file;
 	}
-	
+
 	/**
 	 * Creates an XML file at the specified path with the given text and
 	 * structure.
@@ -67,8 +68,15 @@ public class USPFileCreator {
 	 *            Is the file with the file name and path.
 	 * @throws TransformerConfigurationException
 	 * @throws TransformerException
+	 * @throws ResourceProviderException 
 	 */
-	public static void createUSPFile(Document doc, File file) throws TransformerConfigurationException, TransformerException {
+	public static void createUSPFile(Document doc, File file)
+			throws TransformerConfigurationException, TransformerException, ResourceProviderException {
+
+		// add file name in the header line
+		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+		USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
+
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer;
 		transformer = transformerFactory.newTransformer();
@@ -103,7 +111,7 @@ public class USPFileCreator {
 			// channel elements
 			Element channel = doc.createElement("channel");
 			rootElement.appendChild(channel);
-			
+
 			// channel name
 			Element channelName = doc.createElement("name");
 			channelName.appendChild(doc.createTextNode(curElement.getName()));
@@ -144,8 +152,12 @@ public class USPFileCreator {
 		}
 		return doc;
 	}
-	
+
 	public static File getFile() {
 		return file;
+	}
+
+	public static void setFile(File file) {
+		USPFileCreator.file = file;
 	}
 }

@@ -42,8 +42,9 @@ public class OpenProjectMenuItem extends MenuItem {
 				File file = fileChooser.showOpenDialog(USPGui.stage);
 				if (file != null) {
 					try {
+						USPFileCreator.setFile(file);
 						USPFileReader.getUSPFileReader().readUSPFile(file);
-					} catch (ParserConfigurationException | SAXException | IOException e) {
+					} catch (ParserConfigurationException | SAXException | IOException | InstantiationException | IllegalAccessException | ResourceProviderException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}

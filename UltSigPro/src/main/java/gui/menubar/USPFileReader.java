@@ -18,6 +18,9 @@ import org.xml.sax.SAXException;
 
 import channel.ChannelConfig;
 import gui.USPGui;
+import i18n.LanguageResourceHandler;
+import plugins.sigproplugins.SigproPlugin;
+import resourceframework.ResourceProviderException;
 
 public class USPFileReader {
 
@@ -36,7 +39,11 @@ public class USPFileReader {
 
 	}
 
-	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException {
+	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ResourceProviderException {
+		
+		// add file name in the header line 
+		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+		USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
 		
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder documentBuilder;
@@ -53,6 +60,7 @@ public class USPFileReader {
 			List<String> outputDevices = new LinkedList<>();
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
+			HashMap<String, Class<SigproPlugin>> plugins = new HashMap<>();
 			
 			if (channel.getNodeType() == Node.ELEMENT_NODE) {
 				Element entry = (Element) channel;
@@ -79,9 +87,9 @@ public class USPFileReader {
 								if (pluginNode.getNodeType() == Node.ELEMENT_NODE) {
 									Element pluginElement = (Element) pluginNode;
 									if (pluginElement.getTagName() == "name") {
-										//TODO collect plugin names
-									} else if (pluginElement.getTagName() == "class") {
-										//TODO collect plugin classes
+										//TODO collect plugin names and classes
+										//plugins.put(pluginElement.getTextContent(), (Class<SigproPlugin>) pluginEntryNodeList.item(k+1).getTextContent());
+										k++;
 									}
 								}
 							}
@@ -89,12 +97,15 @@ public class USPFileReader {
 					}
 				}
 			}
-			// TODO create plugins
 			// TODO load wave files
-			// TODO set file path of loaded project as current file path
 			// TODO bug: loading two different projects -> old project settings are not deleted
 			USPGui.addChannel(new ChannelConfig(channelName, inputDevices, outputDevices, choosedInputWaveFiles, choosedOutputWaveFiles));
+			// TODO create plugins
+			/*
+			for (Map.Entry<String, Class<SigproPlugin>> plugin : plugins.entrySet()) {
+				PluginManager.getInstance().registerInternSigproPlugin(plugin.getKey(), plugin.getValue());
+			}*/
 		}
-
+		
 	}
 }

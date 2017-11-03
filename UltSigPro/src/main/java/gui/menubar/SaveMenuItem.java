@@ -39,7 +39,7 @@ public class SaveMenuItem extends MenuItem {
 					try {
 						Document doc = USPFileCreator.collectProjectSettings();
 						USPFileCreator.createUSPFile(doc, USPFileCreator.getFile());
-					} catch (ParserConfigurationException | TransformerException e) {
+					} catch (ParserConfigurationException | TransformerException | ResourceProviderException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
