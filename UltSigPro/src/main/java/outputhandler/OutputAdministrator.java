@@ -213,9 +213,9 @@ public class OutputAdministrator {
 				writeString(output, "fmt "); // header signature (space necessary)
 				writeInt(output, 16); // following format section size
 				writeShort(output, (short) 1); // audio format (1 = PCM)
-				writeShort(output, (short) 1); // number of channels
+				writeShort(output, (short) 2); // number of channels
 				writeInt(output, 44100); // sample rate
-				writeInt(output, 44100 * 2); // byte rate (byte/second)
+				writeInt(output, 44100 * 4); // byte rate (byte/second)
 				writeShort(output, (short) 2); // frame size
 				writeShort(output, (short) 16); // bits per sample
 				
@@ -504,7 +504,7 @@ public class OutputAdministrator {
 						LinkedList<Integer> soundValueData = new LinkedList<>();
 
 						byte[] outByteData = new byte[outputPackageSize];
-						byte[] waveByteData = new byte[outputPackageSize];
+						byte[] waveByteData = new byte[2 * outputPackageSize];
 
 						for (int i = 0; i < inputPackageSize; i++) {
 							int intSample = outData[i];
@@ -514,15 +514,17 @@ public class OutputAdministrator {
 							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
 							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
 
-							waveByteData[2 * i + 1] = outByteData[2 * i];
-							waveByteData[2 * i] = outByteData[2 * i + 1];
+							waveByteData[4 * i + 1] = outByteData[2 * i];
+							waveByteData[4 * i] = outByteData[2 * i + 1];
+							waveByteData[4 * i + 3] = outByteData[2 * i];
+							waveByteData[4 * i + 2] = outByteData[2 * i + 1];
 						}
 		
 						if (waveFileStreams.containsKey(entry.getKey())) {
 							waveData.get(entry.getKey()).add(waveByteData);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
 						} else {							
-							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+							sourceDataLines.get(entry.getKey()).write(outByteData, 0, 2 * outputPackageSize);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
 						}
 					}
