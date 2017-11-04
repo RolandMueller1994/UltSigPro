@@ -524,7 +524,7 @@ public class OutputAdministrator {
 							waveData.get(entry.getKey()).add(waveByteData);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
 						} else {							
-							sourceDataLines.get(entry.getKey()).write(outByteData, 0, 2 * outputPackageSize);
+							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
 							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
 						}
 					}
