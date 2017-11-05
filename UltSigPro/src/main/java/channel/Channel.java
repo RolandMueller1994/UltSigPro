@@ -1,12 +1,7 @@
 package channel;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,16 +13,12 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 
 	private InputAdministrator inputAdmin;
 	private OutputAdministrator outputAdmin;
-	private boolean play = false;
-	private String name;
 	private ChannelPane pane;
 
 	private PluginInput pluginInput;
 	private PluginOutput pluginOutput;
 
 	private ScheduledThreadPoolExecutor executor;
-
-	private boolean firstFetch = true;
 
 	private HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataflowMap = new HashMap<>();
 
@@ -37,7 +28,7 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	private LinkedList<int[]> outputQueue = new LinkedList<>();
 
 	public Channel(ChannelPane pane, ChannelConfig config) {
-		this.name = config.getName();
+		config.getName();
 		this.pane = pane;
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
@@ -99,7 +90,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		if (play) {
 			inputQueue.clear();
 			outputQueue.clear();
-			firstFetch = true;
 			executor = new ScheduledThreadPoolExecutor(1);
 
 			executor.scheduleAtFixedRate(new DataflowRunnable(), 0, 1, TimeUnit.MILLISECONDS);
@@ -108,7 +98,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 				executor.shutdownNow();
 			}
 		}
-		this.play = play;
 	}
 	
 	public SigproPlugin getPluginInput() {
