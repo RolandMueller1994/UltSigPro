@@ -18,11 +18,15 @@ stop=Stop
 file=Datei
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
+gui.USPGui.signalFlowAlertTitle=Fehler der Plugin-Konfiguration
+gui.USPGui.signalFlowAlertHeader=Überprüfen sie die Konfiguration der Plugins
+gui.USPGui.signalFlowAlertTextInput=Es ist kein Eingang im Kanal konfiguriert!
+gui.USPGui.signalFlowAlertTextOutput=Es ist keine Verbindung zum Ausgang hergestellt!
 
 gui.menubar.FileMenuItem.title=Datei
 gui.menubar.SaveMenuItem.title=Speichern
 gui.menubar.SaveAsMenuItem.title=Speichern unter...
-gui.menubar.OpenProjectMenuItem.title=Projekt �ffnen...
+gui.menubar.OpenProjectMenuItem.title=Projekt �ffnen...
 
 gui.menubar.HelpMenuItem.title=Hilfe
 

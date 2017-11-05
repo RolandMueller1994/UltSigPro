@@ -63,6 +63,8 @@ public class PluginConfigGroup extends Pane {
 	private static final long scrollSpeed = 10;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
+	private SigproPlugin output;
+	private SigproPlugin input;
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
@@ -107,8 +109,15 @@ public class PluginConfigGroup extends Pane {
 		setBorder(new Border(
 				new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
 
-		addPlugin(channel.getPluginInput(), 100, 100);
-		addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);
+		if(channel.getPluginInput() != null) {
+			addPlugin(channel.getPluginInput(), 100, 100);
+			input = channel.getPluginInput();
+		}
+		
+		if(channel.getPluginOutput() != null) {
+			addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);		
+			output = channel.getPluginOutput();
+		}
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -227,25 +236,33 @@ public class PluginConfigGroup extends Pane {
 		contextMenu.show(this, screenX, screenY);
 	}
 
-	public void initializePlay() {
+	public void initializePlay() throws SignalFlowConfigException {
 
 		HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataFlowMap = new HashMap<>();
-
+		boolean isOutput = false;
+		boolean isInput = false;
+		
 		for (PluginConnection connection : allConnections) {
 
 			OutputInfoWrapper outputWrapper = null;
 
 			for (Output output : connection.getOutputs()) {
 				outputWrapper = new OutputInfoWrapper(output.getPlugin(), output.getName());
+				if(output.getPlugin().equals(input)) {
+					isInput = true;
+				}
 				break;
 			}
-
+			
 			if (outputWrapper != null) {
 
 				LinkedList<InputInfoWrapper> inputWrappers = new LinkedList<>();
 
 				for (Input input : connection.getInputs()) {
 					inputWrappers.add(new InputInfoWrapper(input.getPlugin(), input.getName()));
+					if(input.getPlugin().equals(output)) {
+						isOutput = true;
+					}
 				}
 
 				if (inputWrappers.size() > 0) {
@@ -255,6 +272,15 @@ public class PluginConfigGroup extends Pane {
 
 		}
 
+		if(!isInput) {
+			throw new SignalFlowConfigException("There is no input!", true);
+		}
+
+		if(!isOutput && output != null) {
+			throw new SignalFlowConfigException("There is no connection to the output!", false);
+		}
+		
+		
 		channel.setDataFlowMap(dataFlowMap);
 	}
 

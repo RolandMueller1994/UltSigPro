@@ -37,8 +37,13 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
 		outputAdmin.setWaveFileEntries(config.getOutputWaveFiles(), this);
 
-		pluginInput = new PluginInput();
-		pluginOutput = new PluginOutput();
+		if(config.getInputDevices().size() != 0) {
+			pluginInput = new PluginInput();			
+		}
+		
+		if(config.getOutputDevices().size() != 0) {
+			pluginOutput = new PluginOutput();
+		}
 
 		LinkedList<InputInfoWrapper> testList = new LinkedList<>();
 		testList.add(new InputInfoWrapper(pluginOutput, "Output"));
@@ -226,17 +231,19 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 				} else {
 					LinkedList<InputInfoWrapper> inputInfoWrapperList = dataflowMap.get(outputWrapper.getOutputInfo());
 
-					for (InputInfoWrapper inputInfoWrapper : inputInfoWrapperList) {
-
-						double[] newData = new double[outputWrapper.getOutputData().length];
-						System.arraycopy(outputWrapper.getOutputData(), 0, newData, 0,
-								outputWrapper.getOutputData().length);
-
-						double[] recursiveOutputData = recursiveSignalProcessing(inputInfoWrapper, newData);
-
-						if (recursiveOutputData != null) {
-							outputData = recursiveOutputData;
-						}
+					if(inputInfoWrapperList != null) {
+						for (InputInfoWrapper inputInfoWrapper : inputInfoWrapperList) {
+							
+							double[] newData = new double[outputWrapper.getOutputData().length];
+							System.arraycopy(outputWrapper.getOutputData(), 0, newData, 0,
+									outputWrapper.getOutputData().length);
+							
+							double[] recursiveOutputData = recursiveSignalProcessing(inputInfoWrapper, newData);
+							
+							if (recursiveOutputData != null) {
+								outputData = recursiveOutputData;
+							}
+						}						
 					}
 				}
 			}
