@@ -2,7 +2,6 @@ package inputhandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,7 +9,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -20,7 +18,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
@@ -29,16 +26,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import channel.Channel;
 import channel.InputDataListener;
-import gui.USPGui;
 import gui.soundLevelDisplay.SoundLevelBar;
-import gui.soundLevelDisplay.SoundValueInterface;
-import i18n.LanguageResourceHandler;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.TextArea;
-import outputhandler.OutputAdministrator;
-import resourceframework.ResourceProviderException;
 
 /**
  * Administrates which input devices are available and requests their sampled
@@ -54,24 +42,17 @@ public class InputAdministrator {
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
 	private HashMap<String, IteratableAudioInputStream> inputStreams;
-	private int waveFileOffset;
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
-	private boolean stopped = false;
-
 	private ScheduledThreadPoolExecutor executor;
 	private Runnable readRunnable;
 
 	private Lock lock = new ReentrantLock();
 	private Condition startupCondition = lock.newCondition();
 
-	private static final String ALERT_TITLE = "alertTitle";
-	private static final String ALERT_HEADER = "alertHeader";
-	private static final String ALERT_TEXT = "alertText";
-
-	// TODO check necessity of distributionMap
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
-
+	private HashMap<InputDataListener, HashMap<String, Double>> inputLevelMultiplier = new HashMap<>();
+	
 	public static InputAdministrator getInputAdminstrator() {
 
 		if (inputAdministrator == null) {
@@ -196,8 +177,6 @@ public class InputAdministrator {
 	 */
 	public void startListening() {
 
-		stopped = false;
-
 		InputThread thread = new InputThread();
 
 		try {
@@ -212,8 +191,6 @@ public class InputAdministrator {
 	}
 
 	public void stopListening() {
-		stopped = true;
-
 		executor.shutdownNow();
 
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
@@ -221,22 +198,39 @@ public class InputAdministrator {
 	}
 
 	public synchronized void openWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
-
-		Collection<String> fileNames = waveFiles.keySet();
-		for (String fileName : fileNames) {
-			distributionMap.get(listener).add(fileName);
-			IteratableAudioInputStream stream;
-			
-			stream = new IteratableAudioInputStream(waveFiles.get(fileName));
-			inputStreams.put(fileName, stream);
+		if (!waveFiles.isEmpty()) {
+			Collection<String> fileNames = waveFiles.keySet();
+			for (String fileName : fileNames) {
+				distributionMap.get(listener).add(fileName);
+				IteratableAudioInputStream stream;
+				stream = new IteratableAudioInputStream(waveFiles.get(fileName));
+				inputStreams.put(fileName, stream);
+				
+				HashMap<String, Double> inputLevel = new HashMap<>();
+				inputLevel.put(fileName, 1.0);
+				if (inputLevelMultiplier.containsKey(listener)) {
+					inputLevelMultiplier.get(listener).putAll(inputLevel);
+				} else {
+					inputLevelMultiplier.put(listener, inputLevel);
+				}
+			}
 		}
 	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		distributionMap.put(listener, devices);
+		if (!devices.isEmpty()) {
+			for (String device : devices) {
+				setSubscribedDevices(device);
 
-		for (String device : devices) {
-			setSubscribedDevices(device);
+				HashMap<String, Double> inputLevel = new HashMap<>();
+				inputLevel.put(device, 1.0);
+				if (inputLevelMultiplier.containsKey(listener)) {
+					inputLevelMultiplier.get(listener).putAll(inputLevel);
+				} else {
+					inputLevelMultiplier.put(listener, inputLevel);
+				}
+			}
 		}
 	}
 
@@ -282,7 +276,6 @@ public class InputAdministrator {
 	
 	private class IteratableAudioInputStream {
 		
-		private File waveFile;
 		private AudioInputStream inputStream;
 		private byte[] dataBuffer;
 		private byte[] nullBuffer;
@@ -292,7 +285,6 @@ public class InputAdministrator {
 		private int samplingFreq = 44100;
 		
 		public IteratableAudioInputStream(File waveFile) {
-			this.waveFile = waveFile;
 			try {
 				// At first we capture the complete sound file.
 				inputStream = AudioSystem.getAudioInputStream(waveFile);
@@ -391,8 +383,6 @@ public class InputAdministrator {
 				boolean first = true;
 				boolean second = true;
 
-				long lastRead;
-
 				int startCount = 0;
 
 				@Override
@@ -434,7 +424,6 @@ public class InputAdministrator {
 						}
 
 						first = false;
-						waveFileOffset = 0;
 						return;
 					} else if (second) {
 						lock.lock();
@@ -442,7 +431,7 @@ public class InputAdministrator {
 						lock.unlock();
 						second = false;
 						System.out.println("First data input at: " + System.currentTimeMillis());
-						lastRead = System.currentTimeMillis();
+						System.currentTimeMillis();
 					}
 
 					for (Map.Entry<String, TargetDataLine> targetEntry : targetEntrySet) {
@@ -522,21 +511,33 @@ public class InputAdministrator {
 					}
 
 					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
-
 						boolean first = true;
 						int[] destData = new int[outPackageSize];
-
 						for (String input : destEntry.getValue()) {
+							double multiplier = (inputLevelMultiplier.get(destEntry.getKey())).get(input);
 							int[] inputData = marshalledBuffer.get(input);
 
-							if (first) {
-								for (int i = 0; i < outPackageSize; i++) {
-									destData[i] = inputData[i];
-									first = false;
+							if (multiplier != 1) {
+								if (first) {
+									for (int i = 0; i < outPackageSize; i++) {
+										destData[i] = (int) (multiplier * inputData[i]);
+										first = false;
+									}
+								} else {
+									for (int i = 0; i < outPackageSize; i++) {
+										destData[i] = (int) (destData[i] + (multiplier * inputData[i]));
+									}
 								}
 							} else {
-								for (int i = 0; i < outPackageSize; i++) {
-									destData[i] += inputData[i];
+								if (first) {
+									for (int i = 0; i < outPackageSize; i++) {
+										destData[i] = inputData[i];
+										first = false;
+									}
+								} else {
+									for (int i = 0; i < outPackageSize; i++) {
+										destData[i] += inputData[i];
+									}
 								}
 							}
 						}
@@ -548,5 +549,9 @@ public class InputAdministrator {
 
 			executor.scheduleAtFixedRate(readRunnable, 0, 1, TimeUnit.MILLISECONDS);
 		}
+	}
+	
+	public void inputLevelMultiplierChanged(InputDataListener listener, String device, double multiplier) {
+		inputLevelMultiplier.get(listener).put(device, multiplier);
 	}
 }

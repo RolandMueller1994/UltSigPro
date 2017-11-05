@@ -1,11 +1,16 @@
 package channel;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+
 import javax.annotation.Nonnull;
 import gui.USPGui;
+import guicomponents.DecimalTextField;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -22,7 +27,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TitledPane;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.ColumnConstraints;
@@ -48,7 +52,6 @@ public class ChannelPane extends TitledPane {
 	private ChannelConfig config;
 	private Channel channel;
 	
-	private boolean play;
 	private InputPane inputPane;
 	private OutputPane outputPane;
 	private String name;
@@ -131,7 +134,6 @@ public class ChannelPane extends TitledPane {
 	 */
 	public void setPlay(boolean play) {
 		contextMenu.getItems().get(0).setDisable(play);
-		this.play = play;
 		inputPane.setEditable(!play);
 		outputPane.setEditable(!play);
 		channel.setPlay(play);
@@ -152,6 +154,8 @@ public class ChannelPane extends TitledPane {
 		private ListView<String> table;
 		private Button addButton;
 		private Button removeButton;
+		private ListView<DecimalTextField> inputLevelMultiplier;
+		private HashMap<DecimalTextField, String> inputLevelMap = new HashMap<>();
 
 		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles) {
 			addButton = new Button("+");
@@ -174,6 +178,27 @@ public class ChannelPane extends TitledPane {
 				}
 
 			});
+			
+			inputLevelMultiplier = new ListView<>();
+			inputLevelMultiplier.setPrefSize(100, 100);
+			for (int i = 0; i < (inputDevices.size() + waveFiles.size()); i++) {
+				inputLevelMultiplier.getItems().add(new DecimalTextField());
+				DecimalTextField decTextField = inputLevelMultiplier.getItems().get(i);
+				decTextField.setPrefWidth(50);
+				decTextField.setValue(1);
+				inputLevelMap.put(decTextField, new String());
+				decTextField.textProperty().addListener(new ChangeListener<String>() {
+					@Override
+					public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+						if (!newValue.isEmpty()) {
+							InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel, inputLevelMap.get(decTextField), decTextField.getValue());
+						}
+					}
+					
+				});
+			}
+			
+			
 			table = new ListView<>();
 			table.setPrefSize(200, 100);
 
@@ -184,24 +209,30 @@ public class ChannelPane extends TitledPane {
 			for (String cur : waveFiles) {
 				table.getItems().add(cur);
 			}
+			
+			for (int i = 0; i < table.getItems().size(); i++) {
+				inputLevelMap.put(inputLevelMultiplier.getItems().get(i), table.getItems().get(i));
+			}
 
 			GridPane gridPane = new GridPane();
 			gridPane.setPadding(new Insets(5));
 			gridPane.setHgap(5);
 			gridPane.setVgap(5);
 
-			gridPane.add(addButton, 0, 0);
-			gridPane.add(removeButton, 1, 0);
-			gridPane.add(table, 0, 1, 2, 1);
+			gridPane.add(addButton, 0, 0, 2, 1);
+			gridPane.add(removeButton, 2, 0, 2, 1);
+			gridPane.add(table, 0, 1, 3, 1);
+			gridPane.add(inputLevelMultiplier, 3, 1, 2, 1);
 
 			GridPane.setHgrow(addButton, Priority.ALWAYS);
 			GridPane.setHgrow(removeButton, Priority.ALWAYS);
 			GridPane.setVgrow(table, Priority.ALWAYS);
+			GridPane.setVgrow(inputLevelMultiplier, Priority.ALWAYS);
 
 			ColumnConstraints cc = new ColumnConstraints();
-			cc.setPercentWidth(50);
+			cc.setPercentWidth(25);
 
-			gridPane.getColumnConstraints().addAll(cc, cc);
+			gridPane.getColumnConstraints().addAll(cc, cc, cc, cc);
 
 			super.getChildren().add(gridPane);
 		}

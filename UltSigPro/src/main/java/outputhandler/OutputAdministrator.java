@@ -5,20 +5,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
@@ -26,13 +22,10 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
 import channel.Channel;
-import channel.InputDataListener;
 import channel.OutputDataSpeaker;
-import gui.USPGui;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
-import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 import resourceframework.GlobalResourceProvider;
@@ -53,7 +46,6 @@ public class OutputAdministrator {
 	private static HashMap<String, Mixer> allSoundOutputDevices;
 	private static HashMap<String, Mixer> selectedDevices;
 	private static HashMap<String, SourceDataLine> sourceDataLines;
-	private static boolean stopped = false;
 	private static HashMap<String, FileOutputStream> waveFileStreams;
 
 	private ScheduledThreadPoolExecutor executor;
@@ -202,26 +194,31 @@ public class OutputAdministrator {
 		for (Map.Entry<String, FileOutputStream> entry : waveFileStreams.entrySet()) {
 			DataOutputStream output = new DataOutputStream(entry.getValue());
 			try {
-				int waveSize = waveData.get(entry.getKey()).size(); 
+				
+				final int numberOfChannels = 2;
+				final int bytesPerSample = 2;
+				final int sampleRate = 44100;
+				final int totalByteNumber = waveData.get(entry.getKey()).size() * byteBufferSize;
+				final int frameSizePerSample = numberOfChannels * bytesPerSample;
 				
 				// RIFF section
 				writeString(output, "RIFF");
-				writeInt(output, waveSize * byteBufferSize * 2 + 36);
+				writeInt(output, totalByteNumber * frameSizePerSample + 36); // 36 for the following format section
 				writeString(output, "WAVE");
 				
 				// format section
 				writeString(output, "fmt "); // header signature (space necessary)
 				writeInt(output, 16); // following format section size
 				writeShort(output, (short) 1); // audio format (1 = PCM)
-				writeShort(output, (short) 1); // number of channels
-				writeInt(output, 44100); // sample rate
-				writeInt(output, 44100 * 2); // byte rate (byte/second)
-				writeShort(output, (short) 2); // frame size
-				writeShort(output, (short) 16); // bits per sample
+				writeShort(output, (short) numberOfChannels); // number of channels
+				writeInt(output, sampleRate); // sample rate
+				writeInt(output, sampleRate * frameSizePerSample); // byte rate (byte/second)
+				writeShort(output, (short) frameSizePerSample); // frame size
+				writeShort(output, (short) (8 * bytesPerSample)); // bits per sample
 				
 				// data section
 				writeString(output, "data"); // header signature
-				writeInt(output, waveSize * byteBufferSize * 2); // following data section size 				
+				writeInt(output, totalByteNumber * frameSizePerSample); // following data section size 				
 				while (!waveData.get(entry.getKey()).isEmpty()) {
 					byte[] b = waveData.get(entry.getKey()).removeFirst();
 					output.write(b);
@@ -238,10 +235,8 @@ public class OutputAdministrator {
 	}
 	
 	public void stopPlayback() {
-
 		executor.shutdownNow();
 		createWaveFiles();
-		
 	}
 
 	/**
@@ -504,7 +499,7 @@ public class OutputAdministrator {
 						LinkedList<Integer> soundValueData = new LinkedList<>();
 
 						byte[] outByteData = new byte[outputPackageSize];
-						byte[] waveByteData = new byte[outputPackageSize];
+						byte[] waveByteData = new byte[2 * outputPackageSize];
 
 						for (int i = 0; i < inputPackageSize; i++) {
 							int intSample = outData[i];
@@ -514,16 +509,20 @@ public class OutputAdministrator {
 							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
 							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
 
-							waveByteData[2 * i + 1] = outByteData[2 * i];
-							waveByteData[2 * i] = outByteData[2 * i + 1];
+							waveByteData[4 * i + 1] = outByteData[2 * i];
+							waveByteData[4 * i] = outByteData[2 * i + 1];
+							waveByteData[4 * i + 3] = outByteData[2 * i];
+							waveByteData[4 * i + 2] = outByteData[2 * i + 1];
 						}
-		
+
 						if (waveFileStreams.containsKey(entry.getKey())) {
 							waveData.get(entry.getKey()).add(waveByteData);
-							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
-						} else {							
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
+									false);
+						} else {
 							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
-							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);		
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
+									false);
 						}
 					}
 				}
