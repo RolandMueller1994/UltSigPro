@@ -1,12 +1,7 @@
 package channel;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -51,8 +46,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 
 		LinkedList<InputInfoWrapper> testList = new LinkedList<>();
 		testList.add(new InputInfoWrapper(pluginOutput, "Output"));
-
-		dataflowMap.put(new OutputInfoWrapper(pluginInput, "Input"), testList);	
 	}
 
 	@Override
@@ -110,40 +103,45 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		}
 		this.play = play;
 	}
-	
+
+	public void setDataFlowMap(HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataFlowMap) {
+		this.dataflowMap = dataFlowMap;
+	}
+
 	public SigproPlugin getPluginInput() {
 		return pluginInput;
 	}
-	
+
 	public SigproPlugin getPluginOutput() {
 		return pluginOutput;
 	}
-	
+
 	public void addPluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
 		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
-		
-		if(!dataflowMap.containsKey(outputWrapper)) {
+
+		if (!dataflowMap.containsKey(outputWrapper)) {
 			dataflowMap.put(outputWrapper, new LinkedList<InputInfoWrapper>());
 		}
-		
+
 		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
-		
+
 		dataflowMap.get(outputWrapper).add(inputWrapper);
 	}
 
-	public void removePluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin, String input) {
-		
+	public void removePluginConnection(SigproPlugin sourcePlugin, String output, SigproPlugin destPlugin,
+			String input) {
+
 		OutputInfoWrapper outputWrapper = new OutputInfoWrapper(sourcePlugin, output);
 		InputInfoWrapper inputWrapper = new InputInfoWrapper(destPlugin, input);
-		
-		if(dataflowMap.containsKey(outputWrapper)) {
+
+		if (dataflowMap.containsKey(outputWrapper)) {
 			dataflowMap.get(outputWrapper).remove(inputWrapper);
-			if(dataflowMap.get(outputWrapper).isEmpty()) {
+			if (dataflowMap.get(outputWrapper).isEmpty()) {
 				dataflowMap.remove(outputWrapper);
 			}
-		}	
+		}
 	}
-	
+
 	private class DataflowRunnable implements Runnable {
 
 		@Override

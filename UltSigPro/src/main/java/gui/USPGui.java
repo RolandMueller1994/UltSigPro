@@ -146,6 +146,10 @@ public class USPGui extends Application {
 					System.gc();
 					play = true;
 					Iterator<Node> iter = channelBox.getChildren().iterator();
+					for(Tab tab : tabMap.values()) {
+						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).initializePlay();
+					}
+					
 					while (iter.hasNext()) {
 						((ChannelPane) iter.next()).setPlay(true);
 					}

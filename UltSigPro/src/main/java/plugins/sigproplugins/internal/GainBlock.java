@@ -31,7 +31,7 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class GainBlock extends SigproPlugin {
 
-	private double gain = 1.0;
+	private double gain = 0.8;
 	
 	private String name = "Gain";
 	
@@ -113,7 +113,7 @@ public class GainBlock extends SigproPlugin {
 	public LinkedList<OutputDataWrapper> putData(String input, double[] data) {
 
 		if(on) {
-			if (input.contentEquals("in")) {
+			if (input.contentEquals("In")) {
 				for (int i = 0; i < data.length; i++) {
 					data[i] = gain * data[i];
 				}
@@ -121,7 +121,7 @@ public class GainBlock extends SigproPlugin {
 		}
 
 		LinkedList<OutputDataWrapper> output = new LinkedList<> ();
-		output.add(new OutputDataWrapper(new OutputInfoWrapper(this, "out"), data));
+		output.add(new OutputDataWrapper(new OutputInfoWrapper(this, "Out"), data));
 		
 		return output;
 	}

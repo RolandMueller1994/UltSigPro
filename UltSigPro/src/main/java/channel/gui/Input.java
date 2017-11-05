@@ -179,6 +179,10 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		return plugin;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
 	public ConnectionLine getLine() {
 		return conLine;
 	}

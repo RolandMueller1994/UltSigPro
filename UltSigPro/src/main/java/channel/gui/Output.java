@@ -175,6 +175,10 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		updatePosition(parentX, parentY);
 	}
 
+	public String getName() {
+		return name;
+	}
+	
 	public SigproPlugin getPlugin() {
 		return plugin;
 	}

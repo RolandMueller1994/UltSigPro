@@ -3,6 +3,7 @@ package channel.gui;
 import java.awt.MouseInfo;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map.Entry;
@@ -11,6 +12,9 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import channel.Channel;
+import channel.InputInfoWrapper;
+import channel.OutputDataWrapper;
+import channel.OutputInfoWrapper;
 import channel.PluginInput;
 import channel.PluginOutput;
 import channel.gui.PluginConnection.ConnectionLine;
@@ -99,11 +103,12 @@ public class PluginConfigGroup extends Pane {
 
 		setMaxHeight(Double.MAX_VALUE);
 		setMaxWidth(Double.MAX_VALUE);
-		
-		setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
 
-		addPlugin(new PluginInput(), 100, 100);
-		addPlugin(new PluginOutput(), USPGui.stage.getWidth() - 100, 100);
+		setBorder(new Border(
+				new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
+
+		addPlugin(channel.getPluginInput(), 100, 100);
+		addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -202,7 +207,7 @@ public class PluginConfigGroup extends Pane {
 						showContextMenu(event.getScreenX(), event.getScreenY());
 
 						Point2D point = screenToLocal(event.getScreenX(), event.getScreenY());
-						
+
 						newPluginX = point.getX();
 						newPluginY = point.getY();
 					} else if (workCon == null && contextMenu.isShowing()) {
@@ -220,6 +225,37 @@ public class PluginConfigGroup extends Pane {
 	private void showContextMenu(double screenX, double screenY) {
 
 		contextMenu.show(this, screenX, screenY);
+	}
+
+	public void initializePlay() {
+
+		HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataFlowMap = new HashMap<>();
+
+		for (PluginConnection connection : allConnections) {
+
+			OutputInfoWrapper outputWrapper = null;
+
+			for (Output output : connection.getOutputs()) {
+				outputWrapper = new OutputInfoWrapper(output.getPlugin(), output.getName());
+				break;
+			}
+
+			if (outputWrapper != null) {
+
+				LinkedList<InputInfoWrapper> inputWrappers = new LinkedList<>();
+
+				for (Input input : connection.getInputs()) {
+					inputWrappers.add(new InputInfoWrapper(input.getPlugin(), input.getName()));
+				}
+
+				if (inputWrappers.size() > 0) {
+					dataFlowMap.put(outputWrapper, inputWrappers);
+				}
+			}
+
+		}
+
+		channel.setDataFlowMap(dataFlowMap);
 	}
 
 	/**
@@ -352,13 +388,14 @@ public class PluginConfigGroup extends Pane {
 			double outputOffset = height / numberOfOutputs;
 			i = 0;
 			for (String output : outputs) {
-				Output outputGUI = new Output(plugin, this, output, internalX, internalY, i, width, height, outputOffset);
+				Output outputGUI = new Output(plugin, this, output, internalX, internalY, i, width, height,
+						outputOffset);
 				getChildren().add(outputGUI);
 				plugin.addOutput(outputGUI);
 				i++;
 			}
 		}
-		
+
 		updateMaxCoordinatesOfComponent(plugin);
 	}
 
