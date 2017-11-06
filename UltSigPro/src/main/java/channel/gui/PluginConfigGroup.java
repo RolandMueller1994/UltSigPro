@@ -113,9 +113,6 @@ public class PluginConfigGroup extends Pane {
 		setBorder(new Border(
 				new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
 
-		addPlugin(channel.getPluginInput(), 100, 100);
-		addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);
-		addPlugin(new GainBlock(), 250, 100);
 		if(channel.getPluginInput() != null) {
 			addPlugin(channel.getPluginInput(), 100, 100);
 			input = channel.getPluginInput();
