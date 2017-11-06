@@ -76,19 +76,19 @@ import resourceframework.ResourceProviderException;
 public class USPGui extends Application {
 
 	private static final String TITLE = "title";
-	
+
 	private static final String SIGNAL_FLOW_ALERT_TITLE = "signalFlowAlertTitle";
 	private static final String SIGNAL_FLOW_ALERT_HEADER = "signalFlowAlertHeader";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_INPUT = "signalFlowAlertTextInput";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_OUTPUT = "signalFlowAlertTextOutput";
-	
+
 	public static Stage stage;
 
 	private static VBox channelBox;
 	private static TabPane pluginPane;
 	private static SoundLevelBar soundLevelBar;
 	private static HashMap<String, Tab> tabMap = new HashMap<>();
-	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>(); 
+	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>();
 
 	private String[] args;
 	private static boolean play = false;
@@ -112,44 +112,45 @@ public class USPGui extends Application {
 
 		// Initialize plugin manager
 		PluginManager.getInstance();
-		
+
 		// Register internal plugins
 		PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
-		//PluginManager.getInstance().registerInternSigproPlugin("AddBlock", SignalAdder.class);
-		
+		// PluginManager.getInstance().registerInternSigproPlugin("AddBlock",
+		// SignalAdder.class);
+
 		stage = primaryStage;
-		
+
 		primaryStage.addEventHandler(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 
 			@Override
 			public void handle(KeyEvent event) {
-				if(event.getCode().equals(KeyCode.ESCAPE)) {
-					for(Tab tab : tabMap.values()) {
-						((PluginConfigGroup) ((ScrollPane)tab.getContent()).getContent()).escapeLineDrawing();
-					}					
-				} else if(event.getCode().equals(KeyCode.DELETE)) {
-					for(Tab tab : tabMap.values()) {
-						((PluginConfigGroup) ((ScrollPane)tab.getContent()).getContent()).deleteLine();
-					}	
+				if (event.getCode().equals(KeyCode.ESCAPE)) {
+					for (Tab tab : tabMap.values()) {
+						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).escapeLineDrawing();
+					}
+				} else if (event.getCode().equals(KeyCode.DELETE)) {
+					for (Tab tab : tabMap.values()) {
+						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).deleteLine();
+					}
 				}
 			}
-			
+
 		});
-		
+
 		Image icon = new Image("file:icon.png");
-		
+
 		primaryStage.getIcons().add(icon);
 
 		LanguageResourceHandler languageRes = LanguageResourceHandler.getInstance();
 
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
-		
+
 		GridPane topGrid = new GridPane();
-		
+
 		VBox vBox = new VBox();
 		ImageView iconView = new ImageView(icon);
-		
+
 		topGrid.add(vBox, 0, 0);
 
 		MenuBar buttonMenu = new MenuBar();
@@ -161,33 +162,37 @@ public class USPGui extends Application {
 			public void handle(MouseEvent event) {
 				if (!play) {
 					System.gc();
-					
+
 					Iterator<Node> iter = channelBox.getChildren().iterator();
-					for(Tab tab : tabMap.values()) {
+					for (Tab tab : tabMap.values()) {
 						try {
 							((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).initializePlay();
 						} catch (SignalFlowConfigException e) {
-							
+
 							Alert signalFlowAlert = new Alert(AlertType.ERROR);
 							try {
-								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
-								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
-								if(e.isInput()) {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT));									
+								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance()
+										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
+								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance()
+										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
+								if (e.isInput()) {
+									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance()
+											.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT));
 								} else {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT));
+									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance()
+											.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT));
 								}
-								
+
 								signalFlowAlert.showAndWait();
 							} catch (ResourceProviderException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 							}
-							
+
 							return;
 						}
 					}
-					
+
 					play = true;
 					while (iter.hasNext()) {
 						((ChannelPane) iter.next()).setPlay(true);
@@ -247,13 +252,13 @@ public class USPGui extends Application {
 			ChannelPane channelPane = new ChannelPane(config);
 			channelBox.getChildren().add(channelPane);
 			Tab curTab = new Tab(config.getName());
-			
+
 			ScrollPane scroll = new ScrollPane();
 			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
 			scroll.setContent(configGroup);
-			
+
 			curTab.setContent(scroll);
-			
+
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);
@@ -298,17 +303,20 @@ public class USPGui extends Application {
 			}
 		}
 	}
-	
-	public static VBox getChannelBox () {
+
+	public static VBox getChannelBox() {
 		return channelBox;
 	}
-	
+
 	public static TabPane getPluginPane() {
 		return pluginPane;
 	}
-	
-	
-	public static void collectPluginConfig (Document doc, Element element, ChannelPane pane) {
+
+	public static void collectPluginConfig(Document doc, Element element, ChannelPane pane) {
 		pluginMap.get(pane).collectPluginInfos(doc, element);
+	}
+
+	public static PluginConfigGroup getPluginConfigGroup(ChannelPane pane) {
+		return pluginMap.get(pane);
 	}
 }

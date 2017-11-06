@@ -122,6 +122,7 @@ public class PluginConfigGroup extends Pane {
 			addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);		
 			output = channel.getPluginOutput();
 		}
+		
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -378,6 +379,10 @@ public class PluginConfigGroup extends Pane {
 
 	}
 
+	public void createPluginFromProjectFile(String pluginName, double xCoord, double yCoord) throws InstantiationException, IllegalAccessException {
+		addPlugin(PluginManager.getInstance().getSigproPlugin(pluginName), xCoord, yCoord);
+	}
+	
 	private void addPlugin(SigproPlugin plugin, double xCoord, double yCoord) {
 
 		plugins.add(plugin);

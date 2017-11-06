@@ -43,7 +43,7 @@ public class OpenProjectMenuItem extends MenuItem {
 				if (file != null) {
 					try {
 						USPFileReader.getUSPFileReader().readUSPFile(file);
-					} catch (ParserConfigurationException | SAXException | IOException e) {
+					} catch (ParserConfigurationException | SAXException | IOException | InstantiationException | IllegalAccessException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
