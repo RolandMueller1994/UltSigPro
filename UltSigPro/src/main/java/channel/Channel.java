@@ -37,11 +37,11 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
 		outputAdmin.setWaveFileEntries(config.getOutputWaveFiles(), this);
 
-		if(config.getInputDevices().size() != 0) {
+		if(config.getInputDevices().size() != 0 || config.getInputWaveFiles().size() != 0) {
 			pluginInput = new PluginInput();			
 		}
 		
-		if(config.getOutputDevices().size() != 0) {
+		if(config.getOutputDevices().size() != 0 || config.getOutputWaveFiles().size() != 0) {
 			pluginOutput = new PluginOutput();
 		}
 
