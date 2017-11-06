@@ -85,7 +85,7 @@ public class USPGui extends Application {
 	private static final String SIGNAL_FLOW_ALERT_TEXT_OUTPUT = "signalFlowAlertTextOutput";
 
 	private static final String SIGNAL_FLOW_ALERT_TEXT_CONNECTION = "signalFlowAlertTextConnection";
-	
+
 	public static Stage stage;
 
 	private static VBox channelBox;
@@ -175,40 +175,34 @@ public class USPGui extends Application {
 
 							Alert signalFlowAlert = new Alert(AlertType.ERROR);
 							try {
+
 								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance()
 										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
 								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance()
 										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
-								if (e.isInput()) {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance()
-											.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT));
-								} else {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance()
-											.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT));
-								}
-								
-								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
-								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
-									
+
 								String text = "";
-								
+
 								System.out.println(e.getErrorCode());
-								
-								if((e.getErrorCode() & SignalFlowErrorCode.INPUT_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT) + System.lineSeparator();
+
+								if ((e.getErrorCode() & SignalFlowErrorCode.INPUT_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
+											SIGNAL_FLOW_ALERT_TEXT_INPUT) + System.lineSeparator();
 								}
-								
-								if((e.getErrorCode() & SignalFlowErrorCode.OUTPUT_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT) + System.lineSeparator();
+
+								if ((e.getErrorCode() & SignalFlowErrorCode.OUTPUT_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
+											SIGNAL_FLOW_ALERT_TEXT_OUTPUT) + System.lineSeparator();
 								}
-								
-								if((e.getErrorCode() & SignalFlowErrorCode.CONNECTION_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_CONNECTION) + System.lineSeparator();
+
+								if ((e.getErrorCode() & SignalFlowErrorCode.CONNECTION_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
+											SIGNAL_FLOW_ALERT_TEXT_CONNECTION) + System.lineSeparator();
 								}
-								
+
 								TextArea contentText = new TextArea(text);
 								signalFlowAlert.getDialogPane().setContent(contentText);
-								
+
 								signalFlowAlert.showAndWait();
 							} catch (ResourceProviderException e1) {
 								// TODO Auto-generated catch block
