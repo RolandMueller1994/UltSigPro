@@ -23,6 +23,7 @@ import channel.gui.Input;
 import channel.gui.Output;
 import channel.gui.PluginConfigGroup;
 import channel.gui.SignalFlowConfigException;
+import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.menubar.MenuBarCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
@@ -47,6 +48,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -81,6 +83,7 @@ public class USPGui extends Application {
 	private static final String SIGNAL_FLOW_ALERT_HEADER = "signalFlowAlertHeader";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_INPUT = "signalFlowAlertTextInput";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_OUTPUT = "signalFlowAlertTextOutput";
+	private static final String SIGNAL_FLOW_ALERT_TEXT_CONNECTION = "signalFlowAlertTextConnection";
 	
 	public static Stage stage;
 
@@ -172,11 +175,25 @@ public class USPGui extends Application {
 							try {
 								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
 								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
-								if(e.isInput()) {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT));									
-								} else {
-									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT));
+									
+								String text = "";
+								
+								System.out.println(e.getErrorCode());
+								
+								if((e.getErrorCode() & SignalFlowErrorCode.INPUT_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT) + System.lineSeparator();
 								}
+								
+								if((e.getErrorCode() & SignalFlowErrorCode.OUTPUT_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT) + System.lineSeparator();
+								}
+								
+								if((e.getErrorCode() & SignalFlowErrorCode.CONNECTION_ERROR.getValue()) != 0) {
+									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_CONNECTION) + System.lineSeparator();
+								}
+								
+								TextArea contentText = new TextArea(text);
+								signalFlowAlert.getDialogPane().setContent(contentText);
 								
 								signalFlowAlert.showAndWait();
 							} catch (ResourceProviderException e1) {
