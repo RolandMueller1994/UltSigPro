@@ -218,9 +218,11 @@ public class InputAdministrator {
 	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
-		distributionMap.put(listener, devices);
-		if (!devices.isEmpty()) {
-			for (String device : devices) {
+		Collection<String> inputDevices = new HashSet<String>();
+		inputDevices.addAll(devices);
+		distributionMap.put(listener, inputDevices);
+		if (!inputDevices.isEmpty()) {
+			for (String device : inputDevices) {
 				setSubscribedDevices(device);
 
 				HashMap<String, Double> inputLevel = new HashMap<>();
