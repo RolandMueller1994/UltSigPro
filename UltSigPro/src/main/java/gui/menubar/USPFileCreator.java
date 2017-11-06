@@ -1,9 +1,7 @@
 package gui.menubar;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,14 +17,12 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import channel.Channel;
 import channel.ChannelPane;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.stage.FileChooser;
-import plugins.PluginManager;
-import plugins.sigproplugins.SigproPlugin;
 import resourceframework.ResourceProviderException;
 
 public class USPFileCreator {
@@ -99,48 +95,16 @@ public class USPFileCreator {
 
 		Iterator<Node> iterChannelName = USPGui.getChannelBox().getChildren().iterator();
 		while (iterChannelName.hasNext()) {
-			ChannelPane curElement = (ChannelPane) iterChannelName.next();
+			ChannelPane currentChannelPane = (ChannelPane) iterChannelName.next();
 			// channel elements
-			Element channel = doc.createElement("channel");
-			rootElement.appendChild(channel);
+			Element channelXMLElement = doc.createElement("channel");
+			rootElement.appendChild(channelXMLElement);
 			
-			// channel name
-			Element channelName = doc.createElement("name");
-			channelName.appendChild(doc.createTextNode(curElement.getName()));
-			channel.appendChild(channelName);
-
-			// set attribute to channelName element
-			// channelName.setAttribute("id", "1");
-
-			// input device elements
-			ObservableList<String> inputDevices = curElement.getInputPaneTableItems();
-			for (String inputDevice : inputDevices) {
-				Element inputDeviceName = doc.createElement("inputDevice");
-				inputDeviceName.appendChild(doc.createTextNode(inputDevice));
-				channel.appendChild(inputDeviceName);
-			}
-
-			// output device elements
-			ObservableList<String> outputDevices = curElement.getOutputPaneTableItems();
-			for (String outputDevice : outputDevices) {
-				Element outputDeviceName = doc.createElement("outputDevice");
-				outputDeviceName.appendChild(doc.createTextNode(outputDevice));
-				channel.appendChild(outputDeviceName);
-			}
-
+			// collects input/output devices and input/output wave files
+			currentChannelPane.collectChannelConfig(doc, channelXMLElement);
+			
 			// plugin elements
-			HashMap<String, Class<SigproPlugin>> plugins = PluginManager.getInstance().getSigproLoader()
-					.getInternalPluginMap();
-			for (Map.Entry<String, Class<SigproPlugin>> plugin : plugins.entrySet()) {
-				Element pluginElement = doc.createElement("plugin");
-				Element pluginName = doc.createElement("name");
-				Element pluginClass = doc.createElement("class");
-				pluginName.appendChild(doc.createTextNode(plugin.getKey()));
-				pluginClass.appendChild(doc.createTextNode(plugin.getValue().toString()));
-				pluginElement.appendChild(pluginName);
-				pluginElement.appendChild(pluginClass);
-				channel.appendChild(pluginElement);
-			}
+			USPGui.collectPluginConfig(doc, channelXMLElement, currentChannelPane);
 		}
 		return doc;
 	}

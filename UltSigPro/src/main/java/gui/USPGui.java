@@ -22,6 +22,7 @@ import channel.ChannelPane;
 import channel.gui.Input;
 import channel.gui.Output;
 import channel.gui.PluginConfigGroup;
+import channel.gui.SignalFlowConfigException;
 import gui.menubar.MenuBarCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
@@ -35,6 +36,8 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
@@ -73,7 +76,12 @@ import resourceframework.ResourceProviderException;
 public class USPGui extends Application {
 
 	private static final String TITLE = "title";
-
+	
+	private static final String SIGNAL_FLOW_ALERT_TITLE = "signalFlowAlertTitle";
+	private static final String SIGNAL_FLOW_ALERT_HEADER = "signalFlowAlertHeader";
+	private static final String SIGNAL_FLOW_ALERT_TEXT_INPUT = "signalFlowAlertTextInput";
+	private static final String SIGNAL_FLOW_ALERT_TEXT_OUTPUT = "signalFlowAlertTextOutput";
+	
 	public static Stage stage;
 
 	private static VBox channelBox;
@@ -153,12 +161,34 @@ public class USPGui extends Application {
 			public void handle(MouseEvent event) {
 				if (!play) {
 					System.gc();
-					play = true;
+					
 					Iterator<Node> iter = channelBox.getChildren().iterator();
 					for(Tab tab : tabMap.values()) {
-						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).initializePlay();
+						try {
+							((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).initializePlay();
+						} catch (SignalFlowConfigException e) {
+							
+							Alert signalFlowAlert = new Alert(AlertType.ERROR);
+							try {
+								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
+								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
+								if(e.isInput()) {
+									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT));									
+								} else {
+									signalFlowAlert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT));
+								}
+								
+								signalFlowAlert.showAndWait();
+							} catch (ResourceProviderException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							
+							return;
+						}
 					}
 					
+					play = true;
 					while (iter.hasNext()) {
 						((ChannelPane) iter.next()).setPlay(true);
 					}

@@ -69,7 +69,7 @@ public class USPFileReader {
 						if (tagName == "name") {
 							channelName = channelItemElement.getTextContent();
 						} else if (tagName == "inputDevice") {
-							inputDevices.add(channelItemElement.getTextContent());
+							//inputDevices.add(channelItemElement.getTextContent());
 						} else if (tagName == "outputDevice") {
 							outputDevices.add(channelItemElement.getTextContent());
 						} else if (tagName == "plugin") {

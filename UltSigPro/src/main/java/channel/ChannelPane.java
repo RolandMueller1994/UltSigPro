@@ -1,10 +1,15 @@
 package channel;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
 import javax.annotation.Nonnull;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import gui.USPGui;
 import guicomponents.DecimalTextField;
 import i18n.LanguageResourceHandler;
@@ -50,6 +55,7 @@ public class ChannelPane extends TitledPane {
 	//private BorderPane centralPane = new BorderPane();
 	private GridPane centralPane = new GridPane();
 	private ChannelConfig config;
+
 	private Channel channel;
 	
 	private InputPane inputPane;
@@ -104,6 +110,54 @@ public class ChannelPane extends TitledPane {
 		setPlay(false);
 	}
 	
+	/**
+	 * Collects all settings of a channel for creating a USP project file.
+	 * 
+	 * @param doc
+	 *            The document to be created.
+	 * @param channel
+	 *            Root element where all settings are appended.
+	 */
+	public void collectChannelConfig(Document doc, Element channel) {
+		String name = config.getName();
+		Collection<String> inputDevices = config.getInputDevices();
+		Collection<String> outputDevices = config.getOutputDevices();
+		Collection<File> inputWaveFiles = config.getInputWaveFiles().values();
+		Collection<File> outputWaveFiles = config.getOutputWaveFiles().values();
+		// channel name
+		Element channelName = doc.createElement("name");
+		channelName.appendChild(doc.createTextNode(name));
+		channel.appendChild(channelName);
+		
+		// input device elements
+		for (String inputDevice : inputDevices) {
+			Element inputDeviceName = doc.createElement("inputDevice");
+			inputDeviceName.appendChild(doc.createTextNode(inputDevice));
+			channel.appendChild(inputDeviceName);
+		}
+		
+		// output device elements
+		for (String outputDevice : outputDevices) {
+			Element outputDeviceName = doc.createElement("outputDevice");
+			outputDeviceName.appendChild(doc.createTextNode(outputDevice));
+			channel.appendChild(outputDeviceName);
+		}
+		
+		// input wave files
+		for (File inputWaveFile : inputWaveFiles) {
+			Element inputWaveFilePath = doc.createElement("inputWave");
+			inputWaveFilePath.appendChild(doc.createTextNode(inputWaveFile.getAbsolutePath()));
+			channel.appendChild(inputWaveFilePath);
+		}
+		
+		// output wave files
+		for (File outputWaveFile : outputWaveFiles) {
+			Element outputWaveFilePath = doc.createElement("outputWave");
+			outputWaveFilePath.appendChild(doc.createTextNode(outputWaveFile.getAbsolutePath()));
+			channel.appendChild(outputWaveFilePath);
+		}
+	}
+		
 	public ObservableList<String> getOutputPaneTableItems() {
 		return outputPane.getTable().getItems();
 	}
