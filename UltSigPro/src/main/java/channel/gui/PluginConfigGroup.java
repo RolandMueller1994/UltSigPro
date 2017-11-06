@@ -11,6 +11,9 @@ import java.util.Map.Entry;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import channel.Channel;
 import channel.InputInfoWrapper;
 import channel.OutputDataWrapper;
@@ -43,6 +46,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import plugins.PluginManager;
 import plugins.sigproplugins.SigproPlugin;
+import plugins.sigproplugins.internal.GainBlock;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -109,6 +113,7 @@ public class PluginConfigGroup extends Pane {
 
 		addPlugin(channel.getPluginInput(), 100, 100);
 		addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);
+		addPlugin(new GainBlock(), 250, 100);
 
 		heightProperty().addListener(new ChangeListener<Number>() {
 
@@ -591,6 +596,20 @@ public class PluginConfigGroup extends Pane {
 
 		}
 
+	}
+	
+	public HashSet<SigproPlugin> getPlugins() {
+		return plugins;
+	}
+	
+	public void collectPluginInfos(Document doc, Element element) {
+		for (SigproPlugin plugin : plugins) {
+			Element pluginElement = doc.createElement("plugin");
+			Element pluginName = doc.createElement("name");
+			pluginName.appendChild(doc.createTextNode(plugin.getName()));
+			pluginElement.appendChild(pluginName);
+			element.appendChild(pluginElement);
+		}
 	}
 
 }

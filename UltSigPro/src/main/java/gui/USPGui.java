@@ -5,11 +5,18 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import channel.Channel;
 import channel.ChannelConfig;
 import channel.ChannelPane;
 import channel.gui.Input;
@@ -52,6 +59,7 @@ import javafx.stage.Stage;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import plugins.PluginManager;
+import plugins.sigproplugins.SigproPlugin;
 import plugins.sigproplugins.internal.GainBlock;
 import resourceframework.ResourceProviderException;
 
@@ -72,6 +80,7 @@ public class USPGui extends Application {
 	private static TabPane pluginPane;
 	private static SoundLevelBar soundLevelBar;
 	private static HashMap<String, Tab> tabMap = new HashMap<>();
+	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>(); 
 
 	private String[] args;
 	private static boolean play = false;
@@ -218,6 +227,7 @@ public class USPGui extends Application {
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);
+			pluginMap.put(channelPane, configGroup);
 		} catch (ResourceProviderException e) {
 			CommonLogger.getInstance().logException(e);
 		}
@@ -261,5 +271,14 @@ public class USPGui extends Application {
 	
 	public static VBox getChannelBox () {
 		return channelBox;
+	}
+	
+	public static TabPane getPluginPane() {
+		return pluginPane;
+	}
+	
+	
+	public static void collectPluginConfig (Document doc, Element element, ChannelPane pane) {
+		pluginMap.get(pane).collectPluginInfos(doc, element);
 	}
 }
