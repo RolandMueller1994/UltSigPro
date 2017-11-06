@@ -22,6 +22,7 @@ import channel.PluginInput;
 import channel.PluginOutput;
 import channel.gui.PluginConnection.ConnectionLine;
 import channel.gui.PluginConnection.LineDevider;
+import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.application.Platform;
@@ -245,7 +246,6 @@ public class PluginConfigGroup extends Pane {
 
 		HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataFlowMap = new HashMap<>();
 		boolean isOutput = false;
-		boolean isInput = false;
 		
 		for (PluginConnection connection : allConnections) {
 
@@ -253,9 +253,6 @@ public class PluginConfigGroup extends Pane {
 
 			for (Output output : connection.getOutputs()) {
 				outputWrapper = new OutputInfoWrapper(output.getPlugin(), output.getName());
-				if(output.getPlugin().equals(input)) {
-					isInput = true;
-				}
 				break;
 			}
 			
@@ -276,15 +273,52 @@ public class PluginConfigGroup extends Pane {
 			}
 
 		}
-
-		if(!isInput) {
-			throw new SignalFlowConfigException("There is no input!", true);
-		}
-
-		if(!isOutput && output != null) {
-			throw new SignalFlowConfigException("There is no connection to the output!", false);
+		
+		boolean isConnection = false;
+		
+		for(SigproPlugin plugin : plugins) {
+			if(!(plugin.equals(input)) && !(plugin.equals(output))) {
+				for(Input input : plugin.getInputs()) {
+					if(input.getLine() == null) {
+						isConnection = true;
+					}
+				}
+				
+				for(Output output : plugin.getOutputs()) {
+					if(output.getLine() == null) {
+						isConnection = true;
+					}
+				}				
+			}
 		}
 		
+		LinkedList<String> messages = new LinkedList<>();
+		LinkedList<SignalFlowErrorCode> errorCodes = new LinkedList<>();
+		
+		if(input == null) {
+			messages.add("There is no input in channel.");
+			errorCodes.add(SignalFlowErrorCode.INPUT_ERROR);
+		}
+		
+		if(!isOutput) {
+			messages.add("There is no connection to the output.");
+			errorCodes.add(SignalFlowErrorCode.OUTPUT_ERROR);
+		}
+		
+		if(isConnection) {
+			messages.add("There is a unconnected input or output of a plugin.");
+			errorCodes.add(SignalFlowErrorCode.CONNECTION_ERROR);
+		}
+		
+		if(messages.size() != 0) {
+			String message = "";
+			
+			for(String messagePart : messages) {
+				message += messagePart + " ";
+			}
+			
+			throw new SignalFlowConfigException(message, errorCodes);
+		}
 		
 		channel.setDataFlowMap(dataFlowMap);
 	}

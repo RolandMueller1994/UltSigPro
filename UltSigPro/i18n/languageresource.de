@@ -22,6 +22,7 @@ gui.USPGui.signalFlowAlertTitle=Fehler der Plugin-Konfiguration
 gui.USPGui.signalFlowAlertHeader=Überprüfen sie die Konfiguration der Plugins
 gui.USPGui.signalFlowAlertTextInput=Es ist kein Eingang im Kanal konfiguriert!
 gui.USPGui.signalFlowAlertTextOutput=Es ist keine Verbindung zum Ausgang hergestellt!
+gui.USPGui.signalFlowAlertTextConnection=Es sind Eingänge/Ausgänge von Plugins nicht verbunden!
 
 gui.menubar.FileMenuItem.title=Datei
 gui.menubar.SaveMenuItem.title=Speichern
