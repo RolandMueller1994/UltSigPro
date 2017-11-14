@@ -347,9 +347,11 @@ public class ChannelPane extends TitledPane {
 
 	private class OutputPane extends Pane {
 
-		private ListView<String> table;
+		private TableView<DeviceGainTuple> deviceGainTable;
 		private Button addButton;
 		private Button removeButton;
+		
+		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
 		public OutputPane(Collection<String> outputDevices, Collection<String> waveFiles) {
 			addButton = new Button("+");
@@ -372,16 +374,30 @@ public class ChannelPane extends TitledPane {
 				}
 
 			});
-			table = new ListView<>();
-			table.setPrefSize(200, 100);
 
-			for (String cur : outputDevices) {
-				table.getItems().add(cur);
+			deviceGainTable = new TableView<>();
+			deviceGainTable.setPrefSize(200, 100);
+			deviceGainTable.setMinSize(200, 100);
+			deviceGainTable.setEditable(true);
+
+			TableColumn<DeviceGainTuple, String> deviceColumn = new TableColumn<>("Device");
+			deviceColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, String>("device"));
+			deviceColumn.setPrefWidth(100);
+
+			TableColumn<DeviceGainTuple, DecimalTextField> gainColumn = new TableColumn<>("Gain");
+			gainColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, DecimalTextField>("gain"));
+			gainColumn.setPrefWidth(100);
+
+			for (String device : outputDevices) {
+				addDevice(device);
 			}
 
-			for (String cur : waveFiles) {
-				table.getItems().add(cur);
+			for (String device : waveFiles) {
+				addDevice(device);
 			}
+
+			deviceGainTable.setItems(tableRows);
+			deviceGainTable.getColumns().addAll(deviceColumn, gainColumn);			
 
 			GridPane gridPane = new GridPane();
 			gridPane.setPadding(new Insets(5));
@@ -390,11 +406,14 @@ public class ChannelPane extends TitledPane {
 
 			gridPane.add(addButton, 0, 0);
 			gridPane.add(removeButton, 1, 0);
-			gridPane.add(table, 0, 1, 2, 1);
 
 			GridPane.setHgrow(addButton, Priority.ALWAYS);
 			GridPane.setHgrow(removeButton, Priority.ALWAYS);
-			GridPane.setVgrow(table, Priority.ALWAYS);
+			gridPane.add(deviceGainTable, 0, 1, 2, 1);
+
+			GridPane.setHgrow(addButton, Priority.ALWAYS);
+			GridPane.setHgrow(removeButton, Priority.ALWAYS);
+			GridPane.setVgrow(deviceGainTable, Priority.ALWAYS);
 
 			ColumnConstraints cc = new ColumnConstraints();
 			cc.setPercentWidth(50);
@@ -409,30 +428,47 @@ public class ChannelPane extends TitledPane {
 			removeButton.setDisable(!b);
 		}
 
-		public ListView<String> getTable() {
-			return table;
+		private void addDevice(String device) {
+			DeviceGainTuple deviceGainTuble = new DeviceGainTuple(device, 1.0);
+			tableRows.add(deviceGainTuble);
+			deviceGainTuble.getGain().textProperty().addListener(new ChangeListener<String>() {
+				@Override
+				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+					if (!newValue.isEmpty()) {
+						//InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel, device,
+							//	deviceGainTuble.getGain().getValue());
+					}
+				}
+			});
 		}
-
-		public void addOutput(String device) {
-			table.getItems().add(device);
-			config.addOutputDevice(device);
+		
+		private void removeDevice(String device) {
+			Iterator<DeviceGainTuple> iter = tableRows.iterator();
+			DeviceGainTuple remove = null;
+			
+			while(iter.hasNext()) {
+				DeviceGainTuple cur = iter.next();
+				if(cur.getDevice().equals(device)) {
+					remove = cur;
+					break;
+				}
+			}
+			
+			if(remove != null) {
+				tableRows.remove(remove);
+			}
 		}
-
-		public void removeOutput(String device) {
-			table.getItems().remove(device);
-			config.removeOutputDevice(device);
-		}
-
+		
 		private void addDevice() {
 			AddRemoveDialog dialog = new AddRemoveDialog(false, true);
 			dialog.showAndWait();
 		}
 
 		private void removeDevice() {
-			if (!table.getItems().isEmpty()) {
+			//if (!table.getItems().isEmpty()) {
 				AddRemoveDialog dialog = new AddRemoveDialog(false, false);
 				dialog.showAndWait();
-			}
+			//}
 		}
 	}
 
@@ -642,13 +678,13 @@ public class ChannelPane extends TitledPane {
 					} else {
 						if(selected != null) {
 							outputAdmin.addSoundOutputDeviceToSpeaker(channel, selected);
-							//outputPane.addDevice(selected);
+							outputPane.addDevice(selected);
 							channel.addOutputDevice(selected);
 							getChannelConfig().addOutputDevice(selected);
 						}
 						
 						if(selectedWave != null && selectedWaveName != null) {
-							//outputPane.addDevice(selectedWave);
+							outputPane.addDevice(selectedWaveName);
 							channel.addOutputDevice(selectedWaveName);
 							getChannelConfig().getOutputWaveFiles().put(selectedWaveName, selectedWave);
 						}
@@ -656,6 +692,7 @@ public class ChannelPane extends TitledPane {
 				} else {
 					if (input) {
 						if(selected != null) {
+							inputAdmin.removeDeviceFromInputDataListener(channel, selected);
 							inputPane.removeDevice(selected);
 							channel.removeInputDevice(selected);
 							getChannelConfig().removeInputDevice(selected);
@@ -668,13 +705,14 @@ public class ChannelPane extends TitledPane {
 						}
 					} else {
 						if(selected != null) {
-							//outputPane.removeDevice(selected);
+							outputAdmin.removeDeviceFromOutputDataSpeaker(channel, selected);
+							outputPane.removeDevice(selected);
 							channel.removeOutputDevice(selected);
 							getChannelConfig().removeOutputDevice(selected);
 						}
 						
 						if(selectedWaveName != null) {
-							//outputPane.removeDevice(selectedWave);
+							outputPane.removeDevice(selectedWaveName);
 							channel.removeOutputDevice(selectedWaveName);
 							getChannelConfig().getOutputWaveFiles().remove(selectedWave);
 						}
