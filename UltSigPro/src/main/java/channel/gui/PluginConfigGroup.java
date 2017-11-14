@@ -15,6 +15,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import channel.Channel;
+import channel.ChannelConfig.ChannelDeviceUpdateListener;
 import channel.InputInfoWrapper;
 import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
@@ -99,6 +100,28 @@ public class PluginConfigGroup extends Pane {
 	public PluginConfigGroup(@Nonnull Channel channel, @Nonnull ScrollPane parent) {
 		this.channel = channel;
 		this.parent = parent;
+		
+		channel.getChannelConfig().registerChannelDeviceUpdateListener(new ChannelDeviceUpdateListener() {
+			
+			@Override
+			public void fireDevicesUpdates() {
+				if(channel.getPluginInput() != null && input == null) {
+					input = channel.getPluginInput();
+					addPlugin(input, 100, 100);
+				} else if(channel.getPluginInput() == null && input != null) {
+					input.delete();
+					input = null;
+				}
+				
+				if(channel.getPluginOutput() != null && output == null) {
+					output = channel.getPluginOutput();
+					addPlugin(output, USPGui.stage.getWidth() - 100, 100);
+				} else if(channel.getPluginOutput() == null && output != null) {
+					output.delete();
+					output = null;
+				}
+			}
+		});
 
 		contextMenu = new ContextMenu();
 		try {

@@ -62,8 +62,8 @@ channel.ChannelPane$AddRemoveDialog.emptyAlertTitle=Auswahl
 channel.ChannelPane$AddRemoveDialog.emptyAlertHeader=Es muss ein Device gewählt werden!
 channel.ChannelPane$AddRemoveDialog.duplicateAlertTitle=Auswahl
 channel.ChannelPane$AddRemoveDialog.duplicateAlertHeader=Das ausgewählte Device ist bereits vorhanden!
-channel.ChannelPane$AddRemoveDialog.deviceLabel=Device: *
-
+channel.ChannelPane$AddRemoveDialog.deviceLabel=Device:
+channel.ChannelPane$AddRemoveDialog.deviceLabelWave=Wave-Datei:
 channel.gui.PluginConfigGroup$AddPluginMenuItem.title=Plugin hinzufügen
 
 channel.gui.PluginConfigGroup$AddPluginMenuItem$AddPluginDialog.title=Plugin hinzufügen

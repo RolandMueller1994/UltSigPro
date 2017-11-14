@@ -60,13 +60,6 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				@Override
 				public void handle(ActionEvent event) {
 					
-					for(Input input : inputs) {
-						input.delete();
-					}
-					for(Output output : outputs) {
-						output.delete();
-					}
-					
 					delete();
 				}
 				
@@ -145,7 +138,13 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		return gui;
 	}
 	
-	private void delete() {
+	public void delete() {
+		for(Input input : inputs) {
+			input.delete();
+		}
+		for(Output output : outputs) {
+			output.delete();
+		}
 		coordinatesListener.deletePlugin(this);
 	}
 	

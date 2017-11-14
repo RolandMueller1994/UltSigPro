@@ -17,6 +17,9 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 
 	private PluginInput pluginInput;
 	private PluginOutput pluginOutput;
+	
+	private LinkedList<String> inputDevices = new LinkedList<>();
+	private LinkedList<String> outputDevices = new LinkedList<>();
 
 	private ScheduledThreadPoolExecutor executor;
 
@@ -26,9 +29,12 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	// LinkedBlockingQueue<>();
 	private LinkedList<int[]> inputQueue = new LinkedList<>();
 	private LinkedList<int[]> outputQueue = new LinkedList<>();
+	
+	private ChannelConfig channelConfig;
 
 	public Channel(ChannelPane pane, ChannelConfig config) {
 		config.getName();
+		this.channelConfig = config;
 		this.pane = pane;
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
@@ -65,24 +71,38 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		synchronized (inputQueue) {
 			inputQueue.add(data);
 		}
-
-		// pane.insertWaveChartData(waveChartData);
+	}
+	
+	public ChannelConfig getChannelConfig() {
+		return channelConfig;
 	}
 
 	public void addInputDevice(String device) {
-		inputAdmin.addDeviceToInputDataListener(this, device);
+		if(inputDevices.isEmpty()) {
+			pluginInput = new PluginInput();
+		}
+		inputDevices.add(device);
 	}
 
 	public void removeInputDevice(String device) {
-		inputAdmin.removeDeviceFromInputDataListener(this, device);
+		inputDevices.remove(device);
+		if(inputDevices.isEmpty()) {
+			pluginInput = null;
+		}
 	}
 
 	public void addOutputDevice(String device) {
-		outputAdmin.addSoundOutputDeviceToSpeaker(this, device);
+		if(outputDevices.isEmpty()) {
+			pluginOutput = new PluginOutput();
+		}
+		outputDevices.add(device);
 	}
 
 	public void removeOutputDevice(String device) {
-		outputAdmin.removeDeviceFromOutputDataSpeaker(this, device);
+		outputDevices.remove(device);
+		if(outputDevices.isEmpty()) {
+			pluginOutput = null;
+		}
 	}
 
 	public void delete() {
