@@ -256,12 +256,6 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if(inputDevicesList.containsKey(device)) {
 				if(!inputDevicesList.get(device).contains(channelName)) {
 					inputDevicesList.get(device).add(channelName);
-					
-					LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-					inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-					inputDevicesBar.addRow(0, inputDeviceItems.get(device));
-					inputQueues.put(device, queue);
 				}
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
@@ -278,12 +272,6 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			if(outputDevicesList.containsKey(device)) {
 				if(!outputDevicesList.get(device).contains(channelName)) {
 					outputDevicesList.get(device).add(channelName);
-					
-					LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-					outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-					outputDevicesBar.addRow(0, outputDeviceItems.get(device));
-					outputQueues.put(device, queue);
 				}
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
