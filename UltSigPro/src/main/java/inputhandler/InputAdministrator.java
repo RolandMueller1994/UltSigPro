@@ -128,6 +128,7 @@ public class InputAdministrator {
 				return;
 			}
 		}
+		
 		subscribedDevices.remove(name);
 		targetDataLines.get(name).stop();
 		targetDataLines.get(name).close();
@@ -264,6 +265,14 @@ public class InputAdministrator {
 		if (devices != null) {
 			devices.add(device);
 			setSubscribedDevices(device);
+			
+			HashMap<String, Double> inputLevel = new HashMap<>();
+			inputLevel.put(device, 1.0);
+			if (inputLevelMultiplier.containsKey(listener)) {
+				inputLevelMultiplier.get(listener).putAll(inputLevel);
+			} else {
+				inputLevelMultiplier.put(listener, inputLevel);
+			}
 		} else {
 			devices = new HashSet<>();
 			devices.add(device);
