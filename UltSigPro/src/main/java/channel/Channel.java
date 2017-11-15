@@ -124,6 +124,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	public void delete() {
 		inputAdmin.removeWaveFiles(channelConfig.getInputWaveFiles(), this);
 		inputAdmin.removeInputDataListener(this);
+		outputAdmin.removeWaveFileEntries(channelConfig.getOutputWaveFiles(), this);
+		outputAdmin.removeOutputDevices(this);
 	}
 
 	public synchronized void setPlay(boolean play) {
