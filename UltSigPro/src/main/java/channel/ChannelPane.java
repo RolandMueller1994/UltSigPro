@@ -501,24 +501,6 @@ public class ChannelPane extends TitledPane {
 		}
 	}
 
-	private class WaveFormPane extends Pane {
-
-		public WaveFormPane() {
-			// setBackground(new Background(new
-			// BackgroundFill(javafx.scene.paint.Color.DARKGRAY, null, new
-			// Insets(5))));
-			// setPadding(new Insets(5));
-
-			GridPane pane = new GridPane();
-
-			waveChart = new ChannelWaveChart();
-			pane.add(waveChart, 0, 1);
-			GridPane.setHgrow(waveChart, Priority.ALWAYS);
-			getChildren().add(waveChart);
-		}
-
-	}
-
 	private class AddRemoveDialog extends Dialog<ButtonType> {
 
 		private static final String INPUT_ADD_TITLE = "inputAddTitle";
@@ -608,7 +590,7 @@ public class ChannelPane extends TitledPane {
 							FileChooser fileChooser = new FileChooser();
 							fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
 									"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
-							File waveFile = fileChooser.showOpenDialog(USPGui.stage);
+							File waveFile = fileChooser.showSaveDialog(USPGui.stage);
 							if (waveFile != null) {
 								list.add(waveFile.getName());
 								choiceBoxWave.setItems(list);
@@ -674,9 +656,13 @@ public class ChannelPane extends TitledPane {
 						}
 						
 						if(selectedWave != null && selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, selectedWave);
+							inputAdmin.openWaveFiles(waveFiles, channel);
+							
 							inputPane.addDevice(selectedWaveName);
 							channel.addInputDevice(selectedWaveName);
-							getChannelConfig().getInputWaveFiles().put(selectedWaveName, selectedWave);
+							getChannelConfig().addInputWaveFile(selectedWaveName, selectedWave);
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
 						}
 					} else {
@@ -689,9 +675,12 @@ public class ChannelPane extends TitledPane {
 						}
 						
 						if(selectedWave != null && selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, selectedWave);
+							outputAdmin.setWaveFileEntries(waveFiles, channel);
 							outputPane.addDevice(selectedWaveName);
 							channel.addOutputDevice(selectedWaveName);
-							getChannelConfig().getOutputWaveFiles().put(selectedWaveName, selectedWave);
+							getChannelConfig().addOutputWaveFile(selectedWaveName, selectedWave);
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, false);
 						}
 					}
@@ -706,9 +695,12 @@ public class ChannelPane extends TitledPane {
 						}
 						
 						if(selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, null);
+							inputAdmin.removeWaveFiles(waveFiles, channel);
 							inputPane.removeDevice(selectedWaveName);
 							channel.removeInputDevice(selectedWaveName);
-							getChannelConfig().getInputWaveFiles().remove(selectedWave);
+							getChannelConfig().removeInputWaveFile(selectedWaveName);
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, true);
 						}
 					} else {
@@ -721,9 +713,12 @@ public class ChannelPane extends TitledPane {
 						}
 						
 						if(selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, null);
+							outputAdmin.removeWaveFileEntries(waveFiles, channel);
 							outputPane.removeDevice(selectedWaveName);
 							channel.removeOutputDevice(selectedWaveName);
-							getChannelConfig().getOutputWaveFiles().remove(selectedWave);
+							getChannelConfig().removeOutputWaveFile(selectedWaveName);				;
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
 						}
 					}

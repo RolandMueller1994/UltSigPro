@@ -299,6 +299,19 @@ public class OutputAdministrator {
 			allSpeaker.add(speaker);
 		}
 	}
+	
+	public synchronized void removeWaveFileEntries(HashMap<String, File> waveFiles, OutputDataSpeaker speaker) {
+		
+		for(String fileName : waveFiles.keySet()) {
+			distributionQueue.get(fileName).remove(speaker);
+			if(distributionQueue.get(fileName).isEmpty()) {
+				distributionQueue.remove(fileName);
+				waveData.remove(fileName);
+				waveFileStreams.remove(fileName);
+			}
+		}
+		
+	}
 
 	/**
 	 * Is called, when a new {@linkplain Channel}/{@linkplain OutputDataSpeaker}

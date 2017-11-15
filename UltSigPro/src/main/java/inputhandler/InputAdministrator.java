@@ -216,6 +216,29 @@ public class InputAdministrator {
 			}
 		}
 	}
+	
+	public synchronized void removeWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
+		
+		for(String fileName : waveFiles.keySet()) {
+			distributionMap.get(listener).remove(fileName);
+			
+			inputLevelMultiplier.get(listener).remove(fileName);
+			
+			boolean removeWaveFile = true;
+			
+			for(Collection<String> devices : distributionMap.values()) {
+				if(devices.contains(fileName)) {
+					removeWaveFile = false;
+					break;
+				}
+			}
+			
+			if(removeWaveFile) {
+				inputStreams.remove(fileName);
+			}
+		}
+		
+	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		Collection<String> inputDevices = new HashSet<String>();
@@ -261,6 +284,7 @@ public class InputAdministrator {
 		for (String device : devices) {
 			removeSubscribedDevice(device);
 		}
+		inputLevelMultiplier.remove(listener);		
 	}
 
 	public void waitForStartup() {
