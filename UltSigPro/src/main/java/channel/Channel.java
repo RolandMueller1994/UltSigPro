@@ -43,6 +43,22 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
 		outputAdmin.setWaveFileEntries(config.getOutputWaveFiles(), this);
 
+		for(String device : config.getInputDevices()) {
+			addInputDevice(device);
+		}
+		
+		for(String device : config.getOutputDevices()) {
+			addOutputDevice(device);
+		}
+		
+		for(String inputWaveFile : config.getInputWaveFiles().keySet()) {
+			addInputDevice(inputWaveFile);
+		}
+		
+		for(String outputWaveFile : config.getOutputWaveFiles().keySet()) {
+			addOutputDevice(outputWaveFile);
+		}
+		
 		if(config.getInputDevices().size() != 0 || config.getInputWaveFiles().size() != 0) {
 			pluginInput = new PluginInput();			
 		}

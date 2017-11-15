@@ -225,6 +225,28 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				outputDeviceItems.remove(device);
 			}
 		}
+		
+		for (String inputWaveFile : config.getInputWaveFiles().keySet()) {
+			inputDevicesList.get(inputWaveFile).remove(config.getName());
+			
+			if(inputDevicesList.get(inputWaveFile).isEmpty()) {
+				inputDevicesList.remove(inputWaveFile);
+				inputDevicesBar.getChildren().remove(inputDeviceItems.get(inputWaveFile));
+				inputQueues.remove(inputWaveFile);
+				inputDeviceItems.remove(inputWaveFile);
+			}
+		}
+		
+		for (String outputWaveFile : config.getOutputWaveFiles().keySet()) {
+			outputDevicesList.get(outputWaveFile).remove(config.getName());
+			
+			if(outputDevicesList.get(outputWaveFile).isEmpty()) {
+				outputDevicesList.remove(outputWaveFile);
+				outputDevicesBar.getChildren().remove(outputDeviceItems.get(outputWaveFile));
+				outputQueues.remove(outputWaveFile);
+				outputDeviceItems.remove(outputWaveFile);
+			}
+		}
 	}
 	
 	public void addDeviceToChannel(String device, Channel channel, boolean input) {
