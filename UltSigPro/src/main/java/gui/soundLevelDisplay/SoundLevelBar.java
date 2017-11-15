@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import channel.Channel;
 import channel.ChannelConfig;
 import i18n.LanguageResourceHandler;
 import javafx.geometry.Insets;
@@ -205,7 +206,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// device
 			if (inputDevicesList.get(device).isEmpty()) {
 				inputDevicesList.remove(device);
-				inputDevicesBar.getChildren().remove(device);
+				inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
 				inputQueues.remove(device);
 				inputDeviceItems.remove(device);
 			}
@@ -219,13 +220,91 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// device
 			if (outputDevicesList.get(device).isEmpty()) {
 				outputDevicesList.remove(device);
-				outputDevicesBar.getChildren().remove(device);
+				outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
 				outputQueues.remove(device);
 				outputDeviceItems.remove(device);
 			}
 		}
 	}
+	
+	public void addDeviceToChannel(String device, Channel channel, boolean input) {
+		String channelName = channel.getChannelConfig().getName();
+		
+		if(input) {
+			if(inputDevicesList.containsKey(device)) {
+				if(!inputDevicesList.get(device).contains(channelName)) {
+					inputDevicesList.get(device).add(channelName);
+					
+					LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
+					inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+					inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+					inputQueues.put(device, queue);
+				}
+			} else {
+				LinkedList<String> channels = new LinkedList<>();
+				channels.add(channelName);
+				inputDevicesList.put(device, channels);
+				
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+
+				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				inputQueues.put(device, queue);
+			}
+		} else {
+			if(outputDevicesList.containsKey(device)) {
+				if(!outputDevicesList.get(device).contains(channelName)) {
+					outputDevicesList.get(device).add(channelName);
+					
+					LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+
+					outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+					outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+					outputQueues.put(device, queue);
+				}
+			} else {
+				LinkedList<String> channels = new LinkedList<>();
+				channels.add(channelName);
+				outputDevicesList.put(device, channels);
+
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+
+				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputQueues.put(device, queue);
+			}
+		}
+	}
+
+	public void removeDeviceFromChannel(String device, Channel channel, boolean input) {
+		String channelName = channel.getChannelConfig().getName();
+		
+		if(input) {
+			if(inputDevicesList.containsKey(device)) {
+				inputDevicesList.get(device).remove(channelName);
+				
+				if(inputDevicesList.get(device).isEmpty()) {
+					inputDevicesList.remove(device);
+					inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
+					inputQueues.remove(device);
+					inputDeviceItems.remove(device);
+				}				
+			}
+		} else {
+			if(outputDevicesList.containsKey(device)) {
+				outputDevicesList.get(device).remove(channelName);
+				
+				if(outputDevicesList.get(device).isEmpty()) {
+					outputDevicesList.remove(device);
+					outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
+					outputQueues.remove(device);
+					outputDeviceItems.remove(device);
+				}				
+			}
+		}
+	}
+	
 	public void setPlay(boolean play) {
 
 		for (SoundLevelDisplayItem item : inputDeviceItems.values()) {

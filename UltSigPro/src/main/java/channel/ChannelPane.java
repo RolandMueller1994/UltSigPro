@@ -12,6 +12,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import gui.USPGui;
+import gui.soundLevelDisplay.SoundLevelBar;
 import guicomponents.DecimalTextField;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
@@ -199,6 +200,7 @@ public class ChannelPane extends TitledPane {
 	private void deleteThisChannel() {
 		channel.delete();
 		USPGui.deleteChannel(this);
+		SoundLevelBar.getSoundLevelBar().removeChannelSoundDevices(channel.getChannelConfig());
 	}
 
 	public Channel getChannel() {
@@ -617,7 +619,7 @@ public class ChannelPane extends TitledPane {
 					}
 				});
 			} else {
-				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, INPUT_REMOVE_TITLE));
+				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_REMOVE_TITLE));
 				ObservableList<String> outputDevices = FXCollections.observableArrayList();
 				for (String device : getChannelConfig().getOutputDevices()) {
 					outputDevices.add(device);
@@ -668,12 +670,14 @@ public class ChannelPane extends TitledPane {
 							inputPane.addDevice(selected);
 							channel.addInputDevice(selected);
 							getChannelConfig().addInputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, true);
 						}
 						
 						if(selectedWave != null && selectedWaveName != null) {
 							inputPane.addDevice(selectedWaveName);
 							channel.addInputDevice(selectedWaveName);
 							getChannelConfig().getInputWaveFiles().put(selectedWaveName, selectedWave);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
 						}
 					} else {
 						if(selected != null) {
@@ -681,12 +685,14 @@ public class ChannelPane extends TitledPane {
 							outputPane.addDevice(selected);
 							channel.addOutputDevice(selected);
 							getChannelConfig().addOutputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, false);
 						}
 						
 						if(selectedWave != null && selectedWaveName != null) {
 							outputPane.addDevice(selectedWaveName);
 							channel.addOutputDevice(selectedWaveName);
 							getChannelConfig().getOutputWaveFiles().put(selectedWaveName, selectedWave);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, false);
 						}
 					}
 				} else {
@@ -696,12 +702,14 @@ public class ChannelPane extends TitledPane {
 							inputPane.removeDevice(selected);
 							channel.removeInputDevice(selected);
 							getChannelConfig().removeInputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, true);
 						}
 						
 						if(selectedWaveName != null) {
 							inputPane.removeDevice(selectedWaveName);
 							channel.removeInputDevice(selectedWaveName);
 							getChannelConfig().getInputWaveFiles().remove(selectedWave);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, true);
 						}
 					} else {
 						if(selected != null) {
@@ -709,12 +717,14 @@ public class ChannelPane extends TitledPane {
 							outputPane.removeDevice(selected);
 							channel.removeOutputDevice(selected);
 							getChannelConfig().removeOutputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, false);
 						}
 						
 						if(selectedWaveName != null) {
 							outputPane.removeDevice(selectedWaveName);
 							channel.removeOutputDevice(selectedWaveName);
 							getChannelConfig().getOutputWaveFiles().remove(selectedWave);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
 						}
 					}
 				}
