@@ -697,6 +697,13 @@ public class PluginConfigGroup extends Pane {
 			pluginElement.appendChild(pluginName);
 			element.appendChild(pluginElement);
 		}
+		
+		for (PluginConnection con : allConnections) {
+			Element connection = doc.createElement("connection");
+			
+			con.collectConnectionLineInfos(doc, connection);
+			element.appendChild(connection);
+		}
 	}
 
 }
