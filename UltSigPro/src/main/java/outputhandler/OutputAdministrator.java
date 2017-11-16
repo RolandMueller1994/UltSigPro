@@ -517,38 +517,36 @@ public class OutputAdministrator {
 								outData[i] += inData[i];
 							}
 						}
-					
-					
-						LinkedList<Integer> soundValueData = new LinkedList<>();
+					}
 
-						byte[] outByteData = new byte[outputPackageSize];
-						byte[] waveByteData = new byte[2 * outputPackageSize];
+					LinkedList<Integer> soundValueData = new LinkedList<>();
 
-						for (int i = 0; i < inputPackageSize; i++) {
-							int intSample = outData[i];
-							soundValueData.add(intSample);
+					byte[] outByteData = new byte[outputPackageSize];
+					byte[] waveByteData = new byte[2 * outputPackageSize];
 
-							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
-							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
+					for (int i = 0; i < inputPackageSize; i++) {
+						int intSample = outData[i];
+						soundValueData.add(intSample);
 
-							waveByteData[4 * i + 1] = outByteData[2 * i];
-							waveByteData[4 * i] = outByteData[2 * i + 1];
-							waveByteData[4 * i + 3] = outByteData[2 * i];
-							waveByteData[4 * i + 2] = outByteData[2 * i + 1];
-						}
+						outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
+						outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
 
-						if (waveFileStreams.containsKey(entry.getKey())) {
-							waveData.get(entry.getKey()).add(waveByteData);
-							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
-									false);
-						} else {
-							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
-							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
-									false);
-						}
+						waveByteData[4 * i + 1] = outByteData[2 * i];
+						waveByteData[4 * i] = outByteData[2 * i + 1];
+						waveByteData[4 * i + 3] = outByteData[2 * i];
+						waveByteData[4 * i + 2] = outByteData[2 * i + 1];
+					}
+
+					if (waveFileStreams.containsKey(entry.getKey())) {
+						waveData.get(entry.getKey()).add(waveByteData);
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+					} else {
+						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
 					}
 				}
-				data.clear();
 			}
+			data.clear();
 		}
-	}}
+	}
+}
