@@ -201,40 +201,52 @@ public class OutputAdministrator {
 				final int totalByteNumber = waveData.get(entry.getKey()).size() * byteBufferSize;
 				final int frameSizePerSample = numberOfChannels * bytesPerSample;
 
-				// RIFF section
+				// RIFF section ---------------------
 				writeString(output, "RIFF");
-				writeInt(output, totalByteNumber * frameSizePerSample + 36); // 36
-																				// for
-																				// the
-																				// following
-																				// format
-																				// section
+
+				// 36 for the following format section
+				writeInt(output, totalByteNumber * frameSizePerSample + 36);
 				writeString(output, "WAVE");
+				// ----------------------------------
 
-				// format section
-				writeString(output, "fmt "); // header signature (space
-												// necessary)
-				writeInt(output, 16); // following format section size
-				writeShort(output, (short) 1); // audio format (1 = PCM)
-				writeShort(output, (short) numberOfChannels); // number of
-																// channels
-				writeInt(output, sampleRate); // sample rate
-				writeInt(output, sampleRate * frameSizePerSample); // byte rate
-																	// (byte/second)
-				writeShort(output, (short) frameSizePerSample); // frame size
-				writeShort(output, (short) (8 * bytesPerSample)); // bits per
-																	// sample
+				// format section -------------------
+				// header signature (space after fmt necessary)
+				writeString(output, "fmt ");
 
-				// data section
-				writeString(output, "data"); // header signature
-				writeInt(output, totalByteNumber * frameSizePerSample); // following
-																		// data
-																		// section
-																		// size
+				// following format section size
+				writeInt(output, 16);
+
+				// audio format (1 = PCM)
+				writeShort(output, (short) 1);
+
+				// number of channels
+				writeShort(output, (short) numberOfChannels);
+
+				// sample rate
+				writeInt(output, sampleRate);
+
+				// byte rate (byte/second)
+				writeInt(output, sampleRate * frameSizePerSample);
+
+				// frame size
+				writeShort(output, (short) frameSizePerSample);
+
+				// bits per sammple
+				writeShort(output, (short) (8 * bytesPerSample));
+				// ----------------------------------
+
+				// data section ---------------------
+				// header signature
+				writeString(output, "data");
+
+				// following data section size
+				writeInt(output, totalByteNumber * frameSizePerSample);
+
 				while (!waveData.get(entry.getKey()).isEmpty()) {
 					byte[] b = waveData.get(entry.getKey()).removeFirst();
 					output.write(b);
 				}
+				// ----------------------------------
 
 				entry.getValue().close();
 
