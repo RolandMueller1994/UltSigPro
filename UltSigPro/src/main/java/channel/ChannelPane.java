@@ -295,20 +295,20 @@ public class ChannelPane extends TitledPane {
 				}
 			});
 		}
-		
+
 		private void removeDevice(String device) {
 			Iterator<DeviceGainTuple> iter = tableRows.iterator();
 			DeviceGainTuple remove = null;
-			
-			while(iter.hasNext()) {
+
+			while (iter.hasNext()) {
 				DeviceGainTuple cur = iter.next();
-				if(cur.getDevice().equals(device)) {
+				if (cur.getDevice().equals(device)) {
 					remove = cur;
 					break;
 				}
 			}
-			
-			if(remove != null) {
+
+			if (remove != null) {
 				tableRows.remove(remove);
 			}
 		}
@@ -352,7 +352,7 @@ public class ChannelPane extends TitledPane {
 		private TableView<DeviceGainTuple> deviceGainTable;
 		private Button addButton;
 		private Button removeButton;
-		
+
 		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
 		public OutputPane(Collection<String> outputDevices, Collection<String> waveFiles) {
@@ -399,7 +399,7 @@ public class ChannelPane extends TitledPane {
 			}
 
 			deviceGainTable.setItems(tableRows);
-			deviceGainTable.getColumns().addAll(deviceColumn, gainColumn);			
+			deviceGainTable.getColumns().addAll(deviceColumn, gainColumn);
 
 			GridPane gridPane = new GridPane();
 			gridPane.setPadding(new Insets(5));
@@ -437,40 +437,41 @@ public class ChannelPane extends TitledPane {
 				@Override
 				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 					if (!newValue.isEmpty()) {
-						//InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel, device,
-							//	deviceGainTuble.getGain().getValue());
+						// InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel,
+						// device,
+						// deviceGainTuble.getGain().getValue());
 					}
 				}
 			});
 		}
-		
+
 		private void removeDevice(String device) {
 			Iterator<DeviceGainTuple> iter = tableRows.iterator();
 			DeviceGainTuple remove = null;
-			
-			while(iter.hasNext()) {
+
+			while (iter.hasNext()) {
 				DeviceGainTuple cur = iter.next();
-				if(cur.getDevice().equals(device)) {
+				if (cur.getDevice().equals(device)) {
 					remove = cur;
 					break;
 				}
 			}
-			
-			if(remove != null) {
+
+			if (remove != null) {
 				tableRows.remove(remove);
 			}
 		}
-		
+
 		private void addDevice() {
 			AddRemoveDialog dialog = new AddRemoveDialog(false, true);
 			dialog.showAndWait();
 		}
 
 		private void removeDevice() {
-			//if (!table.getItems().isEmpty()) {
-				AddRemoveDialog dialog = new AddRemoveDialog(false, false);
-				dialog.showAndWait();
-			//}
+			// if (!table.getItems().isEmpty()) {
+			AddRemoveDialog dialog = new AddRemoveDialog(false, false);
+			dialog.showAndWait();
+			// }
 		}
 	}
 
@@ -637,44 +638,45 @@ public class ChannelPane extends TitledPane {
 
 			Button applyButton = (Button) dialogPane.lookupButton(ButtonType.APPLY);
 			applyButton.addEventFilter(ActionEvent.ACTION, e -> {
-				if ((selected = choiceBox.getSelectionModel().getSelectedItem()) == null
-						&& ((selectedWaveName = choiceBoxWave.getSelectionModel().getSelectedItem()) == null || (selectedWave == null && add))) {
+				selected = choiceBox.getSelectionModel().getSelectedItem();
+				selectedWaveName = choiceBoxWave.getSelectionModel().getSelectedItem();
+				if (selected == null && (selectedWaveName == null || (selectedWave == null && add))) {
 					Alert alert = new Alert(AlertType.WARNING);
 					alert.setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_TITLE));
 					alert.setHeaderText(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_HEADER));
 					alert.showAndWait();
 					e.consume();
 				} else if (add) {
-					
+
 					if (input) {
-						if(selected != null) {
+						if (selected != null) {
 							inputAdmin.addDeviceToInputDataListener(channel, selected);
 							inputPane.addDevice(selected);
 							channel.addInputDevice(selected);
 							getChannelConfig().addInputDevice(selected);
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, true);
 						}
-						
-						if(selectedWave != null && selectedWaveName != null) {
+
+						if (selectedWave != null && selectedWaveName != null) {
 							HashMap<String, File> waveFiles = new HashMap<>();
 							waveFiles.put(selectedWaveName, selectedWave);
 							inputAdmin.openWaveFiles(waveFiles, channel);
-							
+
 							inputPane.addDevice(selectedWaveName);
 							channel.addInputDevice(selectedWaveName);
 							getChannelConfig().addInputWaveFile(selectedWaveName, selectedWave);
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
 						}
 					} else {
-						if(selected != null) {
+						if (selected != null) {
 							outputAdmin.addSoundOutputDeviceToSpeaker(channel, selected);
 							outputPane.addDevice(selected);
 							channel.addOutputDevice(selected);
 							getChannelConfig().addOutputDevice(selected);
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, false);
 						}
-						
-						if(selectedWave != null && selectedWaveName != null) {
+
+						if (selectedWave != null && selectedWaveName != null) {
 							HashMap<String, File> waveFiles = new HashMap<>();
 							waveFiles.put(selectedWaveName, selectedWave);
 							outputAdmin.setWaveFileEntries(waveFiles, channel);
@@ -686,15 +688,15 @@ public class ChannelPane extends TitledPane {
 					}
 				} else {
 					if (input) {
-						if(selected != null) {
+						if (selected != null) {
 							inputAdmin.removeDeviceFromInputDataListener(channel, selected);
 							inputPane.removeDevice(selected);
 							channel.removeInputDevice(selected);
 							getChannelConfig().removeInputDevice(selected);
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, true);
 						}
-						
-						if(selectedWaveName != null) {
+
+						if (selectedWaveName != null) {
 							HashMap<String, File> waveFiles = new HashMap<>();
 							waveFiles.put(selectedWaveName, null);
 							inputAdmin.removeWaveFiles(waveFiles, channel);
@@ -704,21 +706,22 @@ public class ChannelPane extends TitledPane {
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, true);
 						}
 					} else {
-						if(selected != null) {
+						if (selected != null) {
 							outputAdmin.removeDeviceFromOutputDataSpeaker(channel, selected);
 							outputPane.removeDevice(selected);
 							channel.removeOutputDevice(selected);
 							getChannelConfig().removeOutputDevice(selected);
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, false);
 						}
-						
-						if(selectedWaveName != null) {
+
+						if (selectedWaveName != null) {
 							HashMap<String, File> waveFiles = new HashMap<>();
 							waveFiles.put(selectedWaveName, null);
 							outputAdmin.removeWaveFileEntries(waveFiles, channel);
 							outputPane.removeDevice(selectedWaveName);
 							channel.removeOutputDevice(selectedWaveName);
-							getChannelConfig().removeOutputWaveFile(selectedWaveName);				;
+							getChannelConfig().removeOutputWaveFile(selectedWaveName);
+							;
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
 						}
 					}
