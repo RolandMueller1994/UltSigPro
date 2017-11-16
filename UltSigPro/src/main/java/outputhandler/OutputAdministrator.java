@@ -190,42 +190,54 @@ public class OutputAdministrator {
 	}
 
 	private void createWaveFiles() {
-		
+
 		for (Map.Entry<String, FileOutputStream> entry : waveFileStreams.entrySet()) {
 			DataOutputStream output = new DataOutputStream(entry.getValue());
 			try {
-				
+
 				final int numberOfChannels = 2;
 				final int bytesPerSample = 2;
 				final int sampleRate = 44100;
 				final int totalByteNumber = waveData.get(entry.getKey()).size() * byteBufferSize;
 				final int frameSizePerSample = numberOfChannels * bytesPerSample;
-				
+
 				// RIFF section
 				writeString(output, "RIFF");
-				writeInt(output, totalByteNumber * frameSizePerSample + 36); // 36 for the following format section
+				writeInt(output, totalByteNumber * frameSizePerSample + 36); // 36
+																				// for
+																				// the
+																				// following
+																				// format
+																				// section
 				writeString(output, "WAVE");
-				
+
 				// format section
-				writeString(output, "fmt "); // header signature (space necessary)
+				writeString(output, "fmt "); // header signature (space
+												// necessary)
 				writeInt(output, 16); // following format section size
 				writeShort(output, (short) 1); // audio format (1 = PCM)
-				writeShort(output, (short) numberOfChannels); // number of channels
+				writeShort(output, (short) numberOfChannels); // number of
+																// channels
 				writeInt(output, sampleRate); // sample rate
-				writeInt(output, sampleRate * frameSizePerSample); // byte rate (byte/second)
+				writeInt(output, sampleRate * frameSizePerSample); // byte rate
+																	// (byte/second)
 				writeShort(output, (short) frameSizePerSample); // frame size
-				writeShort(output, (short) (8 * bytesPerSample)); // bits per sample
-				
+				writeShort(output, (short) (8 * bytesPerSample)); // bits per
+																	// sample
+
 				// data section
 				writeString(output, "data"); // header signature
-				writeInt(output, totalByteNumber * frameSizePerSample); // following data section size 				
+				writeInt(output, totalByteNumber * frameSizePerSample); // following
+																		// data
+																		// section
+																		// size
 				while (!waveData.get(entry.getKey()).isEmpty()) {
 					byte[] b = waveData.get(entry.getKey()).removeFirst();
 					output.write(b);
 				}
 
 				entry.getValue().close();
-				
+
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -233,7 +245,7 @@ public class OutputAdministrator {
 
 		}
 	}
-	
+
 	public void stopPlayback() {
 		executor.shutdownNow();
 		createWaveFiles();
@@ -299,18 +311,18 @@ public class OutputAdministrator {
 			allSpeaker.add(speaker);
 		}
 	}
-	
+
 	public synchronized void removeWaveFileEntries(HashMap<String, File> waveFiles, OutputDataSpeaker speaker) {
-		
-		for(String fileName : waveFiles.keySet()) {
+
+		for (String fileName : waveFiles.keySet()) {
 			distributionQueue.get(fileName).remove(speaker);
-			if(distributionQueue.get(fileName).isEmpty()) {
+			if (distributionQueue.get(fileName).isEmpty()) {
 				distributionQueue.remove(fileName);
 				waveData.remove(fileName);
 				waveFileStreams.remove(fileName);
 			}
 		}
-		
+
 	}
 
 	/**
@@ -466,7 +478,6 @@ public class OutputAdministrator {
 			}
 
 			boolean missing = false;
-
 			while (!missing) {
 
 				for (OutputDataSpeaker speaker : allSpeaker) {
@@ -494,21 +505,20 @@ public class OutputAdministrator {
 					boolean firstData = true;
 
 					int[] outData = new int[inputPackageSize];
-
 					for (OutputDataSpeaker speaker : entry.getValue()) {
-
 						int[] inData = data.get(speaker);
-
 						if (firstData) {
 							for (int i = 0; i < inputPackageSize; i++) {
 								outData[i] = inData[i];
+								firstData = false;
 							}
 						} else {
 							for (int i = 0; i < inputPackageSize; i++) {
 								outData[i] += inData[i];
 							}
 						}
-
+					
+					
 						LinkedList<Integer> soundValueData = new LinkedList<>();
 
 						byte[] outByteData = new byte[outputPackageSize];
@@ -516,7 +526,6 @@ public class OutputAdministrator {
 
 						for (int i = 0; i < inputPackageSize; i++) {
 							int intSample = outData[i];
-
 							soundValueData.add(intSample);
 
 							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
@@ -542,6 +551,4 @@ public class OutputAdministrator {
 				data.clear();
 			}
 		}
-	}
-
-}
+	}}
