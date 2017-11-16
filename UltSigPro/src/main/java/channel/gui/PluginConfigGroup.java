@@ -259,6 +259,10 @@ public class PluginConfigGroup extends Pane {
 		});
 
 	}
+	
+	public Channel getChannel() {
+		return channel;
+	}
 
 	private void showContextMenu(double screenX, double screenY) {
 

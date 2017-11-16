@@ -83,6 +83,7 @@ public class USPGui extends Application {
 	private static final String SIGNAL_FLOW_ALERT_HEADER = "signalFlowAlertHeader";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_INPUT = "signalFlowAlertTextInput";
 	private static final String SIGNAL_FLOW_ALERT_TEXT_OUTPUT = "signalFlowAlertTextOutput";
+	private static final String SIGNAL_FLOW_ALERT_CHANNEL = "signalFlowAlertChannel";
 
 	private static final String SIGNAL_FLOW_ALERT_TEXT_CONNECTION = "signalFlowAlertTextConnection";
 
@@ -167,50 +168,68 @@ public class USPGui extends Application {
 				if (!play) {
 					System.gc();
 
+					boolean error = false;
+					String errorText = "";
+
 					Iterator<Node> iter = channelBox.getChildren().iterator();
 					for (Tab tab : tabMap.values()) {
+						PluginConfigGroup configGroup = (PluginConfigGroup) ((ScrollPane) tab.getContent())
+								.getContent();
 						try {
-							((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).initializePlay();
+							configGroup.initializePlay();
 						} catch (SignalFlowConfigException e) {
 
-							Alert signalFlowAlert = new Alert(AlertType.ERROR);
+							error = true;
+
 							try {
-
-								signalFlowAlert.setTitle(LanguageResourceHandler.getInstance()
-										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
-								signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance()
-										.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
-
-								String text = "";
+								errorText += LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
+										SIGNAL_FLOW_ALERT_CHANNEL) + " "
+										+ configGroup.getChannel().getChannelConfig().getName() + ":"
+										+ System.lineSeparator();
 
 								System.out.println(e.getErrorCode());
 
 								if ((e.getErrorCode() & SignalFlowErrorCode.INPUT_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
-											SIGNAL_FLOW_ALERT_TEXT_INPUT) + System.lineSeparator();
+									errorText += "- " + LanguageResourceHandler.getInstance().getLocalizedText(
+											USPGui.class, SIGNAL_FLOW_ALERT_TEXT_INPUT) + System.lineSeparator();
 								}
 
 								if ((e.getErrorCode() & SignalFlowErrorCode.OUTPUT_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
-											SIGNAL_FLOW_ALERT_TEXT_OUTPUT) + System.lineSeparator();
+									errorText += "- " + LanguageResourceHandler.getInstance().getLocalizedText(
+											USPGui.class, SIGNAL_FLOW_ALERT_TEXT_OUTPUT) + System.lineSeparator();
 								}
 
 								if ((e.getErrorCode() & SignalFlowErrorCode.CONNECTION_ERROR.getValue()) != 0) {
-									text += "- " + LanguageResourceHandler.getInstance().getLocalizedText(USPGui.class,
-											SIGNAL_FLOW_ALERT_TEXT_CONNECTION) + System.lineSeparator();
+									errorText += "- " + LanguageResourceHandler.getInstance().getLocalizedText(
+											USPGui.class, SIGNAL_FLOW_ALERT_TEXT_CONNECTION) + System.lineSeparator();
 								}
 
-								TextArea contentText = new TextArea(text);
-								signalFlowAlert.getDialogPane().setContent(contentText);
-
-								signalFlowAlert.showAndWait();
+								errorText += System.lineSeparator();
 							} catch (ResourceProviderException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
 							}
-
-							return;
 						}
+					}
+
+					if (error) {
+						Alert signalFlowAlert = new Alert(AlertType.ERROR);
+
+						try {
+							signalFlowAlert.setTitle(LanguageResourceHandler.getInstance()
+									.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_TITLE));
+							signalFlowAlert.setHeaderText(LanguageResourceHandler.getInstance()
+									.getLocalizedText(USPGui.class, SIGNAL_FLOW_ALERT_HEADER));
+
+							TextArea contentText = new TextArea(errorText);
+							signalFlowAlert.getDialogPane().setContent(contentText);
+
+							signalFlowAlert.showAndWait();
+						} catch (ResourceProviderException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						return;
 					}
 
 					play = true;
