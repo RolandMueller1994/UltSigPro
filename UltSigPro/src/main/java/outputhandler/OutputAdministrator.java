@@ -493,7 +493,7 @@ public class OutputAdministrator {
 				}
 
 				if (missing) {
-					return;
+					break;
 				}
 
 				if (firstOutput) {
@@ -545,8 +545,8 @@ public class OutputAdministrator {
 						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
 					}
 				}
+				data.clear();
 			}
-			data.clear();
 		}
 	}
 }
