@@ -281,6 +281,7 @@ public class USPGui extends Application {
 
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
+			pluginPane.getSelectionModel().select(curTab);
 			soundLevelBar.addNewChannelSoundDevices(config);
 			pluginMap.put(channelPane, configGroup);
 		} catch (ResourceProviderException e) {
