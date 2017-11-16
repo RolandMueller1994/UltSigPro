@@ -22,6 +22,7 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
 import channel.Channel;
+import channel.InputDataListener;
 import channel.OutputDataSpeaker;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
@@ -59,6 +60,8 @@ public class OutputAdministrator {
 
 	private HashMap<OutputDataSpeaker, Collection<String>> distributionMap = new HashMap<>();
 	private HashMap<String, LinkedList<byte[]>> waveData = new HashMap<>();
+
+	private HashMap<OutputDataSpeaker, HashMap<String, Double>> outputLevelMultiplier = new HashMap<>();
 
 	public static OutputAdministrator getOutputAdministrator() {
 
@@ -320,6 +323,14 @@ public class OutputAdministrator {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
+			HashMap<String, Double> entry = new HashMap<>();
+			entry.put(fileName, 1.0);
+			if (outputLevelMultiplier.containsKey(speaker)) {
+				outputLevelMultiplier.get(speaker).put(fileName, 1.0);
+			} else {
+				outputLevelMultiplier.put(speaker, entry);
+			}
 			allSpeaker.add(speaker);
 		}
 	}
@@ -333,6 +344,8 @@ public class OutputAdministrator {
 				waveData.remove(fileName);
 				waveFileStreams.remove(fileName);
 			}
+
+			outputLevelMultiplier.get(speaker).remove(fileName);
 		}
 
 	}
@@ -357,6 +370,14 @@ public class OutputAdministrator {
 			}
 			distributionQueue.get(device).add(speaker);
 			allSpeaker.add(speaker);
+
+			HashMap<String, Double> inputLevel = new HashMap<>();
+			inputLevel.put(device, 1.0);
+			if (outputLevelMultiplier.containsKey(speaker)) {
+				outputLevelMultiplier.get(speaker).putAll(inputLevel);
+			} else {
+				outputLevelMultiplier.put(speaker, inputLevel);
+			}
 		}
 	}
 
@@ -379,6 +400,7 @@ public class OutputAdministrator {
 		distributionQueue.get(device).add(speaker);
 		setSelectedDevice(device);
 		allSpeaker.add(speaker);
+		outputLevelMultiplier.get(speaker).put(device, 1.0);
 	}
 
 	/**
@@ -402,6 +424,7 @@ public class OutputAdministrator {
 		if (distributionQueue.get(device).isEmpty()) {
 			distributionQueue.remove(device);
 		}
+		outputLevelMultiplier.get(speaker).remove(device);
 	}
 
 	/**
@@ -428,7 +451,12 @@ public class OutputAdministrator {
 				}
 			}
 		}
+		outputLevelMultiplier.remove(speaker);
 
+	}
+
+	public void outputLevelMultiplierChanged(OutputDataSpeaker speaker, String device, double multiplier) {
+		outputLevelMultiplier.get(speaker).put(device, multiplier);
 	}
 
 	private class OutputAlert extends Alert {
@@ -519,42 +547,58 @@ public class OutputAdministrator {
 					int[] outData = new int[inputPackageSize];
 					for (OutputDataSpeaker speaker : entry.getValue()) {
 						int[] inData = data.get(speaker);
-						if (firstData) {
-							for (int i = 0; i < inputPackageSize; i++) {
-								outData[i] = inData[i];
-								firstData = false;
+						double multiplier = outputLevelMultiplier.get(speaker).get(entry.getKey());
+						if (multiplier != 1) {
+							if (firstData) {
+								for (int i = 0; i < inputPackageSize; i++) {
+									outData[i] = (int) (multiplier * inData[i]);
+									firstData = false;
+								}
+							} else {
+								for (int i = 0; i < inputPackageSize; i++) {
+									outData[i] = (int) (outData[i] + (multiplier * inData[i]));
+								}
 							}
 						} else {
-							for (int i = 0; i < inputPackageSize; i++) {
-								outData[i] += inData[i];
+							if (firstData) {
+								for (int i = 0; i < inputPackageSize; i++) {
+									outData[i] = inData[i];
+									firstData = false;
+								}
+							} else {
+								for (int i = 0; i < inputPackageSize; i++) {
+									outData[i] += inData[i];
+								}
 							}
 						}
-					}
 
-					LinkedList<Integer> soundValueData = new LinkedList<>();
+						LinkedList<Integer> soundValueData = new LinkedList<>();
 
-					byte[] outByteData = new byte[outputPackageSize];
-					byte[] waveByteData = new byte[2 * outputPackageSize];
+						byte[] outByteData = new byte[outputPackageSize];
+						byte[] waveByteData = new byte[2 * outputPackageSize];
 
-					for (int i = 0; i < inputPackageSize; i++) {
-						int intSample = outData[i];
-						soundValueData.add(intSample);
+						for (int i = 0; i < inputPackageSize; i++) {
+							int intSample = outData[i];
+							soundValueData.add(intSample);
 
-						outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
-						outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
+							outByteData[2 * i] = (byte) ((intSample & 0xFF00) >> 8);
+							outByteData[2 * i + 1] = (byte) (intSample & 0xFF);
 
-						waveByteData[4 * i + 1] = outByteData[2 * i];
-						waveByteData[4 * i] = outByteData[2 * i + 1];
-						waveByteData[4 * i + 3] = outByteData[2 * i];
-						waveByteData[4 * i + 2] = outByteData[2 * i + 1];
-					}
+							waveByteData[4 * i + 1] = outByteData[2 * i];
+							waveByteData[4 * i] = outByteData[2 * i + 1];
+							waveByteData[4 * i + 3] = outByteData[2 * i];
+							waveByteData[4 * i + 2] = outByteData[2 * i + 1];
+						}
 
-					if (waveFileStreams.containsKey(entry.getKey())) {
-						waveData.get(entry.getKey()).add(waveByteData);
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
-					} else {
-						sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
-						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData, false);
+						if (waveFileStreams.containsKey(entry.getKey())) {
+							waveData.get(entry.getKey()).add(waveByteData);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
+									false);
+						} else {
+							sourceDataLines.get(entry.getKey()).write(outByteData, 0, outputPackageSize);
+							SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(entry.getKey(), soundValueData,
+									false);
+						}
 					}
 				}
 				data.clear();

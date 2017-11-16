@@ -437,9 +437,7 @@ public class ChannelPane extends TitledPane {
 				@Override
 				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 					if (!newValue.isEmpty()) {
-						// InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel,
-						// device,
-						// deviceGainTuble.getGain().getValue());
+						OutputAdministrator.getOutputAdministrator().outputLevelMultiplierChanged(channel, device, deviceGainTuble.getGain().getValue());
 					}
 				}
 			});
