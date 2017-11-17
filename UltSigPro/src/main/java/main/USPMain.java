@@ -61,8 +61,8 @@ public class USPMain {
 
 			// Setup the LanguageResourceHandler
 			// TODO Read configured language
-			LanguageResourceHandler.setCurrentLanguage(Locale.GERMAN);
-			LanguageResourceHandler.setDefaultLanguage(Locale.GERMAN);
+			LanguageResourceHandler.setCurrentLanguage(Locale.getDefault());
+			LanguageResourceHandler.setDefaultLanguage(Locale.ENGLISH);
 			LanguageResourceHandler.getInstance();
 			
 			Locale.setDefault(Locale.GERMAN);
