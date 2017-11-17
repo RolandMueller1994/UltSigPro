@@ -1,6 +1,3 @@
-
-gui.USPGui.title=UltSigPro UltimateSignalProcessing
-
 helpmenutitle=Hilfe
 filemenutitle=Datei
 pluginmenutitle=Plugins
@@ -8,7 +5,7 @@ configmenutitle=Konfiguration
 
 yes=Ja
 no=Nein
-ok=Ok
+ok=OK
 cancel=Abbrechen
 add=+
 remove=-
@@ -19,7 +16,7 @@ file=Datei
 
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
 gui.USPGui.signalFlowAlertTitle=Fehler der Plugin-Konfiguration
-gui.USPGui.signalFlowAlertHeader=Überprüfen sie die Konfiguration der Plugins
+gui.USPGui.signalFlowAlertHeader=Überprüfen Sie die Konfiguration der Plugins.
 gui.USPGui.signalFlowAlertTextInput=Es ist kein Eingang im Kanal konfiguriert!
 gui.USPGui.signalFlowAlertTextOutput=Es ist keine Verbindung zum Ausgang hergestellt!
 gui.USPGui.signalFlowAlertTextConnection=Es sind Eingänge/Ausgänge von Plugins nicht verbunden!
@@ -28,7 +25,7 @@ gui.USPGui.signalFlowAlertChannel=Kanal
 gui.menubar.FileMenuItem.title=Datei
 gui.menubar.SaveMenuItem.title=Speichern
 gui.menubar.SaveAsMenuItem.title=Speichern unter...
-gui.menubar.OpenProjectMenuItem.title=Projekt �ffnen...
+gui.menubar.OpenProjectMenuItem.title=Projekt öffnen...
 
 gui.menubar.HelpMenuItem.title=Hilfe
 
