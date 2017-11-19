@@ -19,6 +19,7 @@ import org.xml.sax.SAXException;
 import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.USPGui;
+import i18n.LanguageResourceHandler;
 import plugins.PluginManager;
 import resourceframework.ResourceProviderException;
 
@@ -39,8 +40,12 @@ public class USPFileReader {
 
 	}
 
-	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException {
+	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ResourceProviderException {
 
+		// add file name in the header line 
+		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
+		USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
+		
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder documentBuilder;
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -101,7 +106,6 @@ public class USPFileReader {
 					}
 				}
 			}
-			// TODO set file path of loaded project as current file path
 			// TODO bug: loading two different projects -> old project settings
 			// TODO check devices/waves before loading
 			// are not deleted

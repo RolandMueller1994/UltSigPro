@@ -49,6 +49,11 @@ public class USPFileCreator {
 				"UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
 		file = fileChooser.showSaveDialog(USPGui.stage);
 		
+		// add file name in the header line 
+		if (file != null) {
+			USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
+		}
+		
 		return file;
 	}
 	

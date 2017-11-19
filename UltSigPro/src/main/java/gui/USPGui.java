@@ -359,4 +359,8 @@ public class USPGui extends Application {
 	public static PluginConfigGroup getPluginConfigGroup(ChannelPane pane) {
 		return pluginMap.get(pane);
 	}
+
+	public static Stage getStage() {
+		return stage;
+	}
 }
