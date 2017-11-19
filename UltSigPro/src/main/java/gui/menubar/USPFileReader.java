@@ -40,12 +40,13 @@ public class USPFileReader {
 
 	}
 
-	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException, InstantiationException, IllegalAccessException, ResourceProviderException {
+	public void readUSPFile(File file) throws ParserConfigurationException, SAXException, IOException,
+			InstantiationException, IllegalAccessException, ResourceProviderException {
 
-		// add file name in the header line 
+		// add file name in the header line
 		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 		USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
-		
+
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder documentBuilder;
 		documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -83,11 +84,11 @@ public class USPFileReader {
 						} else if (tagName == "outputDevice") {
 							outputDevices.add(channelItemElement.getTextContent());
 						} else if (tagName == "inputWave") {
-							choosedInputWaveFiles.put(channelItemElement.getTextContent(),
-									new File(channelItemElement.getTextContent()));
+							File inputFile = new File(channelItemElement.getTextContent());
+							choosedInputWaveFiles.put(inputFile.getName(), inputFile.getAbsoluteFile());
 						} else if (tagName == "outputWave") {
-							choosedOutputWaveFiles.put(channelItemElement.getTextContent(),
-									new File(channelItemElement.getTextContent()));
+							File outputFile = new File(channelItemElement.getTextContent());
+							choosedOutputWaveFiles.put(outputFile.getName(), outputFile.getAbsoluteFile());
 						} else if (tagName == "plugin") {
 							NodeList pluginEntryNodeList = channelItemElement.getChildNodes();
 							for (int k = 0; k < pluginEntryNodeList.getLength(); k++) {
@@ -106,9 +107,7 @@ public class USPFileReader {
 					}
 				}
 			}
-			// TODO bug: loading two different projects -> old project settings
 			// TODO check devices/waves before loading
-			// are not deleted
 			USPGui.addChannel(new ChannelConfig(channelName, inputDevices, outputDevices, choosedInputWaveFiles,
 					choosedOutputWaveFiles));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
