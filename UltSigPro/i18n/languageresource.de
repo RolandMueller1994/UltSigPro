@@ -22,7 +22,7 @@ gui.USPGui.signalFlowAlertTextOutput=Es ist keine Verbindung zum Ausgang hergest
 gui.USPGui.signalFlowAlertTextConnection=Es sind Eingänge/Ausgänge von Plugins nicht verbunden!
 gui.USPGui.signalFlowAlertChannel=Kanal
 
-gui.menubar.FileMenuItem.title=Datei
+gui.menubar.NewProjectMenuItem.title=Neues Projekt
 gui.menubar.SaveMenuItem.title=Speichern
 gui.menubar.SaveAsMenuItem.title=Speichern unter...
 gui.menubar.OpenProjectMenuItem.title=Projekt öffnen...

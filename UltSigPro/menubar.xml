@@ -3,7 +3,7 @@
 <menubar>
 	<menu>
 		<title>filemenutitle</title>
-		<class>gui.menubar.FileMenuItem</class>
+		<class>gui.menubar.NewProjectMenuItem</class>
 		<class>gui.menubar.OpenProjectMenuItem</class>
 		<class>gui.menubar.SaveMenuItem</class>
 		<class>gui.menubar.SaveAsMenuItem</class>

@@ -2,7 +2,6 @@ package gui.menubar;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -48,7 +47,7 @@ public class OpenProjectMenuItem extends MenuItem {
 				if (file != null) {
 					int channelNumber = USPGui.getChannelBox().getChildren().size();
 					if (channelNumber != 0) {
-						ObservableList pane = USPGui.getChannelBox().getChildren();
+						ObservableList<Node> pane = USPGui.getChannelBox().getChildren();
 						for (int i = channelNumber - 1; i > -1; i--) {
 							SoundLevelBar.getSoundLevelBar().removeChannelSoundDevices(((ChannelPane) pane.get(i)).getChannelConfig());
 							USPGui.deleteChannel((ChannelPane) pane.get(i));
