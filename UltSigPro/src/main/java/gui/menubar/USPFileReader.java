@@ -20,7 +20,6 @@ import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import plugins.PluginManager;
 import resourceframework.ResourceProviderException;
 
 public class USPFileReader {

@@ -69,7 +69,7 @@ public class USPFileCreator {
 	 * @throws TransformerConfigurationException
 	 * @throws TransformerException
 	 */
-	public static void createUSPFile(Document doc, File file) throws TransformerConfigurationException, TransformerException {
+	public static void createUSPFile(Document doc) throws TransformerConfigurationException, TransformerException {
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer;
 		transformer = transformerFactory.newTransformer();
@@ -116,5 +116,9 @@ public class USPFileCreator {
 	
 	public static File getFile() {
 		return file;
+	}
+	
+	public static void setFile(File file) {
+		USPFileCreator.file = file;
 	}
 }

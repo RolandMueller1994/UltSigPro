@@ -31,6 +31,7 @@ import inputhandler.InputAdministrator;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
@@ -312,6 +313,18 @@ public class USPGui extends Application {
 		channelBox.getChildren().remove(pane);
 		Tab curTab = tabMap.remove(pane.getName());
 		pluginPane.getTabs().remove(curTab);
+	}
+
+	public static void deleteAllChannels() {
+		int channelNumber = channelBox.getChildren().size();
+		if (channelNumber != 0) {
+			ObservableList<Node> pane = channelBox.getChildren();
+			for (int i = channelNumber - 1; i > -1; i--) {
+				SoundLevelBar.getSoundLevelBar()
+						.removeChannelSoundDevices(((ChannelPane) pane.get(i)).getChannelConfig());
+				deleteChannel((ChannelPane) pane.get(i));
+			}
+		}
 	}
 
 	public static boolean checkIfPresent(String name) {
