@@ -396,6 +396,7 @@ public class OutputAdministrator {
 		// SoundOutputDevice
 		if (!distributionQueue.containsKey(device)) {
 			distributionQueue.put(device, new HashSet<OutputDataSpeaker>());
+			outputLevelMultiplier.put(speaker, new HashMap<String, Double>());
 		}
 		distributionQueue.get(device).add(speaker);
 		setSelectedDevice(device);
