@@ -521,12 +521,18 @@ public class ChannelPane extends TitledPane {
 		private String selected;
 		private String selectedWaveName;
 		private File selectedWave;
+		
+		private Alert duplicateAlert;
 
 		public AddRemoveDialog(boolean input, boolean add) {
 			DialogPane dialogPane = getDialogPane();
 
 			dialogPane.getButtonTypes().add(ButtonType.APPLY);
 			dialogPane.getButtonTypes().add(ButtonType.CANCEL);
+			
+			duplicateAlert = new Alert(AlertType.ERROR);
+			duplicateAlert.setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, DUPLICATE_ALERT_TITLE));
+			duplicateAlert.setHeaderText(lanHandler.getLocalizedText(AddRemoveDialog.class, DUPLICATE_ALERT_HEADER));
 
 			dialogPane.setPrefWidth(270);
 
@@ -647,6 +653,27 @@ public class ChannelPane extends TitledPane {
 				} else if (add) {
 
 					if (input) {
+						
+						if(selected != null) {
+							for(String device : channel.getChannelConfig().getInputDevices()) {
+								if(device.equals(selected)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}							
+						}
+						
+						if (selectedWave != null && selectedWaveName != null) {
+							for(String file : channel.getChannelConfig().getInputWaveFiles().keySet()) {
+								if(file.equals(selectedWaveName)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+						
 						if (selected != null) {
 							inputAdmin.addDeviceToInputDataListener(channel, selected);
 							inputPane.addDevice(selected);
@@ -666,6 +693,27 @@ public class ChannelPane extends TitledPane {
 							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
 						}
 					} else {
+						
+						if(selected != null) {
+							for(String device : channel.getChannelConfig().getOutputDevices()) {
+								if(device.equals(selected)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}							
+						}
+						
+						if (selectedWave != null && selectedWaveName != null) {
+							for(String file : channel.getChannelConfig().getOutputWaveFiles().keySet()) {
+								if(file.equals(selectedWaveName)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+						
 						if (selected != null) {
 							outputAdmin.addSoundOutputDeviceToSpeaker(channel, selected);
 							outputPane.addDevice(selected);
