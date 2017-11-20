@@ -26,6 +26,7 @@ gui.menubar.NewProjectMenuItem.title=Neues Projekt
 gui.menubar.SaveMenuItem.title=Speichern
 gui.menubar.SaveAsMenuItem.title=Speichern unter...
 gui.menubar.OpenProjectMenuItem.title=Projekt öffnen...
+gui.menubar.ExitMenuItem.title=Beenden
 
 gui.menubar.HelpMenuItem.title=Hilfe
 

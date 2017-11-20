@@ -26,6 +26,7 @@ gui.menubar.NewProjectMenuItem.title=New project
 gui.menubar.SaveMenuItem.title=Save
 gui.menubar.SaveAsMenuItem.title=Save as...
 gui.menubar.OpenProjectMenuItem.title=Open project...
+gui.menubar.ExitMenuItem.title=Exit
 
 gui.menubar.HelpMenuItem.title=Help
 
