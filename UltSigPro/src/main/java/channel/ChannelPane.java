@@ -767,7 +767,6 @@ public class ChannelPane extends TitledPane {
 							outputPane.removeDevice(selectedWaveName);
 							channel.removeOutputDevice(selectedWaveName);
 							getChannelConfig().removeOutputWaveFile(selectedWaveName);
-							;
 							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
 						}
 					}
