@@ -3,10 +3,12 @@ package main;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.Locale;
 
 import javax.management.AttributeNotFoundException;
 
+import configfileframework.ConfigFileHandler;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import logging.CommonLogger;
@@ -49,6 +51,10 @@ public class USPMain {
 			} catch (IllegalArgumentException | AttributeNotFoundException ex) {
 				argParserMessage = ex.getMessage();
 			}
+			
+			HashMap<String, Object> generalParameters = new HashMap<>();
+			generalParameters.put("language", Locale.getDefault().getLanguage());
+			ConfigFileHandler generalConfigHandler = new ConfigFileHandler("generalConfig", generalParameters);
 
 			// Create and register logging directory
 			current = current + File.separator + "logging";
@@ -60,8 +66,8 @@ public class USPMain {
 			resProv.registerResource("loggingPath", current);
 
 			// Setup the LanguageResourceHandler
-			// TODO Read configured language
-			LanguageResourceHandler.setCurrentLanguage(Locale.getDefault());
+			Locale selectedLocale = Locale.forLanguageTag((String) resProv.getResource("language"));			
+			LanguageResourceHandler.setCurrentLanguage(selectedLocale);
 			LanguageResourceHandler.setDefaultLanguage(Locale.ENGLISH);
 			LanguageResourceHandler.getInstance();
 			
