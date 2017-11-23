@@ -662,7 +662,7 @@ public class PluginConfigGroup extends Pane {
 
 			private static final String TITLE = "title";
 
-			private ListView<String> listView = new ListView();
+			private ListView<String> listView = new ListView<>();
 
 			private AddPluginDialog() {
 
