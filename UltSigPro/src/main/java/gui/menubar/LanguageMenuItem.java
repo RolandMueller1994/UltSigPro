@@ -34,7 +34,7 @@ private static final String TITLE = "title";
 					
 					if (languageSelection != null) {
 						try {
-							GlobalResourceProvider.getInstance().changeResource("language", languageSelection);
+							GlobalResourceProvider.getInstance().changeResource("language", languageSelection.getLanguage());
 						} catch (ResourceProviderException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -49,6 +49,7 @@ private static final String TITLE = "title";
 		
 		private static final String TITLE = "title";
 		private ListView<LocaleStringWrapper> languageListView = new ListView<LocaleStringWrapper>();
+		
 		private ChangeLanguageDialog() {
 			
 			try {
@@ -57,23 +58,21 @@ private static final String TITLE = "title";
 				e.printStackTrace();
 			}
 			
-			List<Locale> languageListLocale = new LinkedList<Locale>();
-			ListView<String> languageListString = new ListView<String>();
+			List<Locale> languageListLocale;
 			try {
 				languageListLocale = LanguageResourceHandler.getInstance().collectAvailableLanguages();
+
+				for (Locale language : languageListLocale) {
+					LocaleStringWrapper locStrWrap = new LocaleStringWrapper(language);
+					languageListView.getItems().add(locStrWrap);
+				}
+				getDialogPane().setContent(languageListView);
+				getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+				getDialogPane().getButtonTypes().add(ButtonType.APPLY);
 			} catch (ResourceProviderException | IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			
-			for (Locale language : languageListLocale) {
-				LocaleStringWrapper locStrWrap = new LocaleStringWrapper(language);
-				languageListView.getItems().add(locStrWrap);
-				languageListString.getItems().add(locStrWrap.getLocaleAsString());
-			}
-			getDialogPane().setContent(languageListString);
-			getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-			getDialogPane().getButtonTypes().add(ButtonType.APPLY);
 		}
 	}
 	
@@ -92,6 +91,11 @@ private static final String TITLE = "title";
 		
 		public Locale getLocale() {
 			return locale;
+		}
+		
+		@Override
+		public String toString() {
+			return localeStr;
 		}
 	}
 }
