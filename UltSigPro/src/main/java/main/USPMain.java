@@ -9,6 +9,7 @@ import java.util.Locale;
 import javax.management.AttributeNotFoundException;
 
 import configfileframework.ConfigFileHandler;
+import configfileframework.ConfigFileValueWrapper;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import logging.CommonLogger;
@@ -51,9 +52,10 @@ public class USPMain {
 			} catch (IllegalArgumentException | AttributeNotFoundException ex) {
 				argParserMessage = ex.getMessage();
 			}
-			
-			HashMap<String, Object> generalParameters = new HashMap<>();
-			generalParameters.put("language", Locale.getDefault().getLanguage());
+
+			HashMap<String, ConfigFileValueWrapper> generalParameters = new HashMap<>();
+			generalParameters.put("language",
+					new ConfigFileValueWrapper(Locale.getDefault().getLanguage(), "The current selected language"));
 			ConfigFileHandler generalConfigHandler = new ConfigFileHandler("generalConfig", generalParameters);
 
 			// Create and register logging directory
@@ -66,11 +68,11 @@ public class USPMain {
 			resProv.registerResource("loggingPath", current);
 
 			// Setup the LanguageResourceHandler
-			Locale selectedLocale = Locale.forLanguageTag((String) resProv.getResource("language"));			
+			Locale selectedLocale = Locale.forLanguageTag((String) resProv.getResource("language"));
 			LanguageResourceHandler.setCurrentLanguage(selectedLocale);
 			LanguageResourceHandler.setDefaultLanguage(Locale.ENGLISH);
 			LanguageResourceHandler.getInstance();
-			
+
 			Locale.setDefault(Locale.GERMAN);
 
 			// Check if help is required
@@ -111,7 +113,6 @@ public class USPMain {
 
 				}
 			}
-			
 
 		} catch (Exception e) {
 			CommonLogger.getInstance().logException(e);
