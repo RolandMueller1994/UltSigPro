@@ -44,7 +44,7 @@ dependencies {
     
 	compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
 
-	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: '7cf24785b8'
+	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: '8faff73001f0154f94486ac67c6964d76936a769'
 
 	// https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
 	//compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.8.0.201706111038-r'

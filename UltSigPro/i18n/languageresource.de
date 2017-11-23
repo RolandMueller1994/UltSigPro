@@ -51,6 +51,8 @@ gui.menubar.AboutMenuItem.infoAlertTitle=Über UltSigPro
 gui.menubar.AboutMenuItem.infoAlertHeader=Allgemeine Informationen über UltSigPro
 gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPluginfähige Umgebung zur Simulation von Signalverarbeitungsmodulen.
 
+gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Sprache ändern
+
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Eingänge
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Ausgänge
 

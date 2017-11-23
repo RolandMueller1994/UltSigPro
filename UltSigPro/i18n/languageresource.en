@@ -49,7 +49,9 @@ gui.menubar.AddChannelMenuItem$AddChannelDialog.inOutAlertHeader=Duplicates in t
 gui.menubar.AboutMenuItem.title=About USP
 gui.menubar.AboutMenuItem.infoAlertTitle=About UltSigPro
 gui.menubar.AboutMenuItem.infoAlertHeader=General informations about UltSigPro
-gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPlugin-capable environment for simulation of signal processing modules. 
+gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPlugin-capable environment for simulation of signal processing modules.
+
+gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Change language
 
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Inputs
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Outputs
