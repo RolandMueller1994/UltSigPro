@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import channel.PluginInput;
+import channel.PluginOutput;
 import channel.gui.PluginConnection.ConnectionLine;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
@@ -106,33 +108,33 @@ public class PluginConnection {
 
 		return false;
 	}
-	
+
 	public void collectConnectionLineInfos(Document doc, Element element) {
-		
+
 		Element lineCount = doc.createElement("lineCount");
 		lineCount.appendChild(doc.createTextNode(new Integer(lines.size()).toString()));
 		element.appendChild(lineCount);
-		
+
 		Element deviderCount = doc.createElement("deviderCount");
 		deviderCount.appendChild(doc.createTextNode(new Integer(deviders.size()).toString()));
 		element.appendChild(deviderCount);
-		
+
 		int count = 0;
-		for(ConnectionLine line : lines) {
+		for (ConnectionLine line : lines) {
 			line.setNumber(count);
 			count++;
 		}
-		
+
 		count = 0;
-		for(LineDevider devider : deviders) {
+		for (LineDevider devider : deviders) {
 			devider.setNumber(count);
 		}
-		
-		for(ConnectionLine line : lines) {
+
+		for (ConnectionLine line : lines) {
 			line.collectedLineInfo(doc, element);
 		}
-		
-		for(LineDevider devider : deviders) {
+
+		for (LineDevider devider : deviders) {
 			devider.collectedDeviderInfo(doc, element);
 		}
 	}
@@ -479,7 +481,7 @@ public class PluginConnection {
 		private boolean hoveredForDeletion = false;
 
 		private PluginConnection parent;
-		
+
 		private int number;
 
 		private PluginConfigGroup parentPane;
@@ -507,65 +509,131 @@ public class PluginConnection {
 			setEndX(x);
 			setEndY(y);
 		}
-		
+
 		public void collectedLineInfo(Document doc, Element element) {
 			Element line = doc.createElement("connectionLine");
-			
+
 			Element numberElement = doc.createElement("number");
 			numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
 			line.appendChild(numberElement);
-			
+
 			Element horizontalElement = doc.createElement("horizontal");
 			horizontalElement.appendChild(doc.createTextNode(new Boolean(horizontal).toString()));
 			line.appendChild(horizontalElement);
-			
+
 			Element startCoords = doc.createElement("startCoords");
 			Element startX = doc.createElement("startX");
 			startX.appendChild(doc.createTextNode(new Double(getStartX()).toString()));
 			Element startY = doc.createElement("startY");
 			startY.appendChild(doc.createTextNode(new Double(getStartY()).toString()));
-			
+
 			startCoords.appendChild(startX);
 			startCoords.appendChild(startY);
 			line.appendChild(startCoords);
-			
+
 			Element endCoords = doc.createElement("endCoords");
 			Element endX = doc.createElement("endX");
 			endX.appendChild(doc.createTextNode(new Double(getEndX()).toString()));
 			Element endY = doc.createElement("endY");
 			endY.appendChild(doc.createTextNode(new Double(getEndY()).toString()));
-			
+
 			endCoords.appendChild(endX);
 			endCoords.appendChild(endY);
 			line.appendChild(endCoords);
-			
-			if(firstLine != null) {
+
+			if (firstLine != null) {
 				Element firstLineElement = doc.createElement("firstLine");
 				firstLineElement.appendChild(doc.createTextNode(new Integer(firstLine.getNumber()).toString()));
 				line.appendChild(firstLineElement);
+			} else if (firstEnd != null) {
+				Element firstEndElement = doc.createElement("firstEnd");
+				if (firstEnd instanceof LineDevider) {
+					Element dividerElement = doc.createElement("devider");
+					Element dividerNumberElement = doc.createElement("dividerNumber");
+					dividerNumberElement.appendChild(
+							doc.createTextNode(new Integer(((LineDevider) firstEnd).getNumber()).toString()));
+					dividerElement.appendChild(dividerNumberElement);
+					firstEndElement.appendChild(dividerElement);
+				} else if (firstEnd instanceof Input) {
+					Input input = (Input) firstEnd;
+					Element inputElement = doc.createElement("pluginInput");
+					Element pluginNumberElement = doc.createElement("pluginNumber");
+					pluginNumberElement
+							.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
+					Element inputNameElement = doc.createElement("inputName");
+					inputNameElement.appendChild(doc.createTextNode(input.getName()));
+					inputElement.appendChild(inputNameElement);
+					inputElement.appendChild(pluginNumberElement);
+					firstEndElement.appendChild(inputElement);
+				} else if (firstEnd instanceof Output) {
+					Output output = (Output) firstEnd;
+					Element outputElement = doc.createElement("pluginOutput");
+					Element pluginNumberElement = doc.createElement("pluginNumber");
+					pluginNumberElement
+							.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
+					Element outputNameElement = doc.createElement("outputName");
+					outputNameElement.appendChild(doc.createTextNode(output.getName()));
+					outputElement.appendChild(outputNameElement);
+					outputElement.appendChild(pluginNumberElement);
+					firstEndElement.appendChild(outputElement);
+				}
+				line.appendChild(firstEndElement);
 			}
-			
-			if(secondLine != null) {
+
+			if (secondLine != null) {
 				Element secondLineElement = doc.createElement("secondLine");
 				secondLineElement.appendChild(doc.createTextNode(new Integer(secondLine.getNumber()).toString()));
 				line.appendChild(secondLineElement);
+			} else if (secondEnd != null) {
+				Element secondEndElement = doc.createElement("secondEnd");
+				if (secondEnd instanceof LineDevider) {
+					Element dividerElement = doc.createElement("devider");
+					Element dividerNumberElement = doc.createElement("dividerNumber");
+					dividerNumberElement.appendChild(
+							doc.createTextNode(new Integer(((LineDevider) secondEnd).getNumber()).toString()));
+					dividerElement.appendChild(dividerNumberElement);
+					secondEndElement.appendChild(dividerElement);
+				} else if (secondEnd instanceof Input) {
+					Input input = (Input) secondEnd;
+					Element inputElement = doc.createElement("pluginInput");
+					Element pluginNumberElement = doc.createElement("pluginNumber");
+					pluginNumberElement
+							.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
+					Element inputNameElement = doc.createElement("inputName");
+					inputNameElement.appendChild(doc.createTextNode(input.getName()));
+					inputElement.appendChild(inputNameElement);
+					inputElement.appendChild(pluginNumberElement);
+					secondEndElement.appendChild(inputElement);
+				} else if (secondEnd instanceof Output) {
+					Output output = (Output) secondEnd;
+					Element outputElement = doc.createElement("pluginOutput");
+					Element pluginNumberElement = doc.createElement("pluginNumber");
+					pluginNumberElement
+							.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
+					Element outputNameElement = doc.createElement("outputName");
+					outputNameElement.appendChild(doc.createTextNode(output.getName()));
+					outputElement.appendChild(outputNameElement);
+					outputElement.appendChild(pluginNumberElement);
+					secondEndElement.appendChild(outputElement);
+				}
+				line.appendChild(secondEndElement);
 			}
-			
+
 			element.appendChild(line);
 		}
 
 		public void setNumber(int number) {
 			this.number = number;
 		}
-		
+
 		public int getNumber() {
 			return number;
 		}
-		
+
 		public PluginConnection getParentConnection() {
 			return parent;
 		}
-		
+
 		public ConnectionLineEndpointInterface getFirstEnd() {
 			return firstEnd;
 		}
@@ -1181,7 +1249,7 @@ public class PluginConnection {
 		private Pane dragPane;
 
 		private int number;
-		
+
 		public LineDevider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
 				ConnectionLine east, ConnectionLine south, ConnectionLine west, double x, double y) {
 			this.parentPane = parentPane;
@@ -1199,13 +1267,17 @@ public class PluginConnection {
 
 			updateDragPane();
 		}
-		
+
 		public void setNumber(int number) {
 			this.number = number;
 		}
-		
+
+		public int getNumber() {
+			return number;
+		}
+
 		public void collectedDeviderInfo(Document doc, Element element) {
-			
+
 		}
 
 		private void updateCoordinatesInternal(double screenX, double screenY) {

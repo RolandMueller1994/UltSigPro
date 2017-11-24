@@ -35,6 +35,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 	private boolean dragged = false;
 	private boolean hovered = false;
 	
+	private int number;
+
 	private HashSet<Input> inputs = new HashSet<> ();
 	private HashSet<Output> outputs = new HashSet<> ();
 
@@ -322,5 +324,14 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 	 * @return the height
 	 */
 	public abstract int getHeight();
+	
+	
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
+	}
 
 }

@@ -694,12 +694,17 @@ public class PluginConfigGroup extends Pane {
 	}
 	
 	public void collectPluginInfos(Document doc, Element element) {
+		int count = 0;
 		for (SigproPlugin plugin : plugins) {
+			plugin.setNumber(count);
 			Element pluginElement = doc.createElement("plugin");
 			Element pluginName = doc.createElement("name");
+			Element pluginNumber = doc.createElement("number");
 			pluginName.appendChild(doc.createTextNode(plugin.getName()));
 			pluginElement.appendChild(pluginName);
+			pluginNumber.appendChild(doc.createTextNode(new Integer(plugin.getNumber()).toString()));
 			element.appendChild(pluginElement);
+			count++;
 		}
 		
 		for (PluginConnection con : allConnections) {
