@@ -14,6 +14,8 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
@@ -61,6 +63,10 @@ private static final String INFO_ALERT_CONTENT = "infoAlertContent";
 		private ListView<LocaleStringWrapper> languageListView = new ListView<LocaleStringWrapper>();
 		
 		private ChangeLanguageDialog() {
+			
+			Stage stage = (Stage) getDialogPane().getScene().getWindow();
+			Image icon = new Image("file:icon.png");
+			stage.getIcons().add(icon);
 			
 			try {
 				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(ChangeLanguageDialog.class, TITLE));

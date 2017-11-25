@@ -22,6 +22,8 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.scene.control.Alert;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
@@ -155,7 +157,9 @@ public class USPFileReader {
 		
 		private MissingResourcesDialog(List<String> missingResources) {
 			super(AlertType.ERROR);
-			
+			Stage stage = (Stage) getDialogPane().getScene().getWindow();
+			Image icon = new Image("file:icon.png");
+			stage.getIcons().add(icon);
 			try {
 				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, TITLE));
 				setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, HEADER));
