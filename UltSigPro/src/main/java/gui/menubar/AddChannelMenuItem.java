@@ -26,10 +26,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
@@ -72,6 +74,9 @@ public class AddChannelMenuItem extends MenuItem {
 			public void handle(ActionEvent event) {
 
 				dialog = new AddChannelDialog();
+				Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
+				Image icon = new Image("file:icon.png");
+				stage.getIcons().add(icon);
 
 				Optional<ButtonType> result = dialog.showAndWait();
 
