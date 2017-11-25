@@ -4,6 +4,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import javax.annotation.Nonnull;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import channel.OutputDataWrapper;
 import channel.gui.Input;
 import channel.gui.MaxCoordinatesInterface;
@@ -332,6 +335,14 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 
 	public void setNumber(int number) {
 		this.number = number;
+	}
+	
+	public void collectedPluginInfo(Document doc, Element element) {
+		Element pluginConfig = doc.createElement("pluginConfig");
+		Element numberElement = doc.createElement("number");
+		numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
+		pluginConfig.appendChild(numberElement);
+		element.appendChild(pluginConfig);
 	}
 
 }

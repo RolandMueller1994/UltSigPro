@@ -699,10 +699,9 @@ public class PluginConfigGroup extends Pane {
 			plugin.setNumber(count);
 			Element pluginElement = doc.createElement("plugin");
 			Element pluginName = doc.createElement("name");
-			Element pluginNumber = doc.createElement("number");
 			pluginName.appendChild(doc.createTextNode(plugin.getName()));
 			pluginElement.appendChild(pluginName);
-			pluginNumber.appendChild(doc.createTextNode(new Integer(plugin.getNumber()).toString()));
+			plugin.collectedPluginInfo(doc, pluginElement);
 			element.appendChild(pluginElement);
 			count++;
 		}
