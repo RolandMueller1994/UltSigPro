@@ -73,7 +73,7 @@ public class USPMain {
 			LanguageResourceHandler.setDefaultLanguage(Locale.ENGLISH);
 			LanguageResourceHandler.getInstance();
 
-			Locale.setDefault(Locale.GERMAN);
+			Locale.setDefault(selectedLocale);
 
 			// Check if help is required
 			if (resProv.checkRegistered("help") || argParserMessage != null) {

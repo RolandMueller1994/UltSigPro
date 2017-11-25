@@ -52,6 +52,8 @@ gui.menubar.AboutMenuItem.infoAlertHeader=General informations about UltSigPro
 gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPlugin-capable environment for simulation of signal processing modules.
 
 gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Change language
+gui.menubar.LanguageMenuItem.infoAlertHeader=Restart necessary!
+gui.menubar.LanguageMenuItem.infoAlertContent=To apply the changed language settings, UltSigPro must be closed and restarted.
 
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Inputs
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Outputs

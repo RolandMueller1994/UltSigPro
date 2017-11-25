@@ -52,6 +52,8 @@ gui.menubar.AboutMenuItem.infoAlertHeader=Allgemeine Informationen über UltSigP
 gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPluginfähige Umgebung zur Simulation von Signalverarbeitungsmodulen.
 
 gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Sprache ändern
+gui.menubar.LanguageMenuItem.infoAlertHeader=Neustart erforderlich!
+gui.menubar.LanguageMenuItem.infoAlertContent=Damit die geänderte Spracheinstellung wirksam wird, muss UltSigPro geschlossen und neu gestartet werden. 
 
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Eingänge
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Ausgänge

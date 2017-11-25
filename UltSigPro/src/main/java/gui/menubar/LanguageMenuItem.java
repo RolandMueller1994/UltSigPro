@@ -10,16 +10,23 @@ import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
 public class LanguageMenuItem extends MenuItem {
 
 private static final String TITLE = "title";
+private static final String INFO_ALERT_HEADER = "infoAlertHeader";
+private static final String INFO_ALERT_CONTENT = "infoAlertContent";
 	
 	public LanguageMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(LanguageMenuItem.class, TITLE));
@@ -34,7 +41,15 @@ private static final String TITLE = "title";
 					
 					if (languageSelection != null) {
 						try {
-							GlobalResourceProvider.getInstance().changeResource("language", languageSelection.getLanguage());
+							String currentLanguage = (String) GlobalResourceProvider.getInstance().getResource("language");
+							if (!currentLanguage.equals(languageSelection.toString())) {
+								GlobalResourceProvider.getInstance().changeResource("language", languageSelection.getLanguage());
+								Alert alert = new Alert(AlertType.INFORMATION);
+								alert.setTitle(LanguageResourceHandler.getInstance().getLocalizedText(ChangeLanguageDialog.class, TITLE));
+								alert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(LanguageMenuItem.class, INFO_ALERT_HEADER));
+								alert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(LanguageMenuItem.class, INFO_ALERT_CONTENT));
+								alert.showAndWait();
+							}
 						} catch (ResourceProviderException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
