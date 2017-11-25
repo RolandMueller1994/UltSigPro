@@ -1,7 +1,6 @@
 package gui.menubar;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -9,16 +8,12 @@ import java.util.Optional;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
@@ -98,10 +93,6 @@ private static final String INFO_ALERT_CONTENT = "infoAlertContent";
 		LocaleStringWrapper(Locale locale) {
 			this.locale = locale;
 			this.localeStr = locale.getDisplayName(locale);
-		}
-		
-		public String getLocaleAsString() {
-			return localeStr;
 		}
 		
 		public Locale getLocale() {

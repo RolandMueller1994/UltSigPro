@@ -55,6 +55,11 @@ gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Change language
 gui.menubar.LanguageMenuItem.infoAlertHeader=Restart necessary!
 gui.menubar.LanguageMenuItem.infoAlertContent=To apply the changed language settings, UltSigPro must be closed and restarted.
 
+gui.menubar.USPFileReader$MissingResourcesDialog.title=Missing resources
+gui.menubar.USPFileReader$MissingResourcesDialog.header=An error occured while loading the project file.%crFor missing devices, check if they are connected and ready for use.%crIn case of missing wave files make sure, that they have not been deleted, postponed or renamed.  
+gui.menubar.USPFileReader$MissingResourcesDialog.content=Following resources could not be loaded:%cr%cr
+
+
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Inputs
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Outputs
 

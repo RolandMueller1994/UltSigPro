@@ -20,6 +20,9 @@ import channel.ChannelConfig;
 import channel.ChannelPane;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
+import inputhandler.InputAdministrator;
+import javafx.scene.control.Alert;
+import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
 public class USPFileReader {
@@ -62,6 +65,7 @@ public class USPFileReader {
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
 			List<String> plugins = new LinkedList<>();
+			List<String> missingResources = new LinkedList<>();
 
 			if (channel.getNodeType() == Node.ELEMENT_NODE) {
 				Element entry = (Element) channel;
@@ -79,15 +83,31 @@ public class USPFileReader {
 						if (tagName == "name") {
 							channelName = channelItemElement.getTextContent();
 						} else if (tagName == "inputDevice") {
-							inputDevices.add(channelItemElement.getTextContent());
+							if (InputAdministrator.getInputAdminstrator().deviceAvailable(channelItemElement.getTextContent())) {
+								inputDevices.add(channelItemElement.getTextContent());
+							} else {
+								missingResources.add(channelItemElement.getTextContent());
+							}
 						} else if (tagName == "outputDevice") {
-							outputDevices.add(channelItemElement.getTextContent());
+							if (OutputAdministrator.getOutputAdministrator().deviceAvailable(channelItemElement.getTextContent())) {
+								outputDevices.add(channelItemElement.getTextContent());
+							} else {
+								missingResources.add(channelItemElement.getTextContent());
+							}
 						} else if (tagName == "inputWave") {
 							File inputFile = new File(channelItemElement.getTextContent());
-							choosedInputWaveFiles.put(inputFile.getName(), inputFile.getAbsoluteFile());
+							if (inputFile.exists()) {
+								choosedInputWaveFiles.put(inputFile.getName(), inputFile.getAbsoluteFile());
+							} else {
+								missingResources.add(inputFile.getAbsolutePath());
+							}
 						} else if (tagName == "outputWave") {
 							File outputFile = new File(channelItemElement.getTextContent());
-							choosedOutputWaveFiles.put(outputFile.getName(), outputFile.getAbsoluteFile());
+							if (outputFile.exists()) {
+								choosedOutputWaveFiles.put(outputFile.getName(), outputFile.getAbsoluteFile());
+							} else {
+								missingResources.add(outputFile.getAbsolutePath());
+							}
 						} else if (tagName == "plugin") {
 							NodeList pluginEntryNodeList = channelItemElement.getChildNodes();
 							for (int k = 0; k < pluginEntryNodeList.getLength(); k++) {
@@ -106,7 +126,6 @@ public class USPFileReader {
 					}
 				}
 			}
-			// TODO check devices/waves before loading
 			USPGui.addChannel(new ChannelConfig(channelName, inputDevices, outputDevices, choosedInputWaveFiles,
 					choosedOutputWaveFiles));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
@@ -115,7 +134,41 @@ public class USPFileReader {
 					USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin, 50, 50);
 				}
 			}
+			
+			if (missingResources.size() != 0) {
+				new MissingResourcesDialog(missingResources);
+			}
 
+		}
+	}
+	
+	/**
+	 * Shows missing resources when a .usp project file is loaded and devices/waves could not be loaded. 
+	 * @author Kone
+	 *
+	 */
+	private class MissingResourcesDialog extends Alert {
+		
+		private static final String TITLE = "title";
+		private static final String HEADER = "header";
+		private static final String CONTENT = "content";
+		
+		private MissingResourcesDialog(List<String> missingResources) {
+			super(AlertType.ERROR);
+			
+			try {
+				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, TITLE));
+				setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, HEADER));
+				String contentString = LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, CONTENT);
+				for (String missingResource : missingResources) {
+					contentString = contentString + ("\u2022 " + missingResource + "\n\n");
+				}
+				setContentText(contentString);
+			} catch (ResourceProviderException e) {
+				e.printStackTrace();
+			}
+			
+			showAndWait();
 		}
 	}
 }

@@ -55,6 +55,10 @@ gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Sprache ändern
 gui.menubar.LanguageMenuItem.infoAlertHeader=Neustart erforderlich!
 gui.menubar.LanguageMenuItem.infoAlertContent=Damit die geänderte Spracheinstellung wirksam wird, muss UltSigPro geschlossen und neu gestartet werden. 
 
+gui.menubar.USPFileReader$MissingResourcesDialog.title=Fehlende Ressourcen
+gui.menubar.USPFileReader$MissingResourcesDialog.header=Beim Laden der Projekt-Datei ist ein Fehler aufgetreten.%crÜberprüfe bei fehlenden Devices, ob diese angeschlossen und betriebsbereit sind.%crGehe bei fehlenden Wave-Dateien sicher, dass diese nicht gelöscht, verschoben oder umbenannt wurden.
+gui.menubar.USPFileReader$MissingResourcesDialog.content=Folgende Ressourcen konnten nicht geladen werden:%cr%cr
+
 gui.soundLevelDisplay.SoundLevelBar.inputTitle=Eingänge
 gui.soundLevelDisplay.SoundLevelBar.outputTitle=Ausgänge
 

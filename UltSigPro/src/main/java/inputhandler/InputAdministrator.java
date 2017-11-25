@@ -589,4 +589,12 @@ public class InputAdministrator {
 	public void inputLevelMultiplierChanged(InputDataListener listener, String device, double multiplier) {
 		inputLevelMultiplier.get(listener).put(device, multiplier);
 	}
+	
+	public boolean deviceAvailable(String deviceName) {
+		collectSoundInputDevices();
+		if (allSoundInputDevices.containsKey(deviceName)) {
+			return true;
+		}
+		return false;
+	}
 }

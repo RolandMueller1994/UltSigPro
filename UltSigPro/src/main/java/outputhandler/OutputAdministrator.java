@@ -606,4 +606,12 @@ public class OutputAdministrator {
 			}
 		}
 	}
+	
+	public boolean deviceAvailable(String deviceName) {
+		collectSoundOutputDevices();
+		if (allSoundOutputDevices.containsKey(deviceName)) {
+			return true;
+		}
+		return false;
+	}
 }
