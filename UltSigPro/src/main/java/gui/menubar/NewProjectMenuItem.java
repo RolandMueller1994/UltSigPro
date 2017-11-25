@@ -25,6 +25,7 @@ public class NewProjectMenuItem extends MenuItem {
 				try {
 					lanHandler = LanguageResourceHandler.getInstance();
 					USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title"));
+					USPFileCreator.setFile(null);
 				} catch (ResourceProviderException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
