@@ -1,5 +1,6 @@
 package gui.menubar;
 
+import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -7,6 +8,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import resourceframework.ResourceProviderException;
@@ -39,9 +41,8 @@ public class AboutMenuItem extends MenuItem {
 					
 					alert.getDialogPane().setContent(contentText);
 					
-					Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
-					Image icon = new Image("file:icon.png");
-					stage.getIcons().add(icon);
+					alert.initOwner(USPGui.stage);
+					alert.initStyle(StageStyle.UTILITY);
 					
 					alert.setResizable(true);
 					alert.showAndWait();
