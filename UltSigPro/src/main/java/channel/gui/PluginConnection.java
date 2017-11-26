@@ -30,7 +30,7 @@ import javafx.scene.shape.Line;
 public class PluginConnection {
 
 	private HashSet<ConnectionLine> lines = new HashSet<>();
-	private HashSet<LineDevider> deviders = new HashSet<>();
+	private HashSet<LineDivider> dividers = new HashSet<>();
 
 	private ConnectionLine actLine = null;
 	private boolean actHorizontal = true;
@@ -115,9 +115,9 @@ public class PluginConnection {
 		lineCount.appendChild(doc.createTextNode(new Integer(lines.size()).toString()));
 		element.appendChild(lineCount);
 
-		Element deviderCount = doc.createElement("deviderCount");
-		deviderCount.appendChild(doc.createTextNode(new Integer(deviders.size()).toString()));
-		element.appendChild(deviderCount);
+		Element dividerCount = doc.createElement("dividerCount");
+		dividerCount.appendChild(doc.createTextNode(new Integer(dividers.size()).toString()));
+		element.appendChild(dividerCount);
 
 		int count = 0;
 		for (ConnectionLine line : lines) {
@@ -126,16 +126,16 @@ public class PluginConnection {
 		}
 
 		count = 0;
-		for (LineDevider devider : deviders) {
-			devider.setNumber(count);
+		for (LineDivider divider : dividers) {
+			divider.setNumber(count);
 		}
 
 		for (ConnectionLine line : lines) {
 			line.collectedLineInfo(doc, element);
 		}
 
-		for (LineDevider devider : deviders) {
-			devider.collectedDeviderInfo(doc, element);
+		for (LineDivider divider : dividers) {
+			divider.collectedDividerInfo(doc, element);
 		}
 	}
 
@@ -392,8 +392,8 @@ public class PluginConnection {
 		return outputs;
 	}
 
-	private void addDevider(LineDevider devider) {
-		deviders.add(devider);
+	private void addDevider(LineDivider divider) {
+		dividers.add(divider);
 	}
 
 	/**
@@ -547,11 +547,11 @@ public class PluginConnection {
 				line.appendChild(firstLineElement);
 			} else if (firstEnd != null) {
 				Element firstEndElement = doc.createElement("firstEnd");
-				if (firstEnd instanceof LineDevider) {
-					Element dividerElement = doc.createElement("devider");
+				if (firstEnd instanceof LineDivider) {
+					Element dividerElement = doc.createElement("divider");
 					Element dividerNumberElement = doc.createElement("dividerNumber");
 					dividerNumberElement.appendChild(
-							doc.createTextNode(new Integer(((LineDevider) firstEnd).getNumber()).toString()));
+							doc.createTextNode(new Integer(((LineDivider) firstEnd).getNumber()).toString()));
 					dividerElement.appendChild(dividerNumberElement);
 					firstEndElement.appendChild(dividerElement);
 				} else if (firstEnd instanceof Input) {
@@ -586,11 +586,11 @@ public class PluginConnection {
 				line.appendChild(secondLineElement);
 			} else if (secondEnd != null) {
 				Element secondEndElement = doc.createElement("secondEnd");
-				if (secondEnd instanceof LineDevider) {
-					Element dividerElement = doc.createElement("devider");
+				if (secondEnd instanceof LineDivider) {
+					Element dividerElement = doc.createElement("divider");
 					Element dividerNumberElement = doc.createElement("dividerNumber");
 					dividerNumberElement.appendChild(
-							doc.createTextNode(new Integer(((LineDevider) secondEnd).getNumber()).toString()));
+							doc.createTextNode(new Integer(((LineDivider) secondEnd).getNumber()).toString()));
 					dividerElement.appendChild(dividerNumberElement);
 					secondEndElement.appendChild(dividerElement);
 				} else if (secondEnd instanceof Input) {
@@ -1087,13 +1087,13 @@ public class PluginConnection {
 					ConnectionLine leftLine;
 					ConnectionLine rightLine;
 					ConnectionLine verticalLine;
-					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, localX,
+					LineDivider divider = new LineDivider(parentPane, parent, null, null, null, null, localX,
 							getStartY());
-					addDevider(devider);
+					addDevider(divider);
 
 					if (getEndX() > getStartX()) {
 						// Left to right
-						rightLine = new ConnectionLine(parentPane, parent, devider, localX, getEndY(), horizontal);
+						rightLine = new ConnectionLine(parentPane, parent, divider, localX, getEndY(), horizontal);
 						if (secondLine != null) {
 							rightLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
 							if (this.equals(secondLine.firstLine)) {
@@ -1108,12 +1108,12 @@ public class PluginConnection {
 						leftLine = this;
 						setEndX(localX);
 						secondLine = null;
-						secondEnd = devider;
+						secondEnd = divider;
 
 						parentPane.getChildren().add(rightLine);
 					} else {
 						// Right to left
-						leftLine = new ConnectionLine(parentPane, parent, devider, localX, getEndY(), horizontal);
+						leftLine = new ConnectionLine(parentPane, parent, divider, localX, getEndY(), horizontal);
 						if (secondLine != null) {
 							leftLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
 							if (this.equals(secondLine.firstLine)) {
@@ -1128,22 +1128,22 @@ public class PluginConnection {
 						rightLine = this;
 						setEndX(localX);
 						secondLine = null;
-						secondEnd = devider;
+						secondEnd = divider;
 
 						parentPane.getChildren().add(leftLine);
 					}
 
 					verticalLine = parentPane.getWorkCon().getActLine();
-					verticalLine.setCoordinatesFinal(devider, localX, getEndY());
+					verticalLine.setCoordinatesFinal(divider, localX, getEndY());
 
 					if (verticalLine.isUpDown()) {
-						devider.addLineWithPos(LineDeviderPosition.NORTH, verticalLine);
+						divider.addLineWithPos(LineDividerPosition.NORTH, verticalLine);
 					} else {
-						devider.addLineWithPos(LineDeviderPosition.SOUTH, verticalLine);
+						divider.addLineWithPos(LineDividerPosition.SOUTH, verticalLine);
 					}
 
-					devider.addLineWithPos(LineDeviderPosition.WEST, leftLine);
-					devider.addLineWithPos(LineDeviderPosition.EAST, rightLine);
+					divider.addLineWithPos(LineDividerPosition.WEST, leftLine);
+					divider.addLineWithPos(LineDividerPosition.EAST, rightLine);
 
 					addLine(leftLine);
 					addLine(rightLine);
@@ -1159,13 +1159,13 @@ public class PluginConnection {
 					ConnectionLine upperLine;
 					ConnectionLine lowerLine;
 					ConnectionLine horizontalLine;
-					LineDevider devider = new LineDevider(parentPane, parent, null, null, null, null, getStartX(),
+					LineDivider divider = new LineDivider(parentPane, parent, null, null, null, null, getStartX(),
 							localY);
-					addDevider(devider);
+					addDevider(divider);
 
 					if (getEndY() > getStartY()) {
 						// Top to bottom
-						lowerLine = new ConnectionLine(parentPane, parent, devider, getEndX(), localY, horizontal);
+						lowerLine = new ConnectionLine(parentPane, parent, divider, getEndX(), localY, horizontal);
 						if (secondLine != null) {
 							lowerLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
 							if (this.equals(secondLine.firstLine)) {
@@ -1180,12 +1180,12 @@ public class PluginConnection {
 						upperLine = this;
 						setEndY(localY);
 						secondLine = null;
-						secondEnd = devider;
+						secondEnd = divider;
 
 						parentPane.getChildren().add(lowerLine);
 					} else {
 						// Bottom to top
-						upperLine = new ConnectionLine(parentPane, parent, devider, getEndX(), localY, horizontal);
+						upperLine = new ConnectionLine(parentPane, parent, divider, getEndX(), localY, horizontal);
 						if (secondLine != null) {
 							upperLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
 							if (this.equals(secondLine.firstLine)) {
@@ -1200,22 +1200,22 @@ public class PluginConnection {
 						lowerLine = this;
 						setEndY(localY);
 						secondLine = null;
-						secondEnd = devider;
+						secondEnd = divider;
 
 						parentPane.getChildren().add(upperLine);
 					}
 
 					horizontalLine = parentPane.getWorkCon().getActLine();
-					horizontalLine.setCoordinatesFinal(devider, getEndX(), localY);
+					horizontalLine.setCoordinatesFinal(divider, getEndX(), localY);
 
 					if (parentPane.getWorkCon().getActLine().isLeftRight()) {
-						devider.addLineWithPos(LineDeviderPosition.WEST, horizontalLine);
+						divider.addLineWithPos(LineDividerPosition.WEST, horizontalLine);
 					} else {
-						devider.addLineWithPos(LineDeviderPosition.EAST, horizontalLine);
+						divider.addLineWithPos(LineDividerPosition.EAST, horizontalLine);
 					}
 
-					devider.addLineWithPos(LineDeviderPosition.NORTH, upperLine);
-					devider.addLineWithPos(LineDeviderPosition.SOUTH, lowerLine);
+					divider.addLineWithPos(LineDividerPosition.NORTH, upperLine);
+					divider.addLineWithPos(LineDividerPosition.SOUTH, lowerLine);
 
 					addLine(upperLine);
 					addLine(lowerLine);
@@ -1235,9 +1235,9 @@ public class PluginConnection {
 
 	}
 
-	class LineDevider extends Circle implements ConnectionLineEndpointInterface {
+	class LineDivider extends Circle implements ConnectionLineEndpointInterface {
 
-		private HashMap<LineDeviderPosition, ConnectionLine> connectionLines = new HashMap<>();
+		private HashMap<LineDividerPosition, ConnectionLine> connectionLines = new HashMap<>();
 
 		private static final double DIAMETER = 10;
 
@@ -1250,14 +1250,14 @@ public class PluginConnection {
 
 		private int number;
 
-		public LineDevider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
+		public LineDivider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
 				ConnectionLine east, ConnectionLine south, ConnectionLine west, double x, double y) {
 			this.parentPane = parentPane;
 			this.parent = parent;
-			addConnectionInternally(north, LineDeviderPosition.NORTH);
-			addConnectionInternally(east, LineDeviderPosition.EAST);
-			addConnectionInternally(south, LineDeviderPosition.SOUTH);
-			addConnectionInternally(west, LineDeviderPosition.WEST);
+			addConnectionInternally(north, LineDividerPosition.NORTH);
+			addConnectionInternally(east, LineDividerPosition.EAST);
+			addConnectionInternally(south, LineDividerPosition.SOUTH);
+			addConnectionInternally(west, LineDividerPosition.WEST);
 
 			setCenterX(x);
 			setCenterY(y);
@@ -1276,8 +1276,38 @@ public class PluginConnection {
 			return number;
 		}
 
-		public void collectedDeviderInfo(Document doc, Element element) {
-
+		public void collectedDividerInfo(Document doc, Element element) {
+			Element dividerElement = doc.createElement("divider");
+			Element numberElement = doc.createElement("number");
+			numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
+			Element xCoord = doc.createElement("xCoord");
+			xCoord.appendChild(doc.createTextNode(new Double(getCenterX()).toString()));
+			Element yCoord = doc.createElement("yCoord");
+			yCoord.appendChild(doc.createTextNode(new Double(getCenterY()).toString()));
+			
+			Element lines = doc.createElement("lines");
+			collectLineInfo(doc, lines, LineDividerPosition.EAST);
+			collectLineInfo(doc, lines, LineDividerPosition.NORTH);
+			collectLineInfo(doc, lines, LineDividerPosition.SOUTH);
+			collectLineInfo(doc, lines, LineDividerPosition.WEST);
+			
+			dividerElement.appendChild(numberElement);
+			dividerElement.appendChild(xCoord);
+			dividerElement.appendChild(yCoord);
+			dividerElement.appendChild(lines);
+			element.appendChild(dividerElement);
+		}
+		
+		private void collectLineInfo(Document doc, Element element, LineDividerPosition pos) {
+			if(connectionLines.containsKey(pos)) {
+				String posStr = pos.toString();
+				Element lineElement = doc.createElement(posStr);
+				lineElement.appendChild(doc.createTextNode(posStr));
+				Element number = doc.createElement("lineNumber");
+				number.appendChild(doc.createTextNode(new Integer(connectionLines.get(pos).getNumber()).toString()));
+				lineElement.appendChild(number);
+				element.appendChild(lineElement);
+			}
 		}
 
 		private void updateCoordinatesInternal(double screenX, double screenY) {
@@ -1320,18 +1350,18 @@ public class PluginConnection {
 							if (workingLine != null) {
 								if (workingLine.isHorizontal()) {
 									if (workingLine.isLeftRight()
-											&& connectionLines.containsKey(LineDeviderPosition.WEST)) {
+											&& connectionLines.containsKey(LineDividerPosition.WEST)) {
 										return;
 									} else if (!workingLine.isLeftRight()
-											&& connectionLines.containsKey(LineDeviderPosition.EAST)) {
+											&& connectionLines.containsKey(LineDividerPosition.EAST)) {
 										return;
 									}
 								} else {
 									if (workingLine.isUpDown()
-											&& connectionLines.containsKey(LineDeviderPosition.NORTH)) {
+											&& connectionLines.containsKey(LineDividerPosition.NORTH)) {
 										return;
 									} else if (!workingLine.isUpDown()
-											&& connectionLines.containsKey(LineDeviderPosition.SOUTH)) {
+											&& connectionLines.containsKey(LineDividerPosition.SOUTH)) {
 										return;
 									}
 								}
@@ -1395,15 +1425,15 @@ public class PluginConnection {
 
 				if (!workingLine.isHorizontal()) {
 					if (workingLine.isUpDown()) {
-						connectionLines.put(LineDeviderPosition.NORTH, workingLine);
+						connectionLines.put(LineDividerPosition.NORTH, workingLine);
 					} else {
-						connectionLines.put(LineDeviderPosition.SOUTH, workingLine);
+						connectionLines.put(LineDividerPosition.SOUTH, workingLine);
 					}
 				} else {
 					if (workingLine.isLeftRight()) {
-						connectionLines.put(LineDeviderPosition.WEST, workingLine);
+						connectionLines.put(LineDividerPosition.WEST, workingLine);
 					} else {
-						connectionLines.put(LineDeviderPosition.EAST, workingLine);
+						connectionLines.put(LineDividerPosition.EAST, workingLine);
 					}
 				}
 
@@ -1414,9 +1444,9 @@ public class PluginConnection {
 					workLine.parent = parent;
 				}
 
-				for (LineDevider devider : parentPane.getWorkCon().deviders) {
-					addDevider(devider);
-					devider.parent = parent;
+				for (LineDivider divider : parentPane.getWorkCon().dividers) {
+					addDevider(divider);
+					divider.parent = parent;
 				}
 
 				parentPane.finalizeDrawing();
@@ -1427,16 +1457,16 @@ public class PluginConnection {
 			this.parent = parent;
 		}
 
-		private void addConnectionInternally(ConnectionLine line, LineDeviderPosition position) {
+		private void addConnectionInternally(ConnectionLine line, LineDividerPosition position) {
 			if (line != null) {
 				connectionLines.put(position, line);
 			}
 		}
 
 		private void removeConnection(ConnectionLine line) {
-			LineDeviderPosition removePos = null;
+			LineDividerPosition removePos = null;
 
-			for (LineDeviderPosition pos : connectionLines.keySet()) {
+			for (LineDividerPosition pos : connectionLines.keySet()) {
 				if (connectionLines.get(pos).equals(line)) {
 					removePos = pos;
 					break;
@@ -1460,7 +1490,7 @@ public class PluginConnection {
 			// Nothing to do, won't be called.
 		}
 
-		public void addLineWithPos(LineDeviderPosition pos, ConnectionLine line) {
+		public void addLineWithPos(LineDividerPosition pos, ConnectionLine line) {
 
 			connectionLines.put(pos, line);
 			line.updateCoordinates(this, getCenterX(), getCenterY());
@@ -1469,9 +1499,9 @@ public class PluginConnection {
 		@Override
 		public void removeLine(ConnectionLine line) {
 
-			LineDeviderPosition deletePos = null;
+			LineDividerPosition deletePos = null;
 
-			for (LineDeviderPosition pos : connectionLines.keySet()) {
+			for (LineDividerPosition pos : connectionLines.keySet()) {
 				if (connectionLines.get(pos).equals(line)) {
 					deletePos = pos;
 				}
@@ -1518,7 +1548,7 @@ public class PluginConnection {
 				parentPane.getChildren().remove(this);
 				parentPane.getChildren().remove(dragPane);
 
-				parent.deviders.remove(this);
+				parent.dividers.remove(this);
 				parent.unifyConnectionsDevider();
 
 				parentPane = null;
@@ -1529,7 +1559,7 @@ public class PluginConnection {
 		@Override
 		public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
 
-			for (LineDeviderPosition pos : connectionLines.keySet()) {
+			for (LineDividerPosition pos : connectionLines.keySet()) {
 				if (connectionLines.get(pos).equals(origin)) {
 					connectionLines.replace(pos, replace);
 					break;
@@ -1538,8 +1568,20 @@ public class PluginConnection {
 		}
 	}
 
-	private enum LineDeviderPosition {
-		NORTH, EAST, SOUTH, WEST
+	private enum LineDividerPosition {
+		NORTH, EAST, SOUTH, WEST;
+		
+		public String toString() {
+			if(this.equals(EAST)) {
+				return "east";
+			} else if(this.equals(WEST)) {
+				return "west";
+			} else if(this.equals(SOUTH)) {
+				return "south";
+			} else {
+				return "north";
+			} 
+		}
 	}
 
 }

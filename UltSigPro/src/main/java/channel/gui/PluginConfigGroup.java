@@ -22,7 +22,7 @@ import channel.OutputInfoWrapper;
 import channel.PluginInput;
 import channel.PluginOutput;
 import channel.gui.PluginConnection.ConnectionLine;
-import channel.gui.PluginConnection.LineDevider;
+import channel.gui.PluginConnection.LineDivider;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
@@ -351,7 +351,7 @@ public class PluginConfigGroup extends Pane {
 	}
 
 	/**
-	 * Sets if a {@link ConnectionLine} or {@link LineDevider} is hovered or
+	 * Sets if a {@link ConnectionLine} or {@link LineDivider} is hovered or
 	 * not. Events at mouse clicks won't cause any actions.
 	 * 
 	 * @param hovered
