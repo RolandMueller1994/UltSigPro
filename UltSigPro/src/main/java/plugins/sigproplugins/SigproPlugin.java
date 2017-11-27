@@ -10,6 +10,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import channel.OutputDataWrapper;
+import channel.PluginInput;
+import channel.PluginOutput;
 import channel.gui.Input;
 import channel.gui.MaxCoordinatesInterface;
 import channel.gui.Output;
@@ -62,18 +64,19 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			gui = new Pane();
 
 			contextMenu = new ContextMenu();
-			MenuItem deleteItem = new MenuItem("Löschen");
-			deleteItem.setOnAction(new EventHandler<ActionEvent>() {
-
-				@Override
-				public void handle(ActionEvent event) {
-
-					delete();
-				}
-
-			});
-
-			contextMenu.getItems().add(deleteItem);
+			if(!(this instanceof PluginInput) && !(this instanceof PluginOutput)) {
+				MenuItem deleteItem = new MenuItem("Löschen");
+				deleteItem.setOnAction(new EventHandler<ActionEvent>() {
+					
+					@Override
+					public void handle(ActionEvent event) {
+						
+						delete();
+					}
+					
+				});				
+				contextMenu.getItems().add(deleteItem);
+			}
 
 			gui.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
