@@ -23,6 +23,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -86,9 +87,8 @@ public class PluginManagerMenuItem extends MenuItem {
 			dialogPane = getDialogPane();
 			dialogPane.getButtonTypes().add(ButtonType.CLOSE);
 			
-			Stage stage = (Stage) getDialogPane().getScene().getWindow();
-			Image icon = new Image("file:icon.png");
-			stage.getIcons().add(icon);
+			initOwner(USPGui.stage);
+			initStyle(StageStyle.UTILITY);
 					
 			addCommonButton.setMaxWidth(Double.MAX_VALUE);
 			addCommonButton.setMinWidth(BUTTON_WIDTH);

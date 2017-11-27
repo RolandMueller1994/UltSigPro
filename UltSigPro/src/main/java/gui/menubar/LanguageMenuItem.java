@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -14,8 +15,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
@@ -64,9 +64,8 @@ private static final String INFO_ALERT_CONTENT = "infoAlertContent";
 		
 		private ChangeLanguageDialog() {
 			
-			Stage stage = (Stage) getDialogPane().getScene().getWindow();
-			Image icon = new Image("file:icon.png");
-			stage.getIcons().add(icon);
+			initOwner(USPGui.stage);
+			initStyle(StageStyle.UTILITY);
 			
 			try {
 				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(ChangeLanguageDialog.class, TITLE));
