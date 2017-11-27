@@ -341,7 +341,13 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		Element pluginConfig = doc.createElement("pluginConfig");
 		Element numberElement = doc.createElement("number");
 		numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
+		Element centerX = doc.createElement("centerX");
+		centerX.appendChild(doc.createTextNode(new Double(gui.getLayoutX() + (double) getWidth()/2).toString()));
+		Element centerY = doc.createElement("centerY");
+		centerY.appendChild(doc.createTextNode(new Double(gui.getLayoutY() + (double) getHeight()/2).toString()));
 		pluginConfig.appendChild(numberElement);
+		pluginConfig.appendChild(centerX);
+		pluginConfig.appendChild(centerY);
 		element.appendChild(pluginConfig);
 	}
 
