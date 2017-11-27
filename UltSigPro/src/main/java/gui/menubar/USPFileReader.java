@@ -25,6 +25,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import outputhandler.OutputAdministrator;
+import plugins.sigproplugins.SigproPlugin;
 import resourceframework.ResourceProviderException;
 
 public class USPFileReader {
@@ -66,7 +67,7 @@ public class USPFileReader {
 			List<String> outputDevices = new LinkedList<>();
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
-			List<String> plugins = new LinkedList<>();
+			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
 			List<String> missingResources = new LinkedList<>();
 
 			if (channel.getNodeType() == Node.ELEMENT_NODE) {
@@ -112,18 +113,20 @@ public class USPFileReader {
 							}
 						} else if (tagName == "plugin") {
 							NodeList pluginEntryNodeList = channelItemElement.getChildNodes();
+							String plugin = null;
+							Node pluginConfig = null;
 							for (int k = 0; k < pluginEntryNodeList.getLength(); k++) {
 								Node pluginNode = pluginEntryNodeList.item(k);
 								if (pluginNode.getNodeType() == Node.ELEMENT_NODE) {
 									Element pluginElement = (Element) pluginNode;
 									if (pluginElement.getTagName() == "name") {
-										plugins.add(pluginElement.getTextContent());
-									} else if (pluginElement.getTagName() == "position") {
-										// TODO collect further informations,
-										// e.g. plugin position
+										plugin = pluginElement.getTextContent();
+									} else if (pluginElement.getTagName() == "pluginConfig") {
+										pluginConfig = pluginNode;
 									}
 								}
 							}
+							plugins.add(new PluginXMLConfigWrapper(plugin, pluginConfig));
 						}
 					}
 				}
@@ -131,9 +134,10 @@ public class USPFileReader {
 			USPGui.addChannel(new ChannelConfig(channelName, inputDevices, outputDevices, choosedInputWaveFiles,
 					choosedOutputWaveFiles));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
-			for (String plugin : plugins) {
-				if (!plugin.equals("Output") && !plugin.equals("Input")) {
-					USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin, 50, 50);
+			for (PluginXMLConfigWrapper plugin : plugins) {
+				if (!plugin.getName().equals("Output") && !plugin.getName().equals("Input")) {
+					SigproPlugin current = USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin.getName());
+					current.setPluginInfo(plugin.getConfigNode());
 				}
 			}
 			
@@ -174,5 +178,23 @@ public class USPFileReader {
 			
 			showAndWait();
 		}
+	}
+	
+	private class PluginXMLConfigWrapper{
+		
+		String name;
+		Node configNode;
+		
+		public PluginXMLConfigWrapper(String name, Node configNode) {
+			this.name = name;
+			this.configNode = configNode;
+		}
+		public String getName() {
+			return name;
+		}
+		public Node getConfigNode() {
+			return configNode;
+		}
+		
 	}
 }

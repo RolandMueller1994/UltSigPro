@@ -440,8 +440,10 @@ public class PluginConfigGroup extends Pane {
 
 	}
 
-	public void createPluginFromProjectFile(String pluginName, double xCoord, double yCoord) throws InstantiationException, IllegalAccessException {
-		addPlugin(PluginManager.getInstance().getSigproPlugin(pluginName), xCoord, yCoord);
+	public SigproPlugin createPluginFromProjectFile(String pluginName) throws InstantiationException, IllegalAccessException {
+		SigproPlugin current = PluginManager.getInstance().getSigproPlugin(pluginName);
+		addPlugin(current, 0, 0);
+		return current;
 	}
 	
 	private void addPlugin(SigproPlugin plugin, double xCoord, double yCoord) {
