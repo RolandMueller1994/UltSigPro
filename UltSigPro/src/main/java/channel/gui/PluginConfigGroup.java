@@ -13,6 +13,8 @@ import javax.annotation.Nonnull;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import channel.Channel;
 import channel.ChannelConfig.ChannelDeviceUpdateListener;
@@ -444,6 +446,17 @@ public class PluginConfigGroup extends Pane {
 		SigproPlugin current = PluginManager.getInstance().getSigproPlugin(pluginName);
 		addPlugin(current, 0, 0);
 		return current;
+	}
+	
+	public void createConnectionFromProjectFile(Element conElementParent) {
+		
+		PluginConnection conLine = new PluginConnection(this);
+		
+		NodeList conChilds = conElementParent.getChildNodes();
+		
+		conLine.setConnectionLinesConfig(conChilds);
+		allConnections.add(conLine);
+		
 	}
 	
 	private void addPlugin(SigproPlugin plugin, double xCoord, double yCoord) {

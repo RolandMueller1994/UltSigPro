@@ -67,6 +67,7 @@ public class USPFileReader {
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
 			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
+			List<Element> connectionLines = new LinkedList<>();
 			List<String> missingResources = new LinkedList<>();
 
 			if (channel.getNodeType() == Node.ELEMENT_NODE) {
@@ -126,6 +127,8 @@ public class USPFileReader {
 								}
 							}
 							plugins.add(new PluginXMLConfigWrapper(plugin, pluginConfig));
+						} else if (tagName == "connection") {
+							connectionLines.add(channelItemElement);
 						}
 					}
 				}
@@ -138,6 +141,10 @@ public class USPFileReader {
 					SigproPlugin current = USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin.getName());
 					current.setPluginInfo(plugin.getConfigNode());
 				}
+			}
+			
+			for (Element conElem : connectionLines) {
+				USPGui.getPluginConfigGroup(pane).createConnectionFromProjectFile(conElem);
 			}
 			
 			if (missingResources.size() != 0) {

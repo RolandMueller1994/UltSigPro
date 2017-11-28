@@ -2,11 +2,14 @@ package channel.gui;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 import javax.annotation.Nonnull;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import channel.PluginInput;
 import channel.PluginOutput;
@@ -17,6 +20,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import plugins.sigproplugins.SigproPlugin;
 
 /**
  * This class manages the drawing of lines between plugins. Each connection is
@@ -62,6 +66,10 @@ public class PluginConnection {
 		addLine(actLine);
 
 		configGroup.getChildren().add(actLine);
+	}
+
+	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
+		this.configGroup = configGroup;
 	}
 
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
@@ -136,6 +144,51 @@ public class PluginConnection {
 
 		for (LineDivider divider : dividers) {
 			divider.collectedDividerInfo(doc, element);
+		}
+	}
+
+	public void setConnectionLinesConfig(NodeList nodeList) {
+		
+		int lineCount;
+		int dividerCount;
+		LinkedList<ConnectionLine> newLines = new LinkedList<>();
+		LinkedList<LineDivider> newDividers = new LinkedList<>();
+
+		for(int i=0; i<nodeList.getLength(); i++) {
+			Node conNode = nodeList.item(i);
+			
+			if(conNode.getNodeType() == Node.ELEMENT_NODE) {
+				Element conElement = (Element) conNode;
+				String tagName = conElement.getTagName();
+				
+				if(tagName.equals("lineCount")) {
+					lineCount = new Integer(conElement.getTextContent()).intValue();
+				} else if (tagName.equals("dividerCount")) {
+					dividerCount = new Integer(conElement.getTextContent()).intValue();
+				} else if (tagName.equals("connectionLine")) {
+					NodeList conLineNodes = conElement.getChildNodes();
+					ConnectionLine conLine = new ConnectionLine(configGroup, this, conLineNodes);
+					newLines.add(conLine);
+				} else if (tagName.equals("divider")) {
+					NodeList dividerNodes = conElement.getChildNodes();
+					LineDivider divider = new LineDivider(configGroup, this, dividerNodes);
+					newDividers.add(divider);
+				}			
+			}
+		}
+		
+		HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+		
+		for(ConnectionLine line : newLines) {
+			line.finalizeXMLConfig(plugins, newLines, newDividers);
+			addLine(line);
+			configGroup.getChildren().add(line);
+		}
+		
+		for(LineDivider divider : newDividers) {
+			divider.finalizeXMLConfig(plugins, newLines, newDividers);
+			addDevider(divider);
+			configGroup.getChildren().add(divider);
 		}
 	}
 
@@ -479,6 +532,8 @@ public class PluginConnection {
 
 		private boolean horizontal;
 		private boolean hoveredForDeletion = false;
+		
+		private NodeList xmlConfig;
 
 		private PluginConnection parent;
 
@@ -508,6 +563,68 @@ public class PluginConnection {
 			setStartY(y);
 			setEndX(x);
 			setEndY(y);
+		}
+
+		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent, NodeList xmlConfig) {
+			this.parent = parent;
+			this.parentPane = parentPane;
+			this.xmlConfig = xmlConfig;
+			
+			for(int i=0; i<xmlConfig.getLength(); i++) {
+				Node xmlNode = xmlConfig.item(i);
+				if(xmlNode.getNodeType() == Node.ELEMENT_NODE) {
+					Element xmlElement = (Element) xmlNode;
+					String tagName = xmlElement.getTagName();
+					
+					if(tagName.equals("number")) {
+						number = new Integer(xmlElement.getTextContent()).intValue();
+					} else if (tagName.equals("horizontal")) {
+						String textContent = xmlElement.getTextContent();
+						
+						if(textContent.equals("true")) {
+							horizontal = true;
+						} else {
+							horizontal = false;
+						}
+					} else if (tagName.equals("startCoords")) {
+						NodeList coordsNodes = xmlElement.getChildNodes();
+						
+						for(int j=0; j<coordsNodes.getLength(); j++) {
+							Node coordNode = coordsNodes.item(j);
+							if(coordNode.getNodeType() == Node.ELEMENT_NODE) {
+								Element coordElement = (Element) coordNode;
+								String coordTag = coordElement.getTagName();
+								
+								if(coordTag.equals("startX")) {
+									setStartX(new Double(coordElement.getTextContent()));
+								} else if(coordTag.equals("startY")) {
+									setStartY(new Double(coordElement.getTextContent()));
+								}
+							}
+						}
+					} else if (tagName.equals("endCoords")) {
+						NodeList coordsNodes = xmlElement.getChildNodes();
+						
+						for(int j=0; j<coordsNodes.getLength(); j++) {
+							Node coordNode = coordsNodes.item(j);
+							if(coordNode.getNodeType() == Node.ELEMENT_NODE) {
+								Element coordElement = (Element) coordNode;
+								String coordTag = coordElement.getTagName();
+								
+								if(coordTag.equals("endX")) {
+									setEndX(new Double(coordElement.getTextContent()));
+								} else if(coordTag.equals("endY")) {
+									setEndY(new Double(coordElement.getTextContent()));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines, LinkedList<LineDivider> dividers) {
+
 		}
 
 		public void collectedLineInfo(Document doc, Element element) {
@@ -1243,6 +1360,7 @@ public class PluginConnection {
 
 		private PluginConnection parent;
 		private PluginConfigGroup parentPane;
+		private NodeList xmlConfig;
 
 		private boolean hovered = false;
 
@@ -1268,6 +1386,39 @@ public class PluginConnection {
 			updateDragPane();
 		}
 
+		public LineDivider(PluginConfigGroup parentPane, PluginConnection parent, NodeList xmlConfig) {
+			this.parentPane = parentPane;
+			this.parent = parent;
+			this.xmlConfig = xmlConfig;
+			
+			for(int i=0; i<xmlConfig.getLength(); i++) {
+				Node xmlNode = xmlConfig.item(i);
+				if(xmlNode.getNodeType() == Node.ELEMENT_NODE) {
+					Element xmlElement = (Element) xmlNode;
+					String tagName = xmlElement.getTagName();
+					
+					if(tagName.equals("number")) {
+						number = new Integer(xmlElement.getTextContent()).intValue();
+					} else if (tagName.equals("xCoord")) {
+						setCenterX(new Double(xmlElement.getTextContent()));
+					} else if (tagName.equals("yCoord")) {
+						setCenterY(new Double(xmlElement.getTextContent()));
+					}
+				}
+			}
+			
+			setRadius(DIAMETER / 2);
+
+			parentPane.getChildren().addAll(this);
+
+			updateDragPane();
+		}
+
+		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines,
+				LinkedList<LineDivider> dividers) {
+
+		}
+
 		public void setNumber(int number) {
 			this.number = number;
 		}
@@ -1284,22 +1435,22 @@ public class PluginConnection {
 			xCoord.appendChild(doc.createTextNode(new Double(getCenterX()).toString()));
 			Element yCoord = doc.createElement("yCoord");
 			yCoord.appendChild(doc.createTextNode(new Double(getCenterY()).toString()));
-			
+
 			Element lines = doc.createElement("lines");
 			collectLineInfo(doc, lines, LineDividerPosition.EAST);
 			collectLineInfo(doc, lines, LineDividerPosition.NORTH);
 			collectLineInfo(doc, lines, LineDividerPosition.SOUTH);
 			collectLineInfo(doc, lines, LineDividerPosition.WEST);
-			
+
 			dividerElement.appendChild(numberElement);
 			dividerElement.appendChild(xCoord);
 			dividerElement.appendChild(yCoord);
 			dividerElement.appendChild(lines);
 			element.appendChild(dividerElement);
 		}
-		
+
 		private void collectLineInfo(Document doc, Element element, LineDividerPosition pos) {
-			if(connectionLines.containsKey(pos)) {
+			if (connectionLines.containsKey(pos)) {
 				String posStr = pos.toString();
 				Element lineElement = doc.createElement(posStr);
 				lineElement.appendChild(doc.createTextNode(posStr));
@@ -1570,17 +1721,17 @@ public class PluginConnection {
 
 	private enum LineDividerPosition {
 		NORTH, EAST, SOUTH, WEST;
-		
+
 		public String toString() {
-			if(this.equals(EAST)) {
+			if (this.equals(EAST)) {
 				return "east";
-			} else if(this.equals(WEST)) {
+			} else if (this.equals(WEST)) {
 				return "west";
-			} else if(this.equals(SOUTH)) {
+			} else if (this.equals(SOUTH)) {
 				return "south";
 			} else {
 				return "north";
-			} 
+			}
 		}
 	}
 
