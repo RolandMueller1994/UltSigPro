@@ -7,6 +7,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.scene.control.MenuItem;
@@ -34,6 +35,12 @@ public class AboutMenuItem extends MenuItem {
 					Alert alert = new Alert(AlertType.INFORMATION);
 					alert.setTitle(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_TITLE));
 					alert.setHeaderText(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_HEADER));
+					
+					Image icon = new Image("file:iconNew.png");
+					ImageView iconView = new ImageView(icon);
+					iconView.setFitHeight(85);
+					iconView.setFitWidth(85);
+					alert.setGraphic(iconView);
 					
 					TextArea contentText = new TextArea(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_CONTENT));
 					contentText.setEditable(false);

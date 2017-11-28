@@ -143,7 +143,7 @@ public class USPGui extends Application {
 
 		});
 
-		Image icon = new Image("file:icon.png");
+		Image icon = new Image("file:iconNew.png");
 
 		primaryStage.getIcons().add(icon);
 
