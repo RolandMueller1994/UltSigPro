@@ -45,6 +45,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
+import javafx.stage.StageStyle;
 import outputhandler.OutputAdministrator;
 import resourceframework.ResourceProviderException;
 
@@ -529,12 +530,14 @@ public class ChannelPane extends TitledPane {
 
 			dialogPane.getButtonTypes().add(ButtonType.APPLY);
 			dialogPane.getButtonTypes().add(ButtonType.CANCEL);
+			initOwner(USPGui.stage);
+			initStyle(StageStyle.UTILITY);
 			
 			duplicateAlert = new Alert(AlertType.ERROR);
 			duplicateAlert.setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, DUPLICATE_ALERT_TITLE));
 			duplicateAlert.setHeaderText(lanHandler.getLocalizedText(AddRemoveDialog.class, DUPLICATE_ALERT_HEADER));
 
-			dialogPane.setPrefWidth(270);
+			dialogPane.setPrefWidth(350);
 
 			choiceBox = new ChoiceBox<String>();
 			choiceBoxWave = new ChoiceBox<String>();
