@@ -140,6 +140,10 @@ public class USPFileReader {
 				if (!plugin.getName().equals("Output") && !plugin.getName().equals("Input")) {
 					SigproPlugin current = USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin.getName());
 					current.setPluginInfo(plugin.getConfigNode());
+				} else if(plugin.getName().equals("Output")) {
+					pane.getChannel().getPluginOutput().setPluginInfo(plugin.getConfigNode());
+				} else if(plugin.getName().equals("Input")) {
+					pane.getChannel().getPluginInput().setPluginInfo(plugin.getConfigNode());
 				}
 			}
 			
