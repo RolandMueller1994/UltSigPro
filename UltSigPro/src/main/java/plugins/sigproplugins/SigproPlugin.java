@@ -186,8 +186,6 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		gui.setLayoutX(xPosition);
 		gui.setLayoutY(yPosition);
 
-		fireUpdateMaxCoordinates();
-
 		// Update the position of ports
 		for (Input input : inputs) {
 			input.updatePosition(xPosition, yPosition);
@@ -202,8 +200,6 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		gui.setLayoutX(localX);
 		gui.setLayoutY(localY);
 
-		fireUpdateMaxCoordinates();
-
 		// Update the position of ports
 		for (Input input : inputs) {
 			input.updatePosition(localX, localY);
@@ -212,10 +208,6 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		for (Output output : outputs) {
 			output.updatePosition(localX, localY);
 		}
-	}
-
-	private void fireUpdateMaxCoordinates() {
-		coordinatesListener.updateMaxCoordinatesOfComponent(this);
 	}
 
 	public boolean isDragged() {

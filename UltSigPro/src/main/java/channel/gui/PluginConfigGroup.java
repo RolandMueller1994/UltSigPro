@@ -1,6 +1,7 @@
 package channel.gui;
 
 import java.awt.MouseInfo;
+import java.awt.PointerInfo;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -42,6 +43,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
@@ -69,6 +71,8 @@ public class PluginConfigGroup extends Pane {
 
 	private static final double scrollOffset = 50;
 	private static final long scrollSpeed = 10;
+	
+	private static final double maxBounds = 10000;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 	private SigproPlugin output;
@@ -89,7 +93,13 @@ public class PluginConfigGroup extends Pane {
 
 	private double newPluginX;
 	private double newPluginY;
+	
+	private double startDragX;
+	private double startDragY;
 
+	private boolean dragged = false;
+	private double scrollValue = 20;
+	
 	/**
 	 * Creates a new {@line PluginConfigGroup}
 	 * 
@@ -103,13 +113,68 @@ public class PluginConfigGroup extends Pane {
 		this.channel = channel;
 		this.parent = parent;
 		
+		setOnScroll(new EventHandler<ScrollEvent> () {
+
+			@Override
+			public void handle(ScrollEvent event) {
+				
+				if(event.getDeltaY() == 0) {
+					return;
+				}
+				
+				if(USPGui.isCtrlPressed()) {			
+					double deltaY = event.getDeltaY();
+					double scaleFactor;
+					
+					if(deltaY > 0) {
+						scaleFactor = 1.05;
+					} else {
+						scaleFactor = 1/1.05;
+					}
+					
+					Pane parent = (Pane) getParent();
+					
+					double paneOffsetX = parent.getWidth()/2;
+					double paneOffsetY = parent.getHeight()/2;
+					
+					double centerX = getLayoutX() + maxBounds/2;
+					double centerY = getLayoutY() + maxBounds/2;
+					
+					double diffX = centerX - paneOffsetX;
+					double diffY = centerY - paneOffsetY;
+					
+					double scaleX1 = getScaleX();
+					double scaleY1 = getScaleY();
+					
+					double scaleX2 = scaleX1 * scaleFactor;
+					double scaleY2 = scaleY1 * scaleFactor;
+					
+					setLayoutX(getLayoutX() + (diffX * (scaleX2 - scaleX1)));
+					setLayoutY(getLayoutY() + (diffY * (scaleY1 - scaleY1)));
+					
+					setScaleX(scaleX2);
+					setScaleY(scaleY2);
+				} else if (USPGui.isShiftPressed()) {
+					double intScrollValue = event.getDeltaY() > 0 ? scrollValue : -scrollValue;
+					
+					setLayoutX(getLayoutX() - intScrollValue);
+				} else {
+					double intScrollValue = event.getDeltaY() > 0 ? scrollValue : -scrollValue;
+					
+					setLayoutY(getLayoutY() + intScrollValue);
+				}
+				
+			}
+			
+		});
+		
 		channel.getChannelConfig().registerChannelDeviceUpdateListener(new ChannelDeviceUpdateListener() {
 			
 			@Override
 			public void fireDevicesUpdates() {
 				if(channel.getPluginInput() != null && input == null) {
 					input = channel.getPluginInput();
-					addPlugin(input, 100, 100);
+					addPlugin(input, maxBounds/2 + 100, maxBounds/2 + 100);
 				} else if(channel.getPluginInput() == null && input != null) {
 					input.delete();
 					input = null;
@@ -117,7 +182,7 @@ public class PluginConfigGroup extends Pane {
 				
 				if(channel.getPluginOutput() != null && output == null) {
 					output = channel.getPluginOutput();
-					addPlugin(output, USPGui.stage.getWidth() - 100, 100);
+					addPlugin(output, maxBounds/2 + USPGui.stage.getWidth() - 100, maxBounds/2 + 100);
 				} else if(channel.getPluginOutput() == null && output != null) {
 					output.delete();
 					output = null;
@@ -135,88 +200,24 @@ public class PluginConfigGroup extends Pane {
 
 		setMaxHeight(Double.MAX_VALUE);
 		setMaxWidth(Double.MAX_VALUE);
+		setMinHeight(maxBounds);
+		setMinWidth(maxBounds);
+		setLayoutX(-maxBounds/2);
+		setLayoutY(-maxBounds/2);
 
 		setBorder(new Border(
-				new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THIN)));
+				new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderStroke.THICK)));
 
 		if(channel.getPluginInput() != null) {
-			addPlugin(channel.getPluginInput(), 100, 100);
+			addPlugin(channel.getPluginInput(), maxBounds/2 + 100, maxBounds/2 + 100);
 			input = channel.getPluginInput();
 		}
 		
 		if(channel.getPluginOutput() != null) {
-			addPlugin(channel.getPluginOutput(), USPGui.stage.getWidth() - 100, 100);		
+			addPlugin(channel.getPluginOutput(), maxBounds/2 + USPGui.stage.getWidth() - 100, maxBounds/2 + 100);		
 			output = channel.getPluginOutput();
 		}
 		
-
-		heightProperty().addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-
-				try {
-					Thread.sleep(scrollSpeed);
-				} catch (InterruptedException e) {
-
-					e.printStackTrace();
-				}
-
-				parent.setVvalue(parent.getVmax());
-				Platform.runLater(new Runnable() {
-
-					@Override
-					public void run() {
-						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
-								MouseInfo.getPointerInfo().getLocation().getY());
-
-						for (SigproPlugin plugin : plugins) {
-							if (plugin.isDragged()) {
-								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
-										MouseInfo.getPointerInfo().getLocation().getY());
-								return;
-							}
-						}
-					}
-
-				});
-			}
-		});
-
-		widthProperty().addListener(new ChangeListener<Number>() {
-
-			@Override
-			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-
-				try {
-					Thread.sleep(scrollSpeed);
-				} catch (InterruptedException e) {
-
-					e.printStackTrace();
-				}
-
-				parent.setHvalue(parent.getHmax());
-				Platform.runLater(new Runnable() {
-
-					@Override
-					public void run() {
-						drawLine(MouseInfo.getPointerInfo().getLocation().getX(),
-								MouseInfo.getPointerInfo().getLocation().getY());
-
-						for (SigproPlugin plugin : plugins) {
-							if (plugin.isDragged()) {
-								plugin.drag(MouseInfo.getPointerInfo().getLocation().getX(),
-										MouseInfo.getPointerInfo().getLocation().getY());
-								return;
-							}
-						}
-					}
-
-				});
-			}
-
-		});
-
 		addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {
 
 			@Override
@@ -226,12 +227,54 @@ public class PluginConfigGroup extends Pane {
 			}
 
 		});
+		
+		addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				
+				startDragX = event.getScreenX();
+				startDragY = event.getScreenY();
+				
+			}
+			
+		});
+		
+		addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				
+				if(event.isSecondaryButtonDown()) {
+					
+					dragged = true;
+					
+					double endDragX = event.getScreenX();
+					double endDragY = event.getScreenY();
+					
+					double diffX = endDragX - startDragX;
+					double diffY = endDragY - startDragY;
+					
+					setLayoutX(getLayoutX() + diffX);
+					setLayoutY(getLayoutY() + diffY);
+					
+					startDragX = endDragX;
+					startDragY = endDragY;
+				}
+				
+			}
+		});
 
 		addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
-
+				
+				if(dragged) {
+					dragged = false;
+					return;
+				}
+				
 				boolean hovered = false;
 
 				for (SigproPlugin plugin : plugins) {
@@ -506,98 +549,6 @@ public class PluginConfigGroup extends Pane {
 				i++;
 			}
 		}
-
-		updateMaxCoordinatesOfComponent(plugin);
-	}
-
-	/**
-	 * Will be called if a component within this pane changed its coordinates.
-	 * 
-	 * @param component
-	 *            The {@link MaxCoordinatesInterface} which changed its
-	 *            coordinates. Must not be null.
-	 */
-	public void updateMaxCoordinatesOfComponent(@Nonnull MaxCoordinatesInterface component) {
-
-		updateMaxCoordinatesInternal(component);
-
-		componentMaxPositions.put(component, new Point2D(component.getMaxX(), component.getMaxY()));
-	}
-
-	private void updateMaxCoordinatesInternal(MaxCoordinatesInterface component) {
-
-		boolean checkMaxX = false;
-		boolean checkMaxY = false;
-		boolean checkGreaterX = false;
-		boolean checkGreaterY = false;
-
-		if (maxXComponent == null) {
-			maxXComponent = component;
-			setPrefWidth(component.getMaxX() + scrollOffset);
-			maxX = maxXComponent.getMaxX();
-		} else {
-			checkMaxX = true;
-		}
-
-		if (maxYComponent == null) {
-			maxYComponent = component;
-			setPrefHeight(component.getMaxY() + scrollOffset);
-			maxY = maxYComponent.getMaxY();
-		} else {
-			checkMaxY = true;
-		}
-
-		if (checkMaxX && maxXComponent.equals(component)) {
-			checkMaxX();
-		} else {
-			checkGreaterX = true;
-		}
-
-		if (checkMaxY && maxYComponent.equals(component)) {
-			checkMaxY();
-		} else {
-			checkGreaterY = true;
-		}
-
-		if (checkMaxX && checkGreaterX && component.getMaxX() > maxX) {
-			setPrefWidth(component.getMaxX() + scrollOffset);
-			maxXComponent = component;
-			maxX = maxXComponent.getMaxX();
-		}
-
-		if (checkMaxY && checkGreaterY && component.getMaxY() > maxY) {
-			setPrefHeight(component.getMaxY() + scrollOffset);
-			maxYComponent = component;
-			maxY = maxYComponent.getMaxY();
-		}
-	}
-
-	private void checkMaxX() {
-
-		if (!(maxXComponent.getMaxX() > maxX)) {
-			for (Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
-				if (entry.getValue().getX() > maxXComponent.getMaxX()) {
-					maxXComponent = entry.getKey();
-				}
-			}
-		}
-
-		setPrefWidth(maxXComponent.getMaxX() + scrollOffset);
-		maxX = maxXComponent.getMaxX();
-	}
-
-	private void checkMaxY() {
-
-		if (!(maxYComponent.getMaxY() > maxY)) {
-			for (Entry<MaxCoordinatesInterface, Point2D> entry : componentMaxPositions.entrySet()) {
-				if (entry.getValue().getY() > maxYComponent.getMaxY()) {
-					maxYComponent = entry.getKey();
-				}
-			}
-		}
-
-		setPrefHeight(maxYComponent.getMaxY() + scrollOffset);
-		maxY = maxYComponent.getMaxY();
 	}
 
 	/**

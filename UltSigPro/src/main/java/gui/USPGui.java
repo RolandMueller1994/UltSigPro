@@ -58,6 +58,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -98,6 +99,9 @@ public class USPGui extends Application {
 
 	private String[] args;
 	private static boolean play = false;
+	
+	private static boolean ctrl = false;
+	private static boolean shift = false;
 
 	/**
 	 * This method must be called at startup. The GUI will be set up.
@@ -132,12 +136,29 @@ public class USPGui extends Application {
 			public void handle(KeyEvent event) {
 				if (event.getCode().equals(KeyCode.ESCAPE)) {
 					for (Tab tab : tabMap.values()) {
-						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).escapeLineDrawing();
+						((PluginConfigGroup) ((Pane) tab.getContent()).getChildren().get(0)).escapeLineDrawing();
 					}
 				} else if (event.getCode().equals(KeyCode.DELETE)) {
 					for (Tab tab : tabMap.values()) {
-						((PluginConfigGroup) ((ScrollPane) tab.getContent()).getContent()).deleteLine();
+						((PluginConfigGroup) ((Pane) tab.getContent()).getChildren().get(0)).deleteLine();
 					}
+				} else if (event.getCode().equals(KeyCode.CONTROL)) {
+					ctrl = false;
+				} else if (event.getCode().equals(KeyCode.SHIFT)) {
+					shift = false;
+				}
+			}
+
+		});
+		
+		primaryStage.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+
+			@Override
+			public void handle(KeyEvent event) {
+				if (event.getCode().equals(KeyCode.CONTROL)) {
+					ctrl = true;
+				} else if (event.getCode().equals(KeyCode.SHIFT)) {
+					shift = true;
 				}
 			}
 
@@ -286,6 +307,18 @@ public class USPGui extends Application {
 		primaryStage.show();
 
 	}
+	
+	public static boolean isCtrlPressed() {
+		return ctrl && !shift;
+	}
+	
+	public static boolean isCtrlShiftPressed() {
+		return ctrl && shift;
+	}
+	
+	public static boolean isShiftPressed() {
+		return shift && !ctrl;
+	}
 
 	public static void addChannel(ChannelConfig config) {
 		try {
@@ -295,10 +328,12 @@ public class USPGui extends Application {
 
 			ScrollPane scroll = new ScrollPane();
 			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
-			scroll.setContent(configGroup);
-
-			curTab.setContent(scroll);
-
+			//scroll.setContent(configGroup);
+			
+			Pane parentPane = new Pane();
+			parentPane.getChildren().add(configGroup);
+			
+			curTab.setContent(parentPane);
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
 			pluginPane.getSelectionModel().select(curTab);

@@ -1059,10 +1059,6 @@ public class PluginConnection {
 			} else {
 				setEndY(getStartY());
 			}
-
-			if (parentPane != null) {
-				parentPane.updateMaxCoordinatesOfComponent(this);
-			}
 		}
 
 		public void updateCoordinates(ConnectionLine line, double x, double y) {
@@ -1079,11 +1075,7 @@ public class PluginConnection {
 					setEndY(y);
 				}
 			}
-
-			if (parentPane != null) {
-				parentPane.updateMaxCoordinatesOfComponent(this);
-			}
-
+			
 			updateDragPane();
 		}
 
@@ -1175,11 +1167,7 @@ public class PluginConnection {
 					setStartX(x);
 				}
 			}
-
-			if (parentPane != null) {
-				parentPane.updateMaxCoordinatesOfComponent(this);
-			}
-
+			
 			updateDragPane();
 		}
 
@@ -1237,9 +1225,6 @@ public class PluginConnection {
 				setEndX(getEndX());
 			}
 
-			if (parentPane != null) {
-				parentPane.updateMaxCoordinatesOfComponent(this);
-			}
 			updateDragPane();
 		}
 
