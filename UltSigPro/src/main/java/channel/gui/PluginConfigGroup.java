@@ -118,18 +118,23 @@ public class PluginConfigGroup extends Pane {
 			@Override
 			public void handle(ScrollEvent event) {
 				
-				System.out.println("delta X " + event.getDeltaX());
-				System.out.println("delta Y " + event.getDeltaY());
-				
-				if(event.getDeltaY() == 0) {
+				if(event.getDeltaY() == 0 && event.getDeltaX() == 0) {
 					return;
 				}
 				
+				boolean horizontal = false;
+
+				if(Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY())) {
+					horizontal = true;
+				}
+				
+				double delta = horizontal ? event.getDeltaX() : event.getDeltaY();
+				
+				
 				if(USPGui.isCtrlPressed()) {			
-					double deltaY = event.getDeltaY();
 					double scaleFactor;
 					
-					if(deltaY > 0) {
+					if(delta > 0) {
 						scaleFactor = 1.05;
 					} else {
 						scaleFactor = 1/1.05;
@@ -157,12 +162,12 @@ public class PluginConfigGroup extends Pane {
 					
 					setScaleX(scaleX2);
 					setScaleY(scaleY2);
-				} else if (USPGui.isShiftPressed()) {
-					double intScrollValue = event.getDeltaY() > 0 ? scrollValue : -scrollValue;
+				} else if (USPGui.isShiftPressed() || horizontal) {
+					double intScrollValue = delta > 0 ? scrollValue : -scrollValue;
 					
 					setLayoutX(getLayoutX() - intScrollValue);
 				} else {
-					double intScrollValue = event.getDeltaY() > 0 ? scrollValue : -scrollValue;
+					double intScrollValue = delta > 0 ? scrollValue : -scrollValue;
 					
 					setLayoutY(getLayoutY() + intScrollValue);
 				}
