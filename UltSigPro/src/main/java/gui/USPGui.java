@@ -195,8 +195,7 @@ public class USPGui extends Application {
 
 					Iterator<Node> iter = channelBox.getChildren().iterator();
 					for (Tab tab : tabMap.values()) {
-						PluginConfigGroup configGroup = (PluginConfigGroup) ((ScrollPane) tab.getContent())
-								.getContent();
+						PluginConfigGroup configGroup = (PluginConfigGroup) ((Pane) tab.getContent()).getChildren().get(0);
 						try {
 							configGroup.initializePlay();
 						} catch (SignalFlowConfigException e) {
