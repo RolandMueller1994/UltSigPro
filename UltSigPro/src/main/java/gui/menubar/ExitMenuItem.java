@@ -2,7 +2,6 @@ package gui.menubar;
 
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
