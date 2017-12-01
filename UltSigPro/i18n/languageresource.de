@@ -22,6 +22,9 @@ gui.USPGui.signalFlowAlertTextOutput=Es ist keine Verbindung zum Ausgang hergest
 gui.USPGui.signalFlowAlertTextConnection=Es sind Eingänge/Ausgänge von Plugins nicht verbunden!
 gui.USPGui.signalFlowAlertChannel=Kanal
 
+gui.USPGui$SaveProjectBeforeClosingDialog.title=Projekt speichern
+gui.USPGui$SaveProjectBeforeClosingDialog.header=Projekt vor dem Beenden speichern?
+
 gui.menubar.NewProjectMenuItem.title=Neues Projekt
 gui.menubar.SaveMenuItem.title=Speichern
 gui.menubar.SaveAsMenuItem.title=Speichern unter...

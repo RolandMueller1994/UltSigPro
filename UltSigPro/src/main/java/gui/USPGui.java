@@ -4,14 +4,21 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -25,6 +32,8 @@ import channel.gui.PluginConfigGroup;
 import channel.gui.SignalFlowConfigException;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.menubar.MenuBarCreator;
+import gui.menubar.SaveMenuItem;
+import gui.menubar.USPFileCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
@@ -41,7 +50,11 @@ import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -63,6 +76,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import plugins.PluginManager;
@@ -99,7 +114,7 @@ public class USPGui extends Application {
 
 	private String[] args;
 	private static boolean play = false;
-	
+
 	private static boolean ctrl = false;
 	private static boolean shift = false;
 
@@ -150,7 +165,7 @@ public class USPGui extends Application {
 			}
 
 		});
-		
+
 		primaryStage.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 
 			@Override
@@ -162,6 +177,45 @@ public class USPGui extends Application {
 				}
 			}
 
+		});
+
+		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			//TODO check if there are any changes made to this project
+			// if not -> don't ask to save project
+			// if yes -> ask to save the project
+			
+			@Override
+			public void handle(WindowEvent event) {
+				SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
+				Optional<ButtonType> result = dialog.showAndWait();
+				if (result.isPresent() && result.get() == ButtonType.YES) {
+					if (USPFileCreator.getFile() != null) {
+						try {
+							Document doc = USPFileCreator.collectProjectSettings();
+							USPFileCreator.createUSPFile(doc);
+						} catch (ParserConfigurationException | TransformerException e) {
+							e.printStackTrace();
+						}
+					} else {
+						try {
+							USPFileCreator fileCreator = USPFileCreator.getFileCreator();
+							fileCreator.createFile();
+							if (USPFileCreator.getFile() != null) {
+								Document doc = USPFileCreator.collectProjectSettings();
+								USPFileCreator.createUSPFile(doc);
+							} else {
+								event.consume();
+							}
+						} catch (ResourceProviderException | TransformerException | ParserConfigurationException e) {
+							e.printStackTrace();
+						}
+					}
+				} else if (result.isPresent() && result.get() == ButtonType.NO) {
+					
+				} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
+					event.consume();
+				}
+			}
 		});
 
 		Image icon = new Image("file:iconNew.png");
@@ -195,7 +249,8 @@ public class USPGui extends Application {
 
 					Iterator<Node> iter = channelBox.getChildren().iterator();
 					for (Tab tab : tabMap.values()) {
-						PluginConfigGroup configGroup = (PluginConfigGroup) ((Pane) tab.getContent()).getChildren().get(0);
+						PluginConfigGroup configGroup = (PluginConfigGroup) ((Pane) tab.getContent()).getChildren()
+								.get(0);
 						try {
 							configGroup.initializePlay();
 						} catch (SignalFlowConfigException e) {
@@ -306,15 +361,15 @@ public class USPGui extends Application {
 		primaryStage.show();
 
 	}
-	
+
 	public static boolean isCtrlPressed() {
 		return ctrl && !shift;
 	}
-	
+
 	public static boolean isCtrlShiftPressed() {
 		return ctrl && shift;
 	}
-	
+
 	public static boolean isShiftPressed() {
 		return shift && !ctrl;
 	}
@@ -327,11 +382,11 @@ public class USPGui extends Application {
 
 			ScrollPane scroll = new ScrollPane();
 			PluginConfigGroup configGroup = new PluginConfigGroup(channelPane.getChannel(), scroll);
-			//scroll.setContent(configGroup);
-			
+			// scroll.setContent(configGroup);
+
 			Pane parentPane = new Pane();
 			parentPane.getChildren().add(configGroup);
-			
+
 			curTab.setContent(parentPane);
 			tabMap.put(config.getName(), curTab);
 			pluginPane.getTabs().add(curTab);
@@ -409,5 +464,29 @@ public class USPGui extends Application {
 
 	public static Stage getStage() {
 		return stage;
+	}
+
+	private class SaveProjectBeforeClosingDialog extends Dialog<ButtonType> {
+
+		private static final String TITLE = "title";
+		private static final String HEADER = "header";
+
+		private SaveProjectBeforeClosingDialog() {
+
+			initOwner(USPGui.stage);
+			initStyle(StageStyle.UTILITY);
+			try {
+				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(SaveProjectBeforeClosingDialog.class,
+						TITLE));
+				setHeaderText(LanguageResourceHandler.getInstance()
+						.getLocalizedText(SaveProjectBeforeClosingDialog.class, HEADER));
+			} catch (ResourceProviderException e) {
+				e.printStackTrace();
+			}
+			getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+			getDialogPane().getButtonTypes().add(ButtonType.YES);
+			getDialogPane().getButtonTypes().add(ButtonType.NO);
+
+		}
 	}
 }
