@@ -118,6 +118,9 @@ public class PluginConfigGroup extends Pane {
 			@Override
 			public void handle(ScrollEvent event) {
 				
+				System.out.println("delta X " + event.getDeltaX());
+				System.out.println("delta Y " + event.getDeltaY());
+				
 				if(event.getDeltaY() == 0) {
 					return;
 				}
