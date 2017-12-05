@@ -157,6 +157,9 @@ public class PluginConfigGroup extends Pane {
 					double scaleX2 = scaleX1 * scaleFactor;
 					double scaleY2 = scaleY1 * scaleFactor;
 					
+					scaleX2 = scaleX2 > 1.0 ? 1.0 : scaleX2;
+					scaleY2 = scaleY2 > 1.0 ? 1.0 : scaleY2;
+					
 					setLayoutX(getLayoutX() + (diffX * (scaleX2 - scaleX1)));
 					setLayoutY(getLayoutY() + (diffY * (scaleY1 - scaleY1)));
 					
