@@ -1,7 +1,7 @@
 .gradle
 /build/
 
-logging/**
+UltSigPro/logging/**
 
 # Ignore Gradle GUI config
 gradle-app.setting
