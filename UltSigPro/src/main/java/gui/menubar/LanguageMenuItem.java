@@ -16,6 +16,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import resourceframework.GlobalResourceProvider;
 import resourceframework.ResourceProviderException;
 
@@ -46,6 +47,7 @@ private static final String INFO_ALERT_CONTENT = "infoAlertContent";
 								alert.setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(LanguageMenuItem.class, INFO_ALERT_HEADER));
 								alert.setContentText(LanguageResourceHandler.getInstance().getLocalizedText(LanguageMenuItem.class, INFO_ALERT_CONTENT));
 								alert.showAndWait();
+								USPGui.getStage().fireEvent(new WindowEvent(USPGui.getStage(), WindowEvent.WINDOW_CLOSE_REQUEST));
 							}
 						} catch (ResourceProviderException e) {
 							// TODO Auto-generated catch block

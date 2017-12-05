@@ -22,6 +22,9 @@ gui.USPGui.signalFlowAlertTextOutput=There is no connection to the output!
 gui.USPGui.signalFlowAlertTextConnection=There are unconnected plugin inputs/outputs. 
 gui.USPGui.signalFlowAlertChannel=Channel
 
+gui.USPGui$SaveProjectBeforeClosingDialog.title=Save project
+gui.USPGui$SaveProjectBeforeClosingDialog.header=Save project before quitting?
+
 gui.menubar.NewProjectMenuItem.title=New project
 gui.menubar.SaveMenuItem.title=Save
 gui.menubar.SaveAsMenuItem.title=Save as...
