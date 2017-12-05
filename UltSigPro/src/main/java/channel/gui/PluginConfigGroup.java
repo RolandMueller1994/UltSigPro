@@ -65,14 +65,10 @@ import resourceframework.ResourceProviderException;
 public class PluginConfigGroup extends Pane {
 
 	private Channel channel;
-	private ScrollPane parent;
-
 	private ContextMenu contextMenu;
 
-	private static final double scrollOffset = 50;
-	private static final long scrollSpeed = 10;
-	
 	private static final double maxBounds = 10000;
+	private static final double sizeOffset = 40;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 	private SigproPlugin output;
@@ -84,12 +80,6 @@ public class PluginConfigGroup extends Pane {
 	private ConnectionLine deletionLine;
 
 	private boolean lineHovered = false;
-
-	private MaxCoordinatesInterface maxXComponent;
-	private MaxCoordinatesInterface maxYComponent;
-	private HashMap<MaxCoordinatesInterface, Point2D> componentMaxPositions = new HashMap<>();
-	private double maxX;
-	private double maxY;
 
 	private double newPluginX;
 	private double newPluginY;
@@ -111,8 +101,6 @@ public class PluginConfigGroup extends Pane {
 	 */
 	public PluginConfigGroup(@Nonnull Channel channel, @Nonnull ScrollPane parent) {
 		this.channel = channel;
-		this.parent = parent;
-		
 		setOnScroll(new EventHandler<ScrollEvent> () {
 
 			@Override
@@ -198,6 +186,8 @@ public class PluginConfigGroup extends Pane {
 					output.delete();
 					output = null;
 				}
+				
+				fitToScreen();
 			}
 		});
 
@@ -323,6 +313,125 @@ public class PluginConfigGroup extends Pane {
 	private void showContextMenu(double screenX, double screenY) {
 
 		contextMenu.show(this, screenX, screenY);
+	}
+	
+	public void fitToScreen() {
+		
+		double minX = 0;
+		double maxX = 0;
+		double minY = 0;
+		double maxY = 0;
+		boolean init = false;
+		
+		if(input != null) {
+			minX = input.getGUI().getLayoutX();
+			minY = input.getGUI().getLayoutY();
+			maxX = input.getGUI().getLayoutX() + input.getGUI().getWidth();
+			maxY = input.getGUI().getLayoutY() + input.getGUI().getHeight();	
+			init = true;
+		}
+		
+		if(init && output != null) {
+			if(output.getGUI().getLayoutX() < minX) {
+				minX = output.getGUI().getLayoutX();
+			}
+			if(output.getGUI().getLayoutY() < minY) {
+				minY = output.getGUI().getLayoutY();
+			}
+			if(output.getGUI().getLayoutX() + output.getGUI().getWidth() > maxX) {
+				maxX = output.getGUI().getLayoutX() + output.getGUI().getWidth();
+			}
+			if(output.getGUI().getLayoutY() + output.getGUI().getHeight() > maxY) {
+				maxY = output.getGUI().getLayoutY() + output.getGUI().getHeight();
+			}			
+		} else if(output != null) {
+			minX = output.getGUI().getLayoutX();
+			minY = output.getGUI().getLayoutY();
+			maxX = output.getGUI().getLayoutX() + output.getGUI().getWidth();
+			maxY = output.getGUI().getLayoutY() + output.getGUI().getHeight();
+			init = true;
+		}
+		
+		for(PluginConnection con : allConnections) {
+			if(init) {
+				if(con.getMinX() < minX) {
+					minX = con.getMinX();
+				}
+				if(con.getMaxX() > maxX) {
+					maxX = con.getMaxX();
+				}
+				if(con.getMinY() < minY) {
+					minY = con.getMinY();
+				}
+				if(con.getMaxY() > maxY) {
+					maxY = con.getMaxY();
+				}				
+			} else {
+				minX = con.getMinX();
+				maxX = con.getMaxX();
+				minY = con.getMinY();
+				maxY = con.getMaxY();
+				init = true;
+			}
+		}
+		
+		for(SigproPlugin plugin : plugins) {
+			if(init) {
+				if(plugin.getGUI().getLayoutX() < minX) {
+					minX = plugin.getGUI().getLayoutX();
+				}
+				if(plugin.getGUI().getLayoutY() < minY) {
+					minY = plugin.getGUI().getLayoutY();
+				}
+				if(plugin.getGUI().getLayoutX() + plugin.getGUI().getWidth() > maxX) {
+					maxX = plugin.getGUI().getLayoutX() + plugin.getGUI().getWidth();
+				}
+				if(plugin.getGUI().getLayoutY() + plugin.getGUI().getHeight() > maxY) {
+					maxY = plugin.getGUI().getLayoutY() + plugin.getGUI().getHeight();
+				}				
+			} else {
+				minX = plugin.getGUI().getLayoutX();
+				minY = plugin.getGUI().getLayoutY();
+				maxX = plugin.getGUI().getLayoutX() + plugin.getGUI().getWidth();
+				maxY = plugin.getGUI().getLayoutY() + plugin.getGUI().getHeight();
+				init = true;
+			}
+		}
+		
+		if(init) {
+			minX -= sizeOffset;
+			maxX += sizeOffset;
+			minY -= sizeOffset;
+			maxY += sizeOffset;
+			
+			if(getParent() != null) {
+				double parentWidth = ((Pane) getParent()).getWidth();
+				double parentHeight = ((Pane) getParent()).getHeight();
+				
+				double width = maxX - minX;
+				double height = maxY - minY;
+				
+				double scaleX = parentWidth/width;
+				double scaleY = parentHeight/height;
+				
+				double scale = scaleX < scaleY ? scaleX : scaleY;
+				scale = scale > 1.0 ? 1.0 : scale;
+				setScaleX(scale);
+				setScaleY(scale);
+				
+				double paneOffsetX = parentWidth/2;
+				double paneOffsetY = parentHeight/2;
+				
+				double centerX = (minX + width/2) - maxBounds/2;
+				double centerY = (minY + height/2) - maxBounds/2;
+				
+				double diffX = centerX * scale - paneOffsetX;
+				double diffY = centerY * scale - paneOffsetY;
+				
+				setLayoutX(-maxBounds/2 - diffX);
+				setLayoutY(-maxBounds/2 - diffY);			
+			}
+		}
 	}
 
 	public void initializePlay() throws SignalFlowConfigException {
@@ -597,12 +706,8 @@ public class PluginConfigGroup extends Pane {
 
 		private LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 
-		private PluginConfigGroup parent;
-
 		private AddPluginMenuItem(PluginConfigGroup parent) throws ResourceProviderException {
 			super.setText(lanHandler.getLocalizedText(AddPluginMenuItem.class, TITLE));
-
-			this.parent = parent;
 
 			super.setOnAction(new EventHandler<ActionEvent>() {
 

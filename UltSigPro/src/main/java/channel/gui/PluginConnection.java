@@ -71,7 +71,79 @@ public class PluginConnection {
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
 		this.configGroup = configGroup;
 	}
+	
+	public double getMaxX() {
+		boolean first = true;
+		double maxX = 0;
+		
+		for(ConnectionLine line : lines) {
+			double max = line.getStartX() > line.getEndX() ? line.getStartX() : line.getEndX();
+			
+			if(first) {
+				maxX = max;
+				first = false;
+			} else if(max > maxX) {
+				maxX = max;
+			}
+		}
+		
+		return maxX;
+	}
+	
+	public double getMaxY() {
+		boolean first = true;
+		double maxY = 0;
+		
+		for(ConnectionLine line : lines) {
+			double max = line.getStartY() > line.getEndY() ? line.getStartY() : line.getEndY();
+			
+			if(first) {
+				maxY = max;
+				first = false;
+			} else if(max > maxY) {
+				maxY = max;
+			}
+		}
+		
+		return maxY;
+	}
+	
+	public double getMinX() {
+		boolean first = true;
+		double minX = 0;
+		
+		for(ConnectionLine line : lines) {
+			double min = line.getStartX() < line.getEndX() ? line.getStartX() : line.getEndX();
+			
+			if(first) {
+				minX = min;
+				first = false;
+			} else if(min > minX) {
+				minX = min;
+			}
+		}
+		
+		return minX;
+	}
 
+	public double getMinY() {
+		boolean first = true;
+		double minY = 0;
+		
+		for(ConnectionLine line : lines) {
+			double min = line.getStartY() < line.getEndY() ? line.getStartY() : line.getEndY();
+			
+			if(first) {
+				minY = min;
+				first = false;
+			} else if(min > minY) {
+				minY = min;
+			}
+		}
+		
+		return minY;
+	}
+	
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
 
 		if (!forward) {

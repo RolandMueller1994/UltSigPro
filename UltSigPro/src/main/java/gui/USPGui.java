@@ -161,6 +161,12 @@ public class USPGui extends Application {
 					ctrl = false;
 				} else if (event.getCode().equals(KeyCode.SHIFT)) {
 					shift = false;
+				} else if (event.getCode().equals(KeyCode.F1)) {
+					 Tab selectedTap = pluginPane.getSelectionModel().getSelectedItem();
+					 if(selectedTap != null) {
+						 ((PluginConfigGroup) ((Pane) selectedTap.getContent())
+								 .getChildren().get(0)).fitToScreen();						 
+					 }
 				}
 			}
 
@@ -180,10 +186,10 @@ public class USPGui extends Application {
 		});
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			//TODO check if there are any changes made to this project
+			// TODO check if there are any changes made to this project
 			// if not -> don't ask to save project
 			// if yes -> ask to save the project
-			
+
 			@Override
 			public void handle(WindowEvent event) {
 				SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
@@ -211,7 +217,7 @@ public class USPGui extends Application {
 						}
 					}
 				} else if (result.isPresent() && result.get() == ButtonType.NO) {
-					
+
 				} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
 					event.consume();
 				}
