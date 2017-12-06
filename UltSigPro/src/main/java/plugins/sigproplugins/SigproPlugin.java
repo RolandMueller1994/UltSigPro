@@ -164,6 +164,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		localPositionX = gui.getLayoutX();
 		localPositionY = gui.getLayoutY();
 
+		double raster = coordinatesListener.getRaster();
+		
 		// Absolute position in scene
 		absolutPositionX = gui.localToScreen(gui.getLayoutBounds()).getMinX();
 		absolutPositionY = gui.localToScreen(gui.getLayoutBounds()).getMinY();
@@ -173,8 +175,14 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		offsetY = absolutPositionY - localPositionY;
 
 		// Calculate the local position
-		double xPosition = screenX - mouseOffsetX - offsetX;
-		double yPosition = screenY - mouseOffsetY - offsetY;
+		double xPosition = screenX - mouseOffsetX - offsetX + getWidth()/2;
+		double yPosition = screenY - mouseOffsetY - offsetY + getHeight()/2;
+		
+		xPosition = Math.round(xPosition/raster) * raster;
+		yPosition = Math.round(yPosition/raster) * raster;
+		
+		xPosition -= getWidth()/2;
+		yPosition -= getHeight()/2;
 
 		if (xPosition < 0) {
 			xPosition = 0;

@@ -1337,6 +1337,11 @@ public class PluginConnection {
 				double localX = parentPane.screenToLocal(x, y).getX();
 				double localY = parentPane.screenToLocal(x, y).getY();
 
+				double raster = configGroup.getRaster();
+				
+				localX = Math.round(localX/raster) * raster;
+				localY = Math.round(localY/raster) * raster;
+				
 				if (horizontal) {
 					setStartY(localY);
 					setEndY(localY);
@@ -1483,6 +1488,11 @@ public class PluginConnection {
 			double localX = screenToLocal(x, y).getX();
 			double localY = screenToLocal(x, y).getY();
 
+			double raster = parentPane.getRaster();
+			
+			localX = Math.round(localX/raster) * raster;
+			localY = Math.round(localY/raster) * raster;
+			
 			if (hovered) {
 				if (horizontal) {
 					ConnectionLine leftLine;
@@ -1797,6 +1807,11 @@ public class PluginConnection {
 			double localX = parentPane.screenToLocal(screenX, screenY).getX();
 			double localY = parentPane.screenToLocal(screenX, screenY).getY();
 
+			double raster = parentPane.getRaster();
+			
+			localX = Math.round(localX/raster) * raster;
+			localY = Math.round(localY/raster) * raster;
+			
 			setCenterX(localX);
 			setCenterY(localY);
 

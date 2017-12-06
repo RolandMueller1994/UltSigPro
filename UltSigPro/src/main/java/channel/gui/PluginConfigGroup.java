@@ -70,7 +70,8 @@ public class PluginConfigGroup extends Pane {
 	private static final double maxBounds = 10000;
 	private static final double sizeOffset = 40;
 	
-	private static final double maxRaster = 40;
+	private static final double maxRaster = 20;
+	private double raster = 10;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 	private SigproPlugin output;
@@ -624,9 +625,22 @@ public class PluginConfigGroup extends Pane {
 		
 	}
 	
+	public double getRaster() {
+		return raster;
+	}
+	
 	private void addPlugin(SigproPlugin plugin, double xCoord, double yCoord) {
 
+		xCoord = ((int) xCoord / (int) raster) * raster; 
+		yCoord = ((int) yCoord / (int) raster) * raster;
+		
 		plugins.add(plugin);
+
+		HashSet<String> inputs = plugin.getInputConfig();
+		HashSet<String> outputs = plugin.getOutputConfig();
+		
+		int numberOfInputs = inputs.size();
+		int numberOfOutputs = outputs.size();
 
 		plugin.registerMaxCoordinatesUpdateListener(this);
 
@@ -642,18 +656,12 @@ public class PluginConfigGroup extends Pane {
 		gui.setLayoutX(internalX);
 		gui.setLayoutY(internalY);
 
-		HashSet<String> inputs = plugin.getInputConfig();
-		HashSet<String> outputs = plugin.getOutputConfig();
-
-		int numberOfInputs = inputs.size();
-		int numberOfOutputs = outputs.size();
-
 		int i = 0;
 
 		if (numberOfInputs > 0) {
-			double inputOffset = height / numberOfInputs;
+			double inputOffset = maxRaster * 2;
 			for (String input : inputs) {
-				Input inputGUI = new Input(plugin, this, input, internalX, internalY, i, width, height, inputOffset);
+				Input inputGUI = new Input(plugin, this, input, internalX, internalY, i, numberOfInputs, width, height, inputOffset);
 				getChildren().add(inputGUI);
 				plugin.addInput(inputGUI);
 				i++;
@@ -661,10 +669,10 @@ public class PluginConfigGroup extends Pane {
 		}
 
 		if (numberOfOutputs > 0) {
-			double outputOffset = height / numberOfOutputs;
+			double outputOffset = maxRaster * 2;
 			i = 0;
 			for (String output : outputs) {
-				Output outputGUI = new Output(plugin, this, output, internalX, internalY, i, width, height,
+				Output outputGUI = new Output(plugin, this, output, internalX, internalY, i, numberOfOutputs, width, height,
 						outputOffset);
 				getChildren().add(outputGUI);
 				plugin.addOutput(outputGUI);

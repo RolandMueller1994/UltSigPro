@@ -24,6 +24,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	int position;
 	int parentWidth;
 	int parentHeight;
+	int number;
 	double outputOffset;
 	
 	private double conPosX;
@@ -47,12 +48,13 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	private LinkedList<Line> lines = new LinkedList<>();
 
 	@SuppressWarnings("restriction")
-	public Output(SigproPlugin plugin, PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int parentWidth, int parentHeight,
+	public Output(SigproPlugin plugin, PluginConfigGroup configGroup, String name, double parentX, double parentY, int position, int number, int parentWidth, int parentHeight,
 			double outputOffset) {
 		super();
 		this.configGroup = configGroup;
 		this.name = name;
 		this.position = position;
+		this.number = number;
 		this.parentWidth = parentWidth;
 		this.parentHeight = parentHeight;
 		this.outputOffset = outputOffset;
@@ -197,7 +199,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		setLayoutX(xPosition);
 		conPosX = xPosition + 17;
 
-		double yPosition = parentY + position * outputOffset + outputOffset / 2 - yOffset;
+		double yPosition = parentY + parentHeight/2 + position * outputOffset - number/2 * outputOffset - yOffset;
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
