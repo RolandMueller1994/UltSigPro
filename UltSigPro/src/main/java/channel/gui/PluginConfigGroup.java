@@ -69,6 +69,8 @@ public class PluginConfigGroup extends Pane {
 
 	private static final double maxBounds = 10000;
 	private static final double sizeOffset = 40;
+	
+	private static final double maxRaster = 40;
 
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 	private SigproPlugin output;
@@ -149,7 +151,7 @@ public class PluginConfigGroup extends Pane {
 					scaleY2 = scaleY2 > 1.0 ? 1.0 : scaleY2;
 					
 					setLayoutX(getLayoutX() + (diffX * (scaleX2 - scaleX1)));
-					setLayoutY(getLayoutY() + (diffY * (scaleY1 - scaleY1)));
+					setLayoutY(getLayoutY() + (diffY * (scaleY2 - scaleY1)));
 					
 					setScaleX(scaleX2);
 					setScaleY(scaleY2);
