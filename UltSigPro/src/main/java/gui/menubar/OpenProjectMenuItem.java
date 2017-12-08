@@ -45,6 +45,7 @@ public class OpenProjectMenuItem extends MenuItem {
 					try {
 						USPFileReader.getUSPFileReader().readUSPFile(file);
 						USPFileCreator.setFile(file);
+						USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
 					} catch (ParserConfigurationException | SAXException | IOException | InstantiationException
 							| IllegalAccessException | ResourceProviderException e) {
 						// TODO Auto-generated catch block

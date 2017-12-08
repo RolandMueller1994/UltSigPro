@@ -1,5 +1,7 @@
 package gui.menubar;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
@@ -31,6 +33,12 @@ public class NewProjectMenuItem extends MenuItem {
 					e.printStackTrace();
 				}
 				USPGui.deleteAllChannels();
+				try {
+					USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
+				} catch (ParserConfigurationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 	}
