@@ -31,6 +31,7 @@ public class SaveAsMenuItem extends MenuItem {
 					if (file != null) {
 						Document doc = USPFileCreator.collectProjectSettings();
 						USPFileCreator.createUSPFile(doc);
+						USPFileCreator.setReferenceDocument(doc);
 					}
 				} catch (ResourceProviderException | ParserConfigurationException | TransformerException e) {
 					// TODO Auto-generated catch block

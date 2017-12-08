@@ -162,11 +162,10 @@ public class USPGui extends Application {
 				} else if (event.getCode().equals(KeyCode.SHIFT)) {
 					shift = false;
 				} else if (event.getCode().equals(KeyCode.F1)) {
-					 Tab selectedTap = pluginPane.getSelectionModel().getSelectedItem();
-					 if(selectedTap != null) {
-						 ((PluginConfigGroup) ((Pane) selectedTap.getContent())
-								 .getChildren().get(0)).fitToScreen();						 
-					 }
+					Tab selectedTap = pluginPane.getSelectionModel().getSelectedItem();
+					if (selectedTap != null) {
+						((PluginConfigGroup) ((Pane) selectedTap.getContent()).getChildren().get(0)).fitToScreen();
+					}
 				}
 			}
 
@@ -191,6 +190,8 @@ public class USPGui extends Application {
 			public void handle(WindowEvent event) {
 				Document currentProject;
 				try {
+					// check if project has changed since the last time saving
+					// if so, ask the user to save his current project
 					currentProject = USPFileCreator.collectProjectSettings();
 					if (USPFileCreator.projectChangedSinceLastSaving(currentProject)) {
 						SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
@@ -369,7 +370,9 @@ public class USPGui extends Application {
 		primaryStage.setTitle(languageRes.getLocalizedText(USPGui.class, TITLE));
 		primaryStage.setMaximized(true);
 		primaryStage.show();
-		
+
+		// set initial reference project (here a new blank project)
+		// any changes to this, will be noticed and can be safed before closing
 		USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
 
 	}
