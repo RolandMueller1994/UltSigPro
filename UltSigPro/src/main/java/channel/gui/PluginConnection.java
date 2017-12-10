@@ -561,10 +561,14 @@ public class PluginConnection {
 	 *            the y-coordinate where the current line should end.
 	 */
 	public void devideActLine(double x, double y) {
-
+		
+		double raster = configGroup.getRaster();
+		
 		if (actHorizontal) {
 			double stepX = actLine.getStartX() + (x - actLine.getStartX()) / 2;
 			double stepY = actLine.getStartY();
+			
+			stepX = Math.round(stepX/raster) * raster;
 
 			actLine.setEndX(stepX);
 
