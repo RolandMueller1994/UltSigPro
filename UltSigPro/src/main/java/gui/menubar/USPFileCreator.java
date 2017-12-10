@@ -23,40 +23,56 @@ import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.scene.Node;
 import javafx.stage.FileChooser;
+import junit.framework.Assert;
 import resourceframework.ResourceProviderException;
 
 public class USPFileCreator {
 
 	private static USPFileCreator fileCreator;
 	private static File file;
+	private static boolean fileCreated;
+	private static Document referenceDocument;
 
 	public static USPFileCreator getFileCreator() {
 
 		if (fileCreator == null) {
 			fileCreator = new USPFileCreator();
+			fileCreated = false;
 		}
 		return fileCreator;
 	}
-	
+
 	private USPFileCreator() {
-		
+
 	}
-	
+
 	public File createFile() throws ResourceProviderException {
 		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-				"UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
+		fileChooser.getExtensionFilters()
+				.add(new FileChooser.ExtensionFilter("UltSigPro " + lanHandler.getLocalizedText("file"), "*.usp"));
 		file = fileChooser.showSaveDialog(USPGui.stage);
-		
-		// add file name in the header line 
+
+		// add file name in the header line
 		if (file != null) {
 			USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
+			fileCreated = true;
 		}
-		
+
 		return file;
 	}
-	
+
+	/**
+	 * Is normally called, when a new project gets created. Creates a document
+	 * for reference issues. The reference is used to check, if there are any
+	 * changes made on this project after it has been created.
+	 * 
+	 * @throws ParserConfigurationException
+	 */
+	public void createReferenceProjectDocument() throws ParserConfigurationException {
+		referenceDocument = collectProjectSettings();
+	}
+
 	/**
 	 * Creates an XML file at the specified path with the given text and
 	 * structure.
@@ -104,21 +120,63 @@ public class USPFileCreator {
 			// channel elements
 			Element channelXMLElement = doc.createElement("channel");
 			rootElement.appendChild(channelXMLElement);
-			
+
 			// collects input/output devices and input/output wave files
 			currentChannelPane.collectChannelConfig(doc, channelXMLElement);
-			
+
 			// plugin elements
 			USPGui.collectPluginConfig(doc, channelXMLElement, currentChannelPane);
 		}
 		return doc;
 	}
-	
+
+	/**
+	 * 
+	 * @return The file where the current project has been saved.
+	 */
 	public static File getFile() {
 		return file;
 	}
-	
+
+	/**
+	 * 
+	 * @param file
+	 *            Contains the current project settings to be saved.
+	 */
 	public static void setFile(File file) {
 		USPFileCreator.file = file;
+	}
+
+	/**
+	 * Is normally called, when the current project gets saved. Updates the
+	 * reference document, which has been created with a new project. The
+	 * reference is used to check, if there are any changes made to this project
+	 * after the last time "save" was executed.
+	 * 
+	 * @param doc
+	 *            The current project settings
+	 */
+	public static void setReferenceDocument(Document doc) {
+		referenceDocument = doc;
+	}
+
+	/**
+	 * Checks, if the current project differs from the last saved project. This
+	 * would mean, that the current project has unsaved changes.
+	 * 
+	 * @param doc
+	 *            The current project
+	 * @return True, if the both project differ from each other.
+	 */
+	public static boolean projectChangedSinceLastSaving(Document doc) {
+
+		// TODO uncomment if "normalizeDocument()" is needed
+		// works currently without that
+		// referenceDocument.normalizeDocument();
+		// doc.normalizeDocument();
+		if (doc.isEqualNode(referenceDocument)) {
+			return false;
+		}
+		return true;
 	}
 }

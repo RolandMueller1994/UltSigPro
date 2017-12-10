@@ -38,6 +38,7 @@ public class SaveMenuItem extends MenuItem {
 				if (USPFileCreator.getFile() != null) {
 					try {
 						Document doc = USPFileCreator.collectProjectSettings();
+						USPFileCreator.setReferenceDocument(doc);
 						USPFileCreator.createUSPFile(doc);
 					} catch (ParserConfigurationException | TransformerException e) {
 						// TODO Auto-generated catch block
@@ -49,6 +50,7 @@ public class SaveMenuItem extends MenuItem {
 						fileCreator.createFile();
 						if (USPFileCreator.getFile() != null) {
 							Document doc = USPFileCreator.collectProjectSettings();
+							USPFileCreator.setReferenceDocument(doc);
 							USPFileCreator.createUSPFile(doc);
 						}
 					} catch (ResourceProviderException e) {

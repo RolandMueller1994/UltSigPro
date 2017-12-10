@@ -162,11 +162,10 @@ public class USPGui extends Application {
 				} else if (event.getCode().equals(KeyCode.SHIFT)) {
 					shift = false;
 				} else if (event.getCode().equals(KeyCode.F1)) {
-					 Tab selectedTap = pluginPane.getSelectionModel().getSelectedItem();
-					 if(selectedTap != null) {
-						 ((PluginConfigGroup) ((Pane) selectedTap.getContent())
-								 .getChildren().get(0)).fitToScreen();						 
-					 }
+					Tab selectedTap = pluginPane.getSelectionModel().getSelectedItem();
+					if (selectedTap != null) {
+						((PluginConfigGroup) ((Pane) selectedTap.getContent()).getChildren().get(0)).fitToScreen();
+					}
 				}
 			}
 
@@ -186,40 +185,46 @@ public class USPGui extends Application {
 		});
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			// TODO check if there are any changes made to this project
-			// if not -> don't ask to save project
-			// if yes -> ask to save the project
 
 			@Override
 			public void handle(WindowEvent event) {
-				SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
-				Optional<ButtonType> result = dialog.showAndWait();
-				if (result.isPresent() && result.get() == ButtonType.YES) {
-					if (USPFileCreator.getFile() != null) {
-						try {
-							Document doc = USPFileCreator.collectProjectSettings();
-							USPFileCreator.createUSPFile(doc);
-						} catch (ParserConfigurationException | TransformerException e) {
-							e.printStackTrace();
-						}
-					} else {
-						try {
-							USPFileCreator fileCreator = USPFileCreator.getFileCreator();
-							fileCreator.createFile();
+				Document currentProject;
+				try {
+					// check if project has changed since the last time saving
+					// if so, ask the user to save his current project
+					currentProject = USPFileCreator.collectProjectSettings();
+					if (USPFileCreator.projectChangedSinceLastSaving(currentProject)) {
+						SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
+						Optional<ButtonType> result = dialog.showAndWait();
+						if (result.isPresent() && result.get() == ButtonType.YES) {
 							if (USPFileCreator.getFile() != null) {
-								Document doc = USPFileCreator.collectProjectSettings();
-								USPFileCreator.createUSPFile(doc);
+								try {
+									USPFileCreator.createUSPFile(currentProject);
+								} catch (TransformerException e) {
+									e.printStackTrace();
+								}
 							} else {
-								event.consume();
+								try {
+									USPFileCreator fileCreator = USPFileCreator.getFileCreator();
+									fileCreator.createFile();
+									if (USPFileCreator.getFile() != null) {
+										USPFileCreator.createUSPFile(currentProject);
+									} else {
+										event.consume();
+									}
+								} catch (ResourceProviderException | TransformerException e) {
+									e.printStackTrace();
+								}
 							}
-						} catch (ResourceProviderException | TransformerException | ParserConfigurationException e) {
-							e.printStackTrace();
+						} else if (result.isPresent() && result.get() == ButtonType.NO) {
+
+						} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
+							event.consume();
 						}
 					}
-				} else if (result.isPresent() && result.get() == ButtonType.NO) {
-
-				} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
-					event.consume();
+				} catch (ParserConfigurationException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
 			}
 		});
@@ -365,6 +370,10 @@ public class USPGui extends Application {
 		primaryStage.setTitle(languageRes.getLocalizedText(USPGui.class, TITLE));
 		primaryStage.setMaximized(true);
 		primaryStage.show();
+
+		// set initial reference project (here a new blank project)
+		// any changes to this, will be noticed and can be safed before closing
+		USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
 
 	}
 
