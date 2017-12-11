@@ -36,7 +36,7 @@ public class AboutMenuItem extends MenuItem {
 					alert.setTitle(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_TITLE));
 					alert.setHeaderText(lanHandler.getLocalizedText(AboutMenuItem.class, INFO_ALERT_HEADER));
 					
-					Image icon = new Image("file:iconNew.png");
+					Image icon = new Image("file:iconNewSmall.png");
 					ImageView iconView = new ImageView(icon);
 					iconView.setFitHeight(85);
 					iconView.setFitWidth(85);

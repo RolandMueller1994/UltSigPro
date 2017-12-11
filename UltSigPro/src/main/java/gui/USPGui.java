@@ -118,6 +118,8 @@ public class USPGui extends Application {
 
 	private static boolean ctrl = false;
 	private static boolean shift = false;
+	
+	private final double playBackButtonSize = 20;
 
 	/**
 	 * This method must be called at startup. The GUI will be set up.
@@ -194,7 +196,7 @@ public class USPGui extends Application {
 			}
 		});
 
-		Image icon = new Image("file:iconNew.png");
+		Image icon = new Image("file:iconNewSmall.png");
 
 		primaryStage.getIcons().add(icon);
 
@@ -212,7 +214,11 @@ public class USPGui extends Application {
 
 		MenuBar buttonMenu = new MenuBar();
 		Menu startMenu = new Menu();
-		Label startLabel = new Label(languageRes.getLocalizedText("play"));
+		ImageView playButtonImageView = new ImageView(new Image("file:playButton.png"));
+		playButtonImageView.setFitHeight(playBackButtonSize);
+		playButtonImageView.setFitWidth(playBackButtonSize);
+		Label startLabel = new Label();
+		startLabel.setGraphic(playButtonImageView);
 		startLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
@@ -297,7 +303,11 @@ public class USPGui extends Application {
 		});
 		startMenu.setGraphic(startLabel);
 		Menu stopMenu = new Menu();
-		Label stopLabel = new Label(languageRes.getLocalizedText("stop"));
+		ImageView stopButtonImageView = new ImageView(new Image("file:stopButton.png"));
+		stopButtonImageView.setFitHeight(playBackButtonSize);
+		stopButtonImageView.setFitWidth(playBackButtonSize);
+		Label stopLabel = new Label();
+		stopLabel.setGraphic(stopButtonImageView);
 		stopLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
