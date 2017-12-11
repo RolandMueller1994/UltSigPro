@@ -35,7 +35,16 @@ public class SaveProjectDialog extends Dialog<ButtonType> {
 		}
 
 	}
-	
+
+	/**
+	 * Checks if the user wants to save the current project settings before
+	 * closing UltSigPro. Is normally called, when a {@linkplain WindowEvent}
+	 * WINDOW_CLOSE_REQUEST is fired.
+	 * 
+	 * @param event
+	 *            the event which can be consumed if cancel is pressed during
+	 *            the dialog
+	 */
 	public void saveProjectDialogAfterCloseRequest(WindowEvent event) {
 		Document currentProject;
 		try {
@@ -72,11 +81,16 @@ public class SaveProjectDialog extends Dialog<ButtonType> {
 				}
 			}
 		} catch (ParserConfigurationException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
-	
+
+	/**
+	 * Checks if the user wants to save the current project settings before
+	 * creating a new UltSigPro project. Is normally called, when the
+	 * {@linkplain MenuItem} {@linkplain NewProjectMenuItem} is selected.
+	 * 
+	 */
 	public void saveProjectDialogAfterNewProjectRequest() {
 		Document currentProject;
 		try {
@@ -109,15 +123,20 @@ public class SaveProjectDialog extends Dialog<ButtonType> {
 				} else if (result.isPresent() && result.get() == ButtonType.NO) {
 					deleteCurrentProject();
 				} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
-					
+
 				}
 			}
 		} catch (ParserConfigurationException | ResourceProviderException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
-	
+
+	/**
+	 * Deletes the current project with all settings.
+	 * 
+	 * @throws ResourceProviderException
+	 * @throws ParserConfigurationException
+	 */
 	private void deleteCurrentProject() throws ResourceProviderException, ParserConfigurationException {
 		LanguageResourceHandler lanHandler = LanguageResourceHandler.getInstance();
 		USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title"));
