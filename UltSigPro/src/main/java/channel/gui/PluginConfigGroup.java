@@ -287,6 +287,15 @@ public class PluginConfigGroup extends Pane {
 						break;
 					}
 				}
+				
+				boolean coordinatesOnLine = false;
+				
+				for(PluginConnection con : allConnections) {
+					if(con.checkIfCoordinatesOnLine(event.getScreenX(), event.getScreenY())) {
+						coordinatesOnLine = true;
+						break;
+					}
+				}
 
 				if (!hovered && !lineHovered) {
 					if (event.getButton().equals(MouseButton.SECONDARY) && workCon == null
@@ -302,6 +311,12 @@ public class PluginConfigGroup extends Pane {
 					} else if (event.getButton().equals(MouseButton.PRIMARY) && workCon != null) {
 						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
 								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
+					}
+				}
+				
+				if(hovered || !coordinatesOnLine) {
+					for(PluginConnection con : allConnections) {
+						con.removeCurrentSelection();
 					}
 				}
 			}
@@ -439,6 +454,12 @@ public class PluginConfigGroup extends Pane {
 	
 	public void deletePluginConnection(PluginConnection con) {
 		allConnections.remove(con);
+	}
+	
+	public void removeCurrentSelection() {
+		for(PluginConnection con : allConnections) {
+			con.removeCurrentSelection();
+		}
 	}
 
 	public void initializePlay() throws SignalFlowConfigException {

@@ -71,79 +71,94 @@ public class PluginConnection {
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
 		this.configGroup = configGroup;
 	}
-	
+
+	public void removeCurrentSelection() {
+		for (ConnectionLine line : lines) {
+			line.removeHoverForDeletion();
+		}
+	}
+
+	public boolean checkIfCoordinatesOnLine(double screenX, double screenY) {
+		for (ConnectionLine line : lines) {
+			if (line.areCoordinatesOnLine(screenX, screenY)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public double getMaxX() {
 		boolean first = true;
 		double maxX = 0;
-		
-		for(ConnectionLine line : lines) {
+
+		for (ConnectionLine line : lines) {
 			double max = line.getStartX() > line.getEndX() ? line.getStartX() : line.getEndX();
-			
-			if(first) {
+
+			if (first) {
 				maxX = max;
 				first = false;
-			} else if(max > maxX) {
+			} else if (max > maxX) {
 				maxX = max;
 			}
 		}
-		
+
 		return maxX;
 	}
-	
+
 	public double getMaxY() {
 		boolean first = true;
 		double maxY = 0;
-		
-		for(ConnectionLine line : lines) {
+
+		for (ConnectionLine line : lines) {
 			double max = line.getStartY() > line.getEndY() ? line.getStartY() : line.getEndY();
-			
-			if(first) {
+
+			if (first) {
 				maxY = max;
 				first = false;
-			} else if(max > maxY) {
+			} else if (max > maxY) {
 				maxY = max;
 			}
 		}
-		
+
 		return maxY;
 	}
-	
+
 	public double getMinX() {
 		boolean first = true;
 		double minX = 0;
-		
-		for(ConnectionLine line : lines) {
+
+		for (ConnectionLine line : lines) {
 			double min = line.getStartX() < line.getEndX() ? line.getStartX() : line.getEndX();
-			
-			if(first) {
+
+			if (first) {
 				minX = min;
 				first = false;
-			} else if(min > minX) {
+			} else if (min > minX) {
 				minX = min;
 			}
 		}
-		
+
 		return minX;
 	}
 
 	public double getMinY() {
 		boolean first = true;
 		double minY = 0;
-		
-		for(ConnectionLine line : lines) {
+
+		for (ConnectionLine line : lines) {
 			double min = line.getStartY() < line.getEndY() ? line.getStartY() : line.getEndY();
-			
-			if(first) {
+
+			if (first) {
 				minY = min;
 				first = false;
-			} else if(min > minY) {
+			} else if (min > minY) {
 				minY = min;
 			}
 		}
-		
+
 		return minY;
 	}
-	
+
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
 
 		if (!forward) {
@@ -220,20 +235,20 @@ public class PluginConnection {
 	}
 
 	public void setConnectionLinesConfig(NodeList nodeList) {
-		
+
 		int lineCount;
 		int dividerCount;
 		LinkedList<ConnectionLine> newLines = new LinkedList<>();
 		LinkedList<LineDivider> newDividers = new LinkedList<>();
 
-		for(int i=0; i<nodeList.getLength(); i++) {
+		for (int i = 0; i < nodeList.getLength(); i++) {
 			Node conNode = nodeList.item(i);
-			
-			if(conNode.getNodeType() == Node.ELEMENT_NODE) {
+
+			if (conNode.getNodeType() == Node.ELEMENT_NODE) {
 				Element conElement = (Element) conNode;
 				String tagName = conElement.getTagName();
-				
-				if(tagName.equals("lineCount")) {
+
+				if (tagName.equals("lineCount")) {
 					lineCount = new Integer(conElement.getTextContent()).intValue();
 				} else if (tagName.equals("dividerCount")) {
 					dividerCount = new Integer(conElement.getTextContent()).intValue();
@@ -245,19 +260,19 @@ public class PluginConnection {
 					NodeList dividerNodes = conElement.getChildNodes();
 					LineDivider divider = new LineDivider(configGroup, this, dividerNodes);
 					newDividers.add(divider);
-				}			
+				}
 			}
 		}
-		
+
 		HashSet<SigproPlugin> plugins = configGroup.getPlugins();
-		
-		for(ConnectionLine line : newLines) {
+
+		for (ConnectionLine line : newLines) {
 			line.finalizeXMLConfig(plugins, newLines, newDividers);
 			addLine(line);
 			configGroup.getChildren().add(line);
 		}
-		
-		for(LineDivider divider : newDividers) {
+
+		for (LineDivider divider : newDividers) {
 			divider.finalizeXMLConfig(plugins, newLines, newDividers);
 			addDevider(divider);
 		}
@@ -561,14 +576,14 @@ public class PluginConnection {
 	 *            the y-coordinate where the current line should end.
 	 */
 	public void devideActLine(double x, double y) {
-		
+
 		double raster = configGroup.getRaster();
-		
+
 		if (actHorizontal) {
 			double stepX = actLine.getStartX() + (x - actLine.getStartX()) / 2;
 			double stepY = actLine.getStartY();
-			
-			stepX = Math.round(stepX/raster) * raster;
+
+			stepX = Math.round(stepX / raster) * raster;
 
 			actLine.setEndX(stepX);
 
@@ -607,7 +622,7 @@ public class PluginConnection {
 
 		private boolean horizontal;
 		private boolean hoveredForDeletion = false;
-		
+
 		private NodeList xmlConfig;
 
 		private PluginConnection parent;
@@ -644,51 +659,51 @@ public class PluginConnection {
 			this.parent = parent;
 			this.parentPane = parentPane;
 			this.xmlConfig = xmlConfig;
-			
-			for(int i=0; i<xmlConfig.getLength(); i++) {
+
+			for (int i = 0; i < xmlConfig.getLength(); i++) {
 				Node xmlNode = xmlConfig.item(i);
-				if(xmlNode.getNodeType() == Node.ELEMENT_NODE) {
+				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element xmlElement = (Element) xmlNode;
 					String tagName = xmlElement.getTagName();
-					
-					if(tagName.equals("number")) {
+
+					if (tagName.equals("number")) {
 						number = new Integer(xmlElement.getTextContent()).intValue();
 					} else if (tagName.equals("horizontal")) {
 						String textContent = xmlElement.getTextContent();
-						
-						if(textContent.equals("true")) {
+
+						if (textContent.equals("true")) {
 							horizontal = true;
 						} else {
 							horizontal = false;
 						}
 					} else if (tagName.equals("startCoords")) {
 						NodeList coordsNodes = xmlElement.getChildNodes();
-						
-						for(int j=0; j<coordsNodes.getLength(); j++) {
+
+						for (int j = 0; j < coordsNodes.getLength(); j++) {
 							Node coordNode = coordsNodes.item(j);
-							if(coordNode.getNodeType() == Node.ELEMENT_NODE) {
+							if (coordNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element coordElement = (Element) coordNode;
 								String coordTag = coordElement.getTagName();
-								
-								if(coordTag.equals("startX")) {
+
+								if (coordTag.equals("startX")) {
 									setStartX(new Double(coordElement.getTextContent()));
-								} else if(coordTag.equals("startY")) {
+								} else if (coordTag.equals("startY")) {
 									setStartY(new Double(coordElement.getTextContent()));
 								}
 							}
 						}
 					} else if (tagName.equals("endCoords")) {
 						NodeList coordsNodes = xmlElement.getChildNodes();
-						
-						for(int j=0; j<coordsNodes.getLength(); j++) {
+
+						for (int j = 0; j < coordsNodes.getLength(); j++) {
 							Node coordNode = coordsNodes.item(j);
-							if(coordNode.getNodeType() == Node.ELEMENT_NODE) {
+							if (coordNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element coordElement = (Element) coordNode;
 								String coordTag = coordElement.getTagName();
-								
-								if(coordTag.equals("endX")) {
+
+								if (coordTag.equals("endX")) {
 									setEndX(new Double(coordElement.getTextContent()));
-								} else if(coordTag.equals("endY")) {
+								} else if (coordTag.equals("endY")) {
 									setEndY(new Double(coordElement.getTextContent()));
 								}
 							}
@@ -698,57 +713,58 @@ public class PluginConnection {
 			}
 		}
 
-		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines, LinkedList<LineDivider> dividers) {
-			
-			for(int i=0; i<xmlConfig.getLength(); i++) {
+		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines,
+				LinkedList<LineDivider> dividers) {
+
+			for (int i = 0; i < xmlConfig.getLength(); i++) {
 				Node configNode = xmlConfig.item(i);
-				
-				if(configNode.getNodeType() == Node.ELEMENT_NODE) {
+
+				if (configNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element configElement = (Element) configNode;
 					String tagName = configElement.getTagName();
-					
-					if(tagName.equals("firstLine")) {
+
+					if (tagName.equals("firstLine")) {
 						int firstLineNumber = new Integer(configElement.getTextContent());
-						
-						for(ConnectionLine line : lines) {
-							if(line.getNumber() == firstLineNumber) {
+
+						for (ConnectionLine line : lines) {
+							if (line.getNumber() == firstLineNumber) {
 								firstLine = line;
 								break;
 							}
 						}
-					} else if(tagName.equals("secondLine")) {
+					} else if (tagName.equals("secondLine")) {
 						int secondLineNumber = new Integer(configElement.getTextContent());
-						
-						for(ConnectionLine line : lines) {
-							if(line.getNumber() == secondLineNumber) {
+
+						for (ConnectionLine line : lines) {
+							if (line.getNumber() == secondLineNumber) {
 								secondLine = line;
 								break;
 							}
 						}
-					} else if(tagName.equals("firstEnd")) {
+					} else if (tagName.equals("firstEnd")) {
 						NodeList firstEndNodes = configElement.getChildNodes();
-						
-						for(int j=0; j<firstEndNodes.getLength(); j++) {
+
+						for (int j = 0; j < firstEndNodes.getLength(); j++) {
 							Node firstEndNode = firstEndNodes.item(j);
-							
-							if(firstEndNode.getNodeType() == Node.ELEMENT_NODE) {
+
+							if (firstEndNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element firstEndElement = (Element) firstEndNode;
 								String firstEndTagName = firstEndElement.getTagName();
-								
-								if(firstEndTagName.equals("divider")) {
+
+								if (firstEndTagName.equals("divider")) {
 									NodeList dividerNodes = firstEndElement.getChildNodes();
-									
-									for(int a=0; a<dividerNodes.getLength(); a++) {
+
+									for (int a = 0; a < dividerNodes.getLength(); a++) {
 										Node dividerNode = dividerNodes.item(a);
-										
-										if(dividerNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (dividerNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element dividerElement = (Element) dividerNode;
 											String dividerTag = dividerElement.getTagName();
-											if(dividerTag.equals("dividerNumber")) {
+											if (dividerTag.equals("dividerNumber")) {
 												int dividerNumber = new Integer(dividerElement.getTextContent());
-												
-												for(LineDivider divider : dividers) {
-													if(divider.getNumber() == dividerNumber) {
+
+												for (LineDivider divider : dividers) {
+													if (divider.getNumber() == dividerNumber) {
 														firstEnd = divider;
 														break;
 													}
@@ -758,97 +774,97 @@ public class PluginConnection {
 										}
 									}
 									break;
-								} else if(firstEndTagName.equals("pluginInput")) {
+								} else if (firstEndTagName.equals("pluginInput")) {
 									NodeList inputNodes = firstEndElement.getChildNodes();
 									String inputName = null;
 									int inputPluginNumber = 0;
-									for(int a=0; a<inputNodes.getLength(); a++) {
+									for (int a = 0; a < inputNodes.getLength(); a++) {
 										Node inputNode = inputNodes.item(a);
-										
-										if(inputNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (inputNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element inputElement = (Element) inputNode;
 											String inputTag = inputElement.getTagName();
-											if(inputTag.equals("inputName")) {
+											if (inputTag.equals("inputName")) {
 												inputName = inputElement.getTextContent();
-											} else if(inputTag.equals("pluginNumber")) {
+											} else if (inputTag.equals("pluginNumber")) {
 												inputPluginNumber = new Integer(inputElement.getTextContent());
 											}
 										}
 									}
-									
-									for(SigproPlugin plugin : plugins) {
-										if(plugin.getNumber() == inputPluginNumber) {
+
+									for (SigproPlugin plugin : plugins) {
+										if (plugin.getNumber() == inputPluginNumber) {
 											HashSet<Input> inputs = plugin.getInputs();
-											
-											for(Input input : inputs) {
-												if(input.getName().equals(inputName)) {
+
+											for (Input input : inputs) {
+												if (input.getName().equals(inputName)) {
 													firstEnd = input;
 													input.addLine(this);
 												}
 											}
 										}
 									}
-									
+
 									break;
-								} else if(firstEndTagName.equals("pluginOutput")) {
+								} else if (firstEndTagName.equals("pluginOutput")) {
 									NodeList outputNodes = firstEndElement.getChildNodes();
 									String outputName = null;
 									int outputPluginNumber = 0;
-									for(int a=0; a<outputNodes.getLength(); a++) {
+									for (int a = 0; a < outputNodes.getLength(); a++) {
 										Node outputNode = outputNodes.item(a);
-										
-										if(outputNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (outputNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element outputElement = (Element) outputNode;
 											String outputTag = outputElement.getTagName();
-											if(outputTag.equals("outputName")) {
+											if (outputTag.equals("outputName")) {
 												outputName = outputElement.getTextContent();
-											} else if(outputTag.equals("pluginNumber")) {
+											} else if (outputTag.equals("pluginNumber")) {
 												outputPluginNumber = new Integer(outputElement.getTextContent());
 											}
 										}
 									}
-									
-									for(SigproPlugin plugin : plugins) {
-										if(plugin.getNumber() == outputPluginNumber) {
+
+									for (SigproPlugin plugin : plugins) {
+										if (plugin.getNumber() == outputPluginNumber) {
 											HashSet<Output> outputs = plugin.getOutputs();
-											
-											for(Output output : outputs) {
-												if(output.getName().equals(outputName)) {
+
+											for (Output output : outputs) {
+												if (output.getName().equals(outputName)) {
 													firstEnd = output;
 													output.addLine(this);
 												}
 											}
 										}
 									}
-									
+
 									break;
 								}
 							}
 						}
-					} else if(tagName.equals("secondEnd")) {
+					} else if (tagName.equals("secondEnd")) {
 						NodeList secondEndNodes = configElement.getChildNodes();
-						
-						for(int j=0; j<secondEndNodes.getLength(); j++) {
+
+						for (int j = 0; j < secondEndNodes.getLength(); j++) {
 							Node secondEndNode = secondEndNodes.item(j);
-							
-							if(secondEndNode.getNodeType() == Node.ELEMENT_NODE) {
+
+							if (secondEndNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element secondEndElement = (Element) secondEndNode;
 								String secondEndTagName = secondEndElement.getTagName();
-								
-								if(secondEndTagName.equals("divider")) {
+
+								if (secondEndTagName.equals("divider")) {
 									NodeList dividerNodes = secondEndElement.getChildNodes();
-									
-									for(int a=0; a<dividerNodes.getLength(); a++) {
+
+									for (int a = 0; a < dividerNodes.getLength(); a++) {
 										Node dividerNode = dividerNodes.item(a);
-										
-										if(dividerNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (dividerNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element dividerElement = (Element) dividerNode;
 											String dividerTag = dividerElement.getTagName();
-											if(dividerTag.equals("dividerNumber")) {
+											if (dividerTag.equals("dividerNumber")) {
 												int dividerNumber = new Integer(dividerElement.getTextContent());
-												
-												for(LineDivider divider : dividers) {
-													if(divider.getNumber() == dividerNumber) {
+
+												for (LineDivider divider : dividers) {
+													if (divider.getNumber() == dividerNumber) {
 														secondEnd = divider;
 														break;
 													}
@@ -858,69 +874,69 @@ public class PluginConnection {
 										}
 									}
 									break;
-								} else if(secondEndTagName.equals("pluginInput")) {
+								} else if (secondEndTagName.equals("pluginInput")) {
 									NodeList inputNodes = secondEndElement.getChildNodes();
 									String inputName = null;
 									int inputPluginNumber = 0;
-									for(int a=0; a<inputNodes.getLength(); a++) {
+									for (int a = 0; a < inputNodes.getLength(); a++) {
 										Node inputNode = inputNodes.item(a);
-										
-										if(inputNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (inputNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element inputElement = (Element) inputNode;
 											String inputTag = inputElement.getTagName();
-											if(inputTag.equals("inputName")) {
+											if (inputTag.equals("inputName")) {
 												inputName = inputElement.getTextContent();
-											} else if(inputTag.equals("pluginNumber")) {
+											} else if (inputTag.equals("pluginNumber")) {
 												inputPluginNumber = new Integer(inputElement.getTextContent());
 											}
 										}
 									}
-									
-									for(SigproPlugin plugin : plugins) {
-										if(plugin.getNumber() == inputPluginNumber) {
+
+									for (SigproPlugin plugin : plugins) {
+										if (plugin.getNumber() == inputPluginNumber) {
 											HashSet<Input> inputs = plugin.getInputs();
-											
-											for(Input input : inputs) {
-												if(input.getName().equals(inputName)) {
+
+											for (Input input : inputs) {
+												if (input.getName().equals(inputName)) {
 													secondEnd = input;
 													input.addLine(this);
 												}
 											}
 										}
 									}
-									
+
 									break;
-								} else if(secondEndTagName.equals("pluginOutput")) {
+								} else if (secondEndTagName.equals("pluginOutput")) {
 									NodeList outputNodes = secondEndElement.getChildNodes();
 									String outputName = null;
 									int outputPluginNumber = 0;
-									for(int a=0; a<outputNodes.getLength(); a++) {
+									for (int a = 0; a < outputNodes.getLength(); a++) {
 										Node outputNode = outputNodes.item(a);
-										
-										if(outputNode.getNodeType() == Node.ELEMENT_NODE) {
+
+										if (outputNode.getNodeType() == Node.ELEMENT_NODE) {
 											Element outputElement = (Element) outputNode;
 											String outputTag = outputElement.getTagName();
-											if(outputTag.equals("outputName")) {
+											if (outputTag.equals("outputName")) {
 												outputName = outputElement.getTextContent();
-											} else if(outputTag.equals("pluginNumber")) {
+											} else if (outputTag.equals("pluginNumber")) {
 												outputPluginNumber = new Integer(outputElement.getTextContent());
 											}
 										}
 									}
-									
-									for(SigproPlugin plugin : plugins) {
-										if(plugin.getNumber() == outputPluginNumber) {
+
+									for (SigproPlugin plugin : plugins) {
+										if (plugin.getNumber() == outputPluginNumber) {
 											HashSet<Output> outputs = plugin.getOutputs();
-											
-											for(Output output : outputs) {
-												if(output.getName().equals(outputName)) {
+
+											for (Output output : outputs) {
+												if (output.getName().equals(outputName)) {
 													secondEnd = output;
 													output.addLine(this);
 												}
 											}
 										}
 									}
-									
+
 									break;
 								}
 							}
@@ -1069,12 +1085,12 @@ public class PluginConnection {
 		public void delete() {
 			parentPane.removeDeletionLine();
 
-			lines.remove(this);			
-			if(lines.size() == 0) {
+			lines.remove(this);
+			if (lines.size() == 0) {
 				parentPane.deletePluginConnection(parent);
 			}
 			parent = null;
-			
+
 			parentPane.getChildren().remove(dragPane);
 			dragPane = null;
 			parentPane.getChildren().remove(this);
@@ -1156,7 +1172,7 @@ public class PluginConnection {
 					setEndY(y);
 				}
 			}
-			
+
 			updateDragPane();
 		}
 
@@ -1248,7 +1264,7 @@ public class PluginConnection {
 					setStartX(x);
 				}
 			}
-			
+
 			updateDragPane();
 		}
 
@@ -1347,10 +1363,10 @@ public class PluginConnection {
 				double localY = parentPane.screenToLocal(x, y).getY();
 
 				double raster = configGroup.getRaster();
-				
-				localX = Math.round(localX/raster) * raster;
-				localY = Math.round(localY/raster) * raster;
-				
+
+				localX = Math.round(localX / raster) * raster;
+				localY = Math.round(localY / raster) * raster;
+
 				if (horizontal) {
 					setStartY(localY);
 					setEndY(localY);
@@ -1372,6 +1388,12 @@ public class PluginConnection {
 
 				updateDragPane();
 			}
+		}
+
+		private boolean areCoordinatesOnLine(double screenX, double screenY) {
+
+			return dragPane.contains(dragPane.screenToLocal(screenX, screenY).getX(),
+					dragPane.screenToLocal(screenX, screenY).getY());
 		}
 
 		private void updateDragPane() {
@@ -1441,7 +1463,12 @@ public class PluginConnection {
 					public void handle(MouseEvent event) {
 
 						if (!addLineDevider(event.getScreenX(), event.getScreenY())) {
-							setHoveredForDeletion(null, !hoveredForDeletion);
+							if (hoveredForDeletion) {
+								setHoveredForDeletion(null, false);
+							} else {
+								parentPane.removeCurrentSelection();
+								setHoveredForDeletion(null, true);
+							}
 						}
 					}
 
@@ -1492,16 +1519,21 @@ public class PluginConnection {
 			}
 		}
 
+		public void removeHoverForDeletion() {
+			setStroke(Color.BLACK);
+			hoveredForDeletion = false;
+		}
+
 		private boolean addLineDevider(double x, double y) {
 
 			double localX = screenToLocal(x, y).getX();
 			double localY = screenToLocal(x, y).getY();
 
 			double raster = parentPane.getRaster();
-			
-			localX = Math.round(localX/raster) * raster;
-			localY = Math.round(localY/raster) * raster;
-			
+
+			localX = Math.round(localX / raster) * raster;
+			localY = Math.round(localY / raster) * raster;
+
 			if (hovered) {
 				if (horizontal) {
 					ConnectionLine leftLine;
@@ -1693,14 +1725,14 @@ public class PluginConnection {
 			this.parentPane = parentPane;
 			this.parent = parent;
 			this.xmlConfig = xmlConfig;
-			
-			for(int i=0; i<xmlConfig.getLength(); i++) {
+
+			for (int i = 0; i < xmlConfig.getLength(); i++) {
 				Node xmlNode = xmlConfig.item(i);
-				if(xmlNode.getNodeType() == Node.ELEMENT_NODE) {
+				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element xmlElement = (Element) xmlNode;
 					String tagName = xmlElement.getTagName();
-					
-					if(tagName.equals("number")) {
+
+					if (tagName.equals("number")) {
 						number = new Integer(xmlElement.getTextContent()).intValue();
 					} else if (tagName.equals("xCoord")) {
 						setCenterX(new Double(xmlElement.getTextContent()));
@@ -1709,7 +1741,7 @@ public class PluginConnection {
 					}
 				}
 			}
-			
+
 			setRadius(DIAMETER / 2);
 
 			parentPane.getChildren().addAll(this);
@@ -1719,54 +1751,54 @@ public class PluginConnection {
 
 		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines,
 				LinkedList<LineDivider> dividers) {
-			
-			for(int a=0; a<xmlConfig.getLength(); a++) {
+
+			for (int a = 0; a < xmlConfig.getLength(); a++) {
 				Node xmlNode = xmlConfig.item(a);
-				
-				if(xmlNode.getNodeType() == Node.ELEMENT_NODE) {
+
+				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element xmlElement = (Element) xmlNode;
 					String tagName = xmlElement.getTagName();
-					
-					if(tagName.equals("lines")) {
+
+					if (tagName.equals("lines")) {
 						NodeList lineNodes = xmlElement.getChildNodes();
-						
-						for(int b=0; b<lineNodes.getLength(); b++) {
+
+						for (int b = 0; b < lineNodes.getLength(); b++) {
 							Node lineNode = lineNodes.item(b);
-							
-							if(lineNode.getNodeType() == Node.ELEMENT_NODE) {
+
+							if (lineNode.getNodeType() == Node.ELEMENT_NODE) {
 								Element lineElement = (Element) lineNode;
 								String lineTag = lineElement.getTagName();
-								
+
 								LineDividerPosition pos = null;
 								int lineNumber = 0;
-								
-								if(lineTag.equals("north")) {
+
+								if (lineTag.equals("north")) {
 									pos = LineDividerPosition.NORTH;
 									lineNumber = new Integer(lineElement.getTextContent());
-								} else if(lineTag.equals("south")) {
+								} else if (lineTag.equals("south")) {
 									pos = LineDividerPosition.SOUTH;
-									lineNumber = new Integer(lineElement.getTextContent());									
-								} else if(lineTag.equals("east")) {
+									lineNumber = new Integer(lineElement.getTextContent());
+								} else if (lineTag.equals("east")) {
 									pos = LineDividerPosition.EAST;
 									lineNumber = new Integer(lineElement.getTextContent());
-								} else if(lineTag.equals("west")) {
+								} else if (lineTag.equals("west")) {
 									pos = LineDividerPosition.WEST;
 									lineNumber = new Integer(lineElement.getTextContent());
 								}
-								
+
 								ConnectionLine line = null;
-								
-								for(ConnectionLine curLine : lines) {
-									if(curLine.getNumber() == lineNumber) {
+
+								for (ConnectionLine curLine : lines) {
+									if (curLine.getNumber() == lineNumber) {
 										line = curLine;
 										break;
 									}
 								}
 								addLineWithPos(pos, line);
 							}
-							
+
 						}
-						
+
 						break;
 					}
 				}
@@ -1807,7 +1839,8 @@ public class PluginConnection {
 			if (connectionLines.containsKey(pos)) {
 				String posStr = pos.toString();
 				Element lineElement = doc.createElement(posStr);
-				lineElement.appendChild(doc.createTextNode(new Integer(connectionLines.get(pos).getNumber()).toString()));
+				lineElement
+						.appendChild(doc.createTextNode(new Integer(connectionLines.get(pos).getNumber()).toString()));
 				element.appendChild(lineElement);
 			}
 		}
@@ -1817,10 +1850,10 @@ public class PluginConnection {
 			double localY = parentPane.screenToLocal(screenX, screenY).getY();
 
 			double raster = parentPane.getRaster();
-			
-			localX = Math.round(localX/raster) * raster;
-			localY = Math.round(localY/raster) * raster;
-			
+
+			localX = Math.round(localX / raster) * raster;
+			localY = Math.round(localY / raster) * raster;
+
 			setCenterX(localX);
 			setCenterY(localY);
 
