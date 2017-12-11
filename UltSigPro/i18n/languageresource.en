@@ -22,8 +22,8 @@ gui.USPGui.signalFlowAlertTextOutput=There is no connection to the output!
 gui.USPGui.signalFlowAlertTextConnection=There are unconnected plugin inputs/outputs. 
 gui.USPGui.signalFlowAlertChannel=Channel
 
-gui.USPGui$SaveProjectBeforeClosingDialog.title=Save project
-gui.USPGui$SaveProjectBeforeClosingDialog.header=Save project before quitting?
+gui.menubar.SaveProjectDialog.title=Save project
+gui.menubar.SaveProjectDialog.header=The current project contains unsaved changes. %crSave these changes before closing this project?
 
 gui.menubar.NewProjectMenuItem.title=New project
 gui.menubar.SaveMenuItem.title=Save
@@ -56,7 +56,7 @@ gui.menubar.AboutMenuItem.infoAlertContent=UltimateSignalProcessing%cr%crPlugin-
 
 gui.menubar.LanguageMenuItem$ChangeLanguageDialog.title=Change language
 gui.menubar.LanguageMenuItem.infoAlertHeader=Restart necessary!
-gui.menubar.LanguageMenuItem.infoAlertContent=To apply the changed language settings, UltSigPro must be closed and restarted.
+gui.menubar.LanguageMenuItem.infoAlertContent=To apply the changed language settings, UltSigPro needs to be closed and restarted.
 
 gui.menubar.USPFileReader$MissingResourcesDialog.title=Missing resources
 gui.menubar.USPFileReader$MissingResourcesDialog.header=An error occured while loading the project file.%crFor missing devices, check if they are connected and ready for use.%crIn case of missing wave files make sure, that they have not been deleted, postponed or renamed.  

@@ -30,14 +30,12 @@ public class USPFileCreator {
 
 	private static USPFileCreator fileCreator;
 	private static File file;
-	private static boolean fileCreated;
 	private static Document referenceDocument;
 
 	public static USPFileCreator getFileCreator() {
 
 		if (fileCreator == null) {
 			fileCreator = new USPFileCreator();
-			fileCreated = false;
 		}
 		return fileCreator;
 	}
@@ -56,7 +54,6 @@ public class USPFileCreator {
 		// add file name in the header line
 		if (file != null) {
 			USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title") + " - " + file.getName());
-			fileCreated = true;
 		}
 
 		return file;

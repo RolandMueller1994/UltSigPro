@@ -33,6 +33,7 @@ import channel.gui.SignalFlowConfigException;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.menubar.MenuBarCreator;
 import gui.menubar.SaveMenuItem;
+import gui.menubar.SaveProjectDialog;
 import gui.menubar.USPFileCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
@@ -188,44 +189,8 @@ public class USPGui extends Application {
 
 			@Override
 			public void handle(WindowEvent event) {
-				Document currentProject;
-				try {
-					// check if project has changed since the last time saving
-					// if so, ask the user to save his current project
-					currentProject = USPFileCreator.collectProjectSettings();
-					if (USPFileCreator.projectChangedSinceLastSaving(currentProject)) {
-						SaveProjectBeforeClosingDialog dialog = new SaveProjectBeforeClosingDialog();
-						Optional<ButtonType> result = dialog.showAndWait();
-						if (result.isPresent() && result.get() == ButtonType.YES) {
-							if (USPFileCreator.getFile() != null) {
-								try {
-									USPFileCreator.createUSPFile(currentProject);
-								} catch (TransformerException e) {
-									e.printStackTrace();
-								}
-							} else {
-								try {
-									USPFileCreator fileCreator = USPFileCreator.getFileCreator();
-									fileCreator.createFile();
-									if (USPFileCreator.getFile() != null) {
-										USPFileCreator.createUSPFile(currentProject);
-									} else {
-										event.consume();
-									}
-								} catch (ResourceProviderException | TransformerException e) {
-									e.printStackTrace();
-								}
-							}
-						} else if (result.isPresent() && result.get() == ButtonType.NO) {
-
-						} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
-							event.consume();
-						}
-					}
-				} catch (ParserConfigurationException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				SaveProjectDialog dialog = new SaveProjectDialog();
+				dialog.saveProjectDialogAfterCloseRequest(event);
 			}
 		});
 
@@ -479,29 +444,5 @@ public class USPGui extends Application {
 
 	public static Stage getStage() {
 		return stage;
-	}
-
-	private class SaveProjectBeforeClosingDialog extends Dialog<ButtonType> {
-
-		private static final String TITLE = "title";
-		private static final String HEADER = "header";
-
-		private SaveProjectBeforeClosingDialog() {
-
-			initOwner(USPGui.stage);
-			initStyle(StageStyle.UTILITY);
-			try {
-				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(SaveProjectBeforeClosingDialog.class,
-						TITLE));
-				setHeaderText(LanguageResourceHandler.getInstance()
-						.getLocalizedText(SaveProjectBeforeClosingDialog.class, HEADER));
-			} catch (ResourceProviderException e) {
-				e.printStackTrace();
-			}
-			getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-			getDialogPane().getButtonTypes().add(ButtonType.YES);
-			getDialogPane().getButtonTypes().add(ButtonType.NO);
-
-		}
 	}
 }

@@ -1,8 +1,5 @@
 package gui.menubar;
 
-import javax.xml.parsers.ParserConfigurationException;
-
-import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -23,22 +20,8 @@ public class NewProjectMenuItem extends MenuItem {
 
 			@Override
 			public void handle(ActionEvent event) {
-				LanguageResourceHandler lanHandler;
-				try {
-					lanHandler = LanguageResourceHandler.getInstance();
-					USPGui.getStage().setTitle(lanHandler.getLocalizedText(USPGui.class, "title"));
-					USPFileCreator.setFile(null);
-				} catch (ResourceProviderException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				USPGui.deleteAllChannels();
-				try {
-					USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
-				} catch (ParserConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				SaveProjectDialog dialog = new SaveProjectDialog();
+				dialog.saveProjectDialogAfterNewProjectRequest();
 			}
 		});
 	}
