@@ -1069,7 +1069,12 @@ public class PluginConnection {
 		public void delete() {
 			parentPane.removeDeletionLine();
 
-			lines.remove(this);
+			lines.remove(this);			
+			if(lines.size() == 0) {
+				parentPane.deletePluginConnection(parent);
+			}
+			parent = null;
+			
 			parentPane.getChildren().remove(dragPane);
 			dragPane = null;
 			parentPane.getChildren().remove(this);
