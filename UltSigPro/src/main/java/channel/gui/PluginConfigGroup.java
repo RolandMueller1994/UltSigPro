@@ -436,6 +436,10 @@ public class PluginConfigGroup extends Pane {
 			}
 		}
 	}
+	
+	public void deletePluginConnection(PluginConnection con) {
+		allConnections.remove(con);
+	}
 
 	public void initializePlay() throws SignalFlowConfigException {
 
