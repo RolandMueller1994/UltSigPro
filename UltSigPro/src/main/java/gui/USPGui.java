@@ -196,7 +196,7 @@ public class USPGui extends Application {
 			}
 		});
 
-		Image icon = new Image("file:iconNew.png");
+		Image icon = new Image("file:iconNewSmall.png");
 
 		primaryStage.getIcons().add(icon);
 
