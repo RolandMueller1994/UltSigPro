@@ -1,24 +1,22 @@
 package plugins.sigproplugins.internal;
 
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
 import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
+import guicomponents.DoubleTextField;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import plugins.sigproplugins.SigproPlugin;
@@ -39,7 +37,7 @@ public class GainBlock extends SigproPlugin {
 	private final int height = 120;
 	
 	private Label nameLabel = new Label(name);
-	private TextField gainTextField = new TextField();
+	private DoubleTextField gainTextField = new DoubleTextField(1.0, 0.0, 20.0);
 	private Button onButton = new Button("On");
 	private Rectangle onRect = new Rectangle(width - 10, 25);
 	
@@ -71,6 +69,8 @@ public class GainBlock extends SigproPlugin {
 		onRect.setFill(Color.GREY);
 		onRect.setArcHeight(3);
 		onRect.setArcWidth(3);
+		
+		gainTextField.setValue(1.0);
 	}
 
 	@Override

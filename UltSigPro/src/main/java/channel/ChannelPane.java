@@ -4,29 +4,27 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Observer;
 
 import javax.annotation.Nonnull;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.sun.prism.paint.Color;
-
 import gui.USPGui;
 import gui.soundLevelDisplay.SoundLevelBar;
-import guicomponents.DecimalTextField;
+import guicomponents.AbstractNumberTextField.ValueChangedInterface;
+import guicomponents.DoubleTextField;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
@@ -40,10 +38,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -251,8 +245,8 @@ public class ChannelPane extends TitledPane {
 			deviceColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, String>("device"));
 			deviceColumn.setPrefWidth(100);
 
-			TableColumn<DeviceGainTuple, DecimalTextField> gainColumn = new TableColumn<>("Gain");
-			gainColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, DecimalTextField>("gain"));
+			TableColumn<DeviceGainTuple, DoubleTextField> gainColumn = new TableColumn<>("Gain");
+			gainColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, DoubleTextField>("gain"));
 			gainColumn.setPrefWidth(100);
 
 			for (String device : inputDevices) {
@@ -290,23 +284,13 @@ public class ChannelPane extends TitledPane {
 		private void addDevice(String device) {
 			DeviceGainTuple deviceGainTuple = new DeviceGainTuple(device, 1.0);
 			tableRows.add(deviceGainTuple);
-			deviceGainTuple.getGain().textProperty().addListener(new ChangeListener<String>() {
+			
+			deviceGainTuple.getGain().registerValueChangedListener(new ValueChangedInterface() {
+
 				@Override
-				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-					deviceGainTuple.getGain().setStyle("-fx-text-fill: mediumblue; -fx-font-weight: bold");
-					}
-			});
-				
-			deviceGainTuple.getGain().setOnKeyPressed(new EventHandler<KeyEvent>() {
-				@Override
-				public void handle(KeyEvent key) {
-					if (key.getCode().equals(KeyCode.ENTER)) {
-						if (!deviceGainTuple.getGain().getText().isEmpty()) {
-							InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel, device,
-									deviceGainTuple.getGain().getValue());
-							deviceGainTuple.getGain().setStyle("-fx-text-fill: black");
-						}
-					}
+				public void valueChanged(Number value) {
+					InputAdministrator.getInputAdminstrator().inputLevelMultiplierChanged(channel, device,
+							(Double) value);
 				}
 			});
 		}
@@ -401,8 +385,8 @@ public class ChannelPane extends TitledPane {
 			deviceColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, String>("device"));
 			deviceColumn.setPrefWidth(100);
 
-			TableColumn<DeviceGainTuple, DecimalTextField> gainColumn = new TableColumn<>("Gain");
-			gainColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, DecimalTextField>("gain"));
+			TableColumn<DeviceGainTuple, DoubleTextField> gainColumn = new TableColumn<>("Gain");
+			gainColumn.setCellValueFactory(new PropertyValueFactory<DeviceGainTuple, DoubleTextField>("gain"));
 			gainColumn.setPrefWidth(100);
 
 			for (String device : outputDevices) {
@@ -448,23 +432,13 @@ public class ChannelPane extends TitledPane {
 		private void addDevice(String device) {
 			DeviceGainTuple deviceGainTuple = new DeviceGainTuple(device, 1.0);
 			tableRows.add(deviceGainTuple);
-			deviceGainTuple.getGain().textProperty().addListener(new ChangeListener<String>() {
+			
+			deviceGainTuple.getGain().registerValueChangedListener(new ValueChangedInterface() {
+
 				@Override
-				public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-					deviceGainTuple.getGain().setStyle("-fx-text-fill: mediumblue; -fx-font-weight: bold");
-					}
-			});
-				
-			deviceGainTuple.getGain().setOnKeyPressed(new EventHandler<KeyEvent>() {
-				@Override
-				public void handle(KeyEvent key) {
-					if (key.getCode().equals(KeyCode.ENTER)) {
-						if(!deviceGainTuple.getGain().getText().isEmpty()) {
-							OutputAdministrator.getOutputAdministrator().outputLevelMultiplierChanged(channel, device,
-									deviceGainTuple.getGain().getValue());
-							deviceGainTuple.getGain().setStyle("-fx-text-fill: black");
-						}
-					}
+				public void valueChanged(Number value) {
+					OutputAdministrator.getOutputAdministrator().outputLevelMultiplierChanged(channel, device,
+							(Double) value);
 				}
 			});
 		}
@@ -501,19 +475,19 @@ public class ChannelPane extends TitledPane {
 
 	public class DeviceGainTuple {
 
-		private DecimalTextField gain = new DecimalTextField();
+		private DoubleTextField gain;
 		private SimpleStringProperty device;
 
 		public DeviceGainTuple(String device, double gain) {
 			this.device = new SimpleStringProperty(device);
-			this.gain.setValue(gain);
+			this.gain = new DoubleTextField(gain, 0.0, 20.0);
 		}
 
-		public DecimalTextField getGain() {
+		public DoubleTextField getGain() {
 			return gain;
 		}
 
-		public void setGain(DecimalTextField gain) {
+		public void setGain(DoubleTextField gain) {
 			this.gain = gain;
 		}
 

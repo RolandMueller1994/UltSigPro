@@ -44,7 +44,7 @@ dependencies {
     
 	compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
 
-	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: '5322673735'
+	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: '6aed26deef'
 	compile group: 'com.github.RolandMueller1994', name: 'javasignalprocessingtools', version: '9ea139a326'
 	
 
