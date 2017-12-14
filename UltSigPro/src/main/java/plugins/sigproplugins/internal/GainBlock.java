@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
+import guicomponents.AbstractNumberTextField.ValueChangedInterface;
 import guicomponents.DoubleTextField;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -29,7 +30,7 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class GainBlock extends SigproPlugin {
 
-	private double gain = 0.8;
+	private double gain = 1.0;
 	
 	private String name = "Gain";
 	
@@ -37,7 +38,7 @@ public class GainBlock extends SigproPlugin {
 	private final int height = 120;
 	
 	private Label nameLabel = new Label(name);
-	private DoubleTextField gainTextField = new DoubleTextField(1.0, 0.0, 20.0);
+	private DoubleTextField gainTextField = new DoubleTextField(gain, 0.0, 20.0);
 	private Button onButton = new Button("On");
 	private Rectangle onRect = new Rectangle(width - 10, 25);
 	
@@ -61,6 +62,16 @@ public class GainBlock extends SigproPlugin {
 				}
 				
 			}
+		});
+		
+		gainTextField.registerValueChangedListener(new ValueChangedInterface() {
+
+			@Override
+			public void valueChanged(Number value) {
+				
+				gain = ((Double) value).doubleValue();			
+			}
+			
 		});
 		
 		nameLabel.setMaxWidth(width - 10);
