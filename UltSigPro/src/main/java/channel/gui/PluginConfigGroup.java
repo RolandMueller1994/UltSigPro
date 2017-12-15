@@ -53,6 +53,7 @@ import javafx.scene.paint.Color;
 import plugins.PluginManager;
 import plugins.sigproplugins.SigproPlugin;
 import plugins.sigproplugins.internal.GainBlock;
+import plugins.sigproplugins.signalrouting.WaveChartProbe;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -76,6 +77,7 @@ public class PluginConfigGroup extends Pane {
 	private HashSet<SigproPlugin> plugins = new HashSet<>();
 	private SigproPlugin output;
 	private SigproPlugin input;
+	private SigproPlugin waveChartProbe;
 
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
@@ -221,6 +223,9 @@ public class PluginConfigGroup extends Pane {
 			addPlugin(channel.getPluginOutput(), maxBounds/2 + USPGui.stage.getWidth() - 100, maxBounds/2 + 100);		
 			output = channel.getPluginOutput();
 		}
+		
+		waveChartProbe = new WaveChartProbe(channel.getChannelPane());
+		addPlugin(waveChartProbe, maxBounds/2 + USPGui.stage.getWidth() - 100, maxBounds/2 + 200);
 		
 		addEventHandler(MouseEvent.MOUSE_MOVED, new EventHandler<MouseEvent>() {
 

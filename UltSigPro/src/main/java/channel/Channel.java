@@ -82,8 +82,6 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 	@Override
 	public void putData(int[] data) {
 
-		pane.insertWaveChartData(data);
-
 		synchronized (inputQueue) {
 			inputQueue.add(data);
 		}
@@ -93,6 +91,10 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		return channelConfig;
 	}
 
+	public ChannelPane getChannelPane() {
+		return pane;
+	}
+	
 	public void addInputDevice(String device) {
 		if(inputDevices.isEmpty()) {
 			pluginInput = new PluginInput();
@@ -263,28 +265,30 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 
 			LinkedList<OutputDataWrapper> outputDataWrappers = inputInfo.getDestPlugin()
 					.putData(inputInfo.getDestInput(), data);
-
-			for (OutputDataWrapper outputWrapper : outputDataWrappers) {
-				if (outputWrapper.getOutputInfo().getSourcePlugin().equals(pluginOutput)) {
-					outputData = outputWrapper.getOutputData();
-				} else {
-					LinkedList<InputInfoWrapper> inputInfoWrapperList = dataflowMap.get(outputWrapper.getOutputInfo());
-
-					if(inputInfoWrapperList != null) {
-						for (InputInfoWrapper inputInfoWrapper : inputInfoWrapperList) {
-							
-							double[] newData = new double[outputWrapper.getOutputData().length];
-							System.arraycopy(outputWrapper.getOutputData(), 0, newData, 0,
-									outputWrapper.getOutputData().length);
-							
-							double[] recursiveOutputData = recursiveSignalProcessing(inputInfoWrapper, newData);
-							
-							if (recursiveOutputData != null) {
-								outputData = recursiveOutputData;
-							}
-						}						
+			
+			if(outputDataWrappers != null) {
+				for (OutputDataWrapper outputWrapper : outputDataWrappers) {
+					if (outputWrapper.getOutputInfo().getSourcePlugin().equals(pluginOutput)) {
+						outputData = outputWrapper.getOutputData();
+					} else {
+						LinkedList<InputInfoWrapper> inputInfoWrapperList = dataflowMap.get(outputWrapper.getOutputInfo());
+						
+						if(inputInfoWrapperList != null) {
+							for (InputInfoWrapper inputInfoWrapper : inputInfoWrapperList) {
+								
+								double[] newData = new double[outputWrapper.getOutputData().length];
+								System.arraycopy(outputWrapper.getOutputData(), 0, newData, 0,
+										outputWrapper.getOutputData().length);
+								
+								double[] recursiveOutputData = recursiveSignalProcessing(inputInfoWrapper, newData);
+								
+								if (recursiveOutputData != null) {
+									outputData = recursiveOutputData;
+								}
+							}						
+						}
 					}
-				}
+				}				
 			}
 
 			return outputData;

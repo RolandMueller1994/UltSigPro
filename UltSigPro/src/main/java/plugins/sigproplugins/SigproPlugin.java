@@ -26,6 +26,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
+import plugins.sigproplugins.signalrouting.WaveChartProbe;
 
 /**
  * Basic interface for signal processing plugins. Every plugin has to implement
@@ -64,7 +65,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			gui = new Pane();
 
 			contextMenu = new ContextMenu();
-			if(!(this instanceof PluginInput) && !(this instanceof PluginOutput)) {
+			if(!(this instanceof PluginInput) && !(this instanceof PluginOutput) && !(this instanceof WaveChartProbe)) {
 				MenuItem deleteItem = new MenuItem("Löschen");
 				deleteItem.setOnAction(new EventHandler<ActionEvent>() {
 					
