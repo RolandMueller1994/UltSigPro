@@ -472,6 +472,8 @@ public class PluginConfigGroup extends Pane {
 		HashMap<OutputInfoWrapper, LinkedList<InputInfoWrapper>> dataFlowMap = new HashMap<>();
 		boolean isOutput = false;
 		
+		System.out.println("Size: " + allConnections.size());
+		
 		for (PluginConnection connection : allConnections) {
 
 			OutputInfoWrapper outputWrapper = null;
@@ -487,6 +489,9 @@ public class PluginConfigGroup extends Pane {
 
 				for (Input input : connection.getInputs()) {
 					inputWrappers.add(new InputInfoWrapper(input.getPlugin(), input.getName()));
+					
+					System.out.println(input.getPlugin().getName());
+					
 					if(input.getPlugin().equals(output)) {
 						isOutput = true;
 					}

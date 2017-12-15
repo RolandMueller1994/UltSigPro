@@ -279,6 +279,8 @@ public class PluginConnection {
 	}
 
 	private void unifyConnectionsDevider() {
+		
+		System.out.println("Unify called");
 
 		HashSet<ConnectionLine> removeLines = new HashSet<>();
 
@@ -462,7 +464,6 @@ public class PluginConnection {
 	}
 
 	private void addLine(ConnectionLine line) {
-
 		lines.add(line);
 		line.registerMaxCoordinatesUpdateListener(configGroup);
 	}
@@ -1085,7 +1086,7 @@ public class PluginConnection {
 		public void delete() {
 			parentPane.removeDeletionLine();
 
-			lines.remove(this);
+			parent.lines.remove(this);
 			if (lines.size() == 0) {
 				parentPane.deletePluginConnection(parent);
 			}
