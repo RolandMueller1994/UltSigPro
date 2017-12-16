@@ -188,13 +188,18 @@ public class ChannelPane extends TitledPane {
 		}
 
 	}
-	
-	public String lookForDeviceGain(String device) {
-		ObservableList<DeviceGainTuple> allDevices = inputPane.getDeviceGainTable().getItems();
-		allDevices.addAll(outputPane.getDeviceGainTable().getItems());
-		for(DeviceGainTuple allDevice : allDevices) {
-			if (device.equals(allDevice.getDevice())) {
-				return allDevice.getGain().getValue().toString();
+
+	public String lookForDeviceGain(String deviceName) {
+		ObservableList<DeviceGainTuple> inputDevices = inputPane.getDeviceGainTable().getItems();
+		ObservableList<DeviceGainTuple> outputDevices = outputPane.getDeviceGainTable().getItems();
+		for (DeviceGainTuple device : inputDevices) {
+			if (deviceName.equals(device.getDevice())) {
+				return device.getGain().getValue().toString();
+			}
+		}
+		for (DeviceGainTuple device : outputDevices) {
+			if (deviceName.equals(device.getDevice())) {
+				return device.getGain().getValue().toString();
 			}
 		}
 		return "1.0";
@@ -236,6 +241,22 @@ public class ChannelPane extends TitledPane {
 
 	public Channel getChannel() {
 		return channel;
+	}
+
+	public InputPane getInputPane() {
+		return inputPane;
+	}
+
+	public TableView<DeviceGainTuple> getInputDeviceGainTable() {
+		return inputPane.getDeviceGainTable();
+	}
+	
+	public TableView<DeviceGainTuple> getOutputDeviceGainTable() {
+		return outputPane.getDeviceGainTable();
+	}
+
+	public OutputPane getOutputPane() {
+		return outputPane;
 	}
 
 	private class InputPane extends Pane {
@@ -460,7 +481,7 @@ public class ChannelPane extends TitledPane {
 			addButton.setDisable(!b);
 			removeButton.setDisable(!b);
 		}
-		
+
 		public TableView<DeviceGainTuple> getDeviceGainTable() {
 			return deviceGainTable;
 		}
