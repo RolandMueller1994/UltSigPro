@@ -125,6 +125,8 @@ public class SaveProjectDialog extends Dialog<ButtonType> {
 				} else if (result.isPresent() && result.get() == ButtonType.CANCEL) {
 
 				}
+			} else {
+				deleteCurrentProject();
 			}
 		} catch (ParserConfigurationException | ResourceProviderException e1) {
 			e1.printStackTrace();
