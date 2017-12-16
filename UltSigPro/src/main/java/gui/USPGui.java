@@ -119,7 +119,7 @@ public class USPGui extends Application {
 	private static boolean ctrl = false;
 	private static boolean shift = false;
 	
-	private final double playBackButtonSize = 20;
+	private final double playBackButtonSize = 30;
 
 	/**
 	 * This method must be called at startup. The GUI will be set up.

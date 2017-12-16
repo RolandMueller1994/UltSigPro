@@ -141,31 +141,63 @@ public class ChannelPane extends TitledPane {
 
 		// input device elements
 		for (String inputDevice : inputDevices) {
-			Element inputDeviceName = doc.createElement("inputDevice");
+			Element inputDeviceElement = doc.createElement("inputDevice");
+			Element inputDeviceName = doc.createElement("name");
+			Element inputDeviceGain = doc.createElement("gain");
 			inputDeviceName.appendChild(doc.createTextNode(inputDevice));
-			channel.appendChild(inputDeviceName);
+			inputDeviceGain.appendChild(doc.createTextNode(lookForDeviceGain(inputDevice)));
+			inputDeviceElement.appendChild(inputDeviceName);
+			inputDeviceElement.appendChild(inputDeviceGain);
+			channel.appendChild(inputDeviceElement);
 		}
 
 		// output device elements
 		for (String outputDevice : outputDevices) {
-			Element outputDeviceName = doc.createElement("outputDevice");
+			Element outputDeviceElement = doc.createElement("outputDevice");
+			Element outputDeviceName = doc.createElement("name");
+			Element outputDeviceGain = doc.createElement("gain");
 			outputDeviceName.appendChild(doc.createTextNode(outputDevice));
-			channel.appendChild(outputDeviceName);
+			outputDeviceGain.appendChild(doc.createTextNode(lookForDeviceGain(outputDevice)));
+			outputDeviceElement.appendChild(outputDeviceName);
+			outputDeviceElement.appendChild(outputDeviceGain);
+			channel.appendChild(outputDeviceElement);
 		}
 
 		// input wave files
 		for (File inputWaveFile : inputWaveFiles) {
-			Element inputWaveFilePath = doc.createElement("inputWave");
-			inputWaveFilePath.appendChild(doc.createTextNode(inputWaveFile.getAbsolutePath()));
-			channel.appendChild(inputWaveFilePath);
+			Element inputWaveElement = doc.createElement("inputWave");
+			Element inputWavePath = doc.createElement("filePath");
+			Element inputWaveGain = doc.createElement("gain");
+			inputWavePath.appendChild(doc.createTextNode(inputWaveFile.getAbsolutePath()));
+			inputWaveGain.appendChild(doc.createTextNode(lookForDeviceGain(inputWaveFile.getName())));
+			inputWaveElement.appendChild(inputWavePath);
+			inputWaveElement.appendChild(inputWaveGain);
+			channel.appendChild(inputWaveElement);
 		}
 
 		// output wave files
 		for (File outputWaveFile : outputWaveFiles) {
-			Element outputWaveFilePath = doc.createElement("outputWave");
-			outputWaveFilePath.appendChild(doc.createTextNode(outputWaveFile.getAbsolutePath()));
-			channel.appendChild(outputWaveFilePath);
+			Element outputWaveElement = doc.createElement("outputWave");
+			Element outputWavePath = doc.createElement("filePath");
+			Element outputWaveGain = doc.createElement("gain");
+			outputWavePath.appendChild(doc.createTextNode(outputWaveFile.getAbsolutePath()));
+			outputWaveGain.appendChild(doc.createTextNode(lookForDeviceGain(outputWaveFile.getName())));
+			outputWaveElement.appendChild(outputWavePath);
+			outputWaveElement.appendChild(outputWaveGain);
+			channel.appendChild(outputWaveElement);
 		}
+
+	}
+	
+	public String lookForDeviceGain(String device) {
+		ObservableList<DeviceGainTuple> allDevices = inputPane.getDeviceGainTable().getItems();
+		allDevices.addAll(outputPane.getDeviceGainTable().getItems());
+		for(DeviceGainTuple allDevice : allDevices) {
+			if (device.equals(allDevice.getDevice())) {
+				return allDevice.getGain().getValue().toString();
+			}
+		}
+		return "1.0";
 	}
 
 	public void insertWaveChartData(int[] data) {
@@ -284,7 +316,7 @@ public class ChannelPane extends TitledPane {
 		private void addDevice(String device) {
 			DeviceGainTuple deviceGainTuple = new DeviceGainTuple(device, 1.0);
 			tableRows.add(deviceGainTuple);
-			
+
 			deviceGainTuple.getGain().registerValueChangedListener(new ValueChangedInterface() {
 
 				@Override
@@ -329,8 +361,8 @@ public class ChannelPane extends TitledPane {
 			// }
 		}
 
-		public ListView<String> getTable() {
-			return null;
+		public TableView<DeviceGainTuple> getDeviceGainTable() {
+			return deviceGainTable;
 		}
 
 		public void addInput(String device) {
@@ -429,10 +461,14 @@ public class ChannelPane extends TitledPane {
 			removeButton.setDisable(!b);
 		}
 		
+		public TableView<DeviceGainTuple> getDeviceGainTable() {
+			return deviceGainTable;
+		}
+
 		private void addDevice(String device) {
 			DeviceGainTuple deviceGainTuple = new DeviceGainTuple(device, 1.0);
 			tableRows.add(deviceGainTuple);
-			
+
 			deviceGainTuple.getGain().registerValueChangedListener(new ValueChangedInterface() {
 
 				@Override
@@ -607,164 +643,178 @@ public class ChannelPane extends TitledPane {
 						}
 					}
 				});
-			}else
+			} else
 
-		{
-			setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_REMOVE_TITLE));
-			ObservableList<String> outputDevices = FXCollections.observableArrayList();
-			for (String device : getChannelConfig().getOutputDevices()) {
-				outputDevices.add(device);
+			{
+				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, OUTPUT_REMOVE_TITLE));
+				ObservableList<String> outputDevices = FXCollections.observableArrayList();
+				for (String device : getChannelConfig().getOutputDevices()) {
+					outputDevices.add(device);
+				}
+				choiceBox.setItems(outputDevices);
+				ObservableList<String> outputDevicesWave = FXCollections.observableArrayList();
+				for (String wave : getChannelConfig().getOutputWaveFiles().keySet()) {
+					outputDevicesWave.add(wave);
+				}
+				choiceBoxWave.setItems(outputDevicesWave);
 			}
-			choiceBox.setItems(outputDevices);
-			ObservableList<String> outputDevicesWave = FXCollections.observableArrayList();
-			for (String wave : getChannelConfig().getOutputWaveFiles().keySet()) {
-				outputDevicesWave.add(wave);
-			}
-			choiceBoxWave.setItems(outputDevicesWave);
+
+			Label deviceLabel = new Label(lanHandler.getLocalizedText(AddRemoveDialog.class, DEVICE_LABEL));
+			Label deviceLabelWave = new Label(lanHandler.getLocalizedText(AddRemoveDialog.class, DEVICE_LABEL_WAVE));
+
+			choiceBox.setMaxWidth(Double.MAX_VALUE);
+			choiceBoxWave.setMaxWidth(Double.MAX_VALUE);
+			GridPane gridPane = new GridPane();
+			gridPane.setPadding(new Insets(5));
+			gridPane.setHgap(5);
+			gridPane.setVgap(5);
+			gridPane.add(deviceLabel, 0, 0);
+			gridPane.add(choiceBox, 1, 0);
+			gridPane.add(deviceLabelWave, 0, 1);
+			gridPane.add(choiceBoxWave, 1, 1);
+			GridPane.setHgrow(choiceBox, Priority.ALWAYS);
+			GridPane.setHgrow(choiceBoxWave, Priority.ALWAYS);
+			GridPane.setHalignment(choiceBox, HPos.LEFT);
+			GridPane.setHalignment(deviceLabel, HPos.RIGHT);
+			GridPane.setHalignment(choiceBoxWave, HPos.LEFT);
+			GridPane.setHalignment(deviceLabelWave, HPos.RIGHT);
+			dialogPane.setContent(gridPane);
+
+			Button applyButton = (Button) dialogPane.lookupButton(ButtonType.APPLY);
+			applyButton.addEventFilter(ActionEvent.ACTION, e -> {
+				selected = choiceBox.getSelectionModel().getSelectedItem();
+				selectedWaveName = choiceBoxWave.getSelectionModel().getSelectedItem();
+				if (selected == null && (selectedWaveName == null || (selectedWave == null && add))) {
+					Alert alert = new Alert(AlertType.WARNING);
+					alert.setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_TITLE));
+					alert.setHeaderText(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_HEADER));
+					alert.showAndWait();
+					e.consume();
+				} else if (add) {
+
+					if (input) {
+
+						if (selected != null) {
+							for (String device : channel.getChannelConfig().getInputDevices()) {
+								if (device.equals(selected)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+
+						if (selectedWave != null && selectedWaveName != null) {
+							for (String file : channel.getChannelConfig().getInputWaveFiles().keySet()) {
+								if (file.equals(selectedWaveName)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+
+						if (selected != null) {
+							inputAdmin.addDeviceToInputDataListener(channel, selected);
+							inputPane.addDevice(selected);
+							channel.addInputDevice(selected);
+							getChannelConfig().addInputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, true);
+						}
+
+						if (selectedWave != null && selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, selectedWave);
+							inputAdmin.openWaveFiles(waveFiles, channel);
+
+							inputPane.addDevice(selectedWaveName);
+							channel.addInputDevice(selectedWaveName);
+							getChannelConfig().addInputWaveFile(selectedWaveName, selectedWave);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
+						}
+					} else {
+
+						if (selected != null) {
+							for (String device : channel.getChannelConfig().getOutputDevices()) {
+								if (device.equals(selected)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+
+						if (selectedWave != null && selectedWaveName != null) {
+							for (String file : channel.getChannelConfig().getOutputWaveFiles().keySet()) {
+								if (file.equals(selectedWaveName)) {
+									duplicateAlert.showAndWait();
+									e.consume();
+									return;
+								}
+							}
+						}
+
+						if (selected != null) {
+							outputAdmin.addSoundOutputDeviceToSpeaker(channel, selected);
+							outputPane.addDevice(selected);
+							channel.addOutputDevice(selected);
+							getChannelConfig().addOutputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, false);
+						}
+
+						if (selectedWave != null && selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, selectedWave);
+							outputAdmin.setWaveFileEntries(waveFiles, channel);
+							outputPane.addDevice(selectedWaveName);
+							channel.addOutputDevice(selectedWaveName);
+							getChannelConfig().addOutputWaveFile(selectedWaveName, selectedWave);
+							SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, false);
+						}
+					}
+				} else {
+					if (input) {
+						if (selected != null) {
+							inputAdmin.removeDeviceFromInputDataListener(channel, selected);
+							inputPane.removeDevice(selected);
+							channel.removeInputDevice(selected);
+							getChannelConfig().removeInputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, true);
+						}
+
+						if (selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, null);
+							inputAdmin.removeWaveFiles(waveFiles, channel);
+							inputPane.removeDevice(selectedWaveName);
+							channel.removeInputDevice(selectedWaveName);
+							getChannelConfig().removeInputWaveFile(selectedWaveName);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, true);
+						}
+					} else {
+						if (selected != null) {
+							outputAdmin.removeDeviceFromOutputDataSpeaker(channel, selected);
+							outputPane.removeDevice(selected);
+							channel.removeOutputDevice(selected);
+							getChannelConfig().removeOutputDevice(selected);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, false);
+						}
+
+						if (selectedWaveName != null) {
+							HashMap<String, File> waveFiles = new HashMap<>();
+							waveFiles.put(selectedWaveName, null);
+							outputAdmin.removeWaveFileEntries(waveFiles, channel);
+							outputPane.removeDevice(selectedWaveName);
+							channel.removeOutputDevice(selectedWaveName);
+							getChannelConfig().removeOutputWaveFile(selectedWaveName);
+							SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
+						}
+					}
+				}
+			});
+
 		}
 
-		Label deviceLabel = new Label(lanHandler.getLocalizedText(AddRemoveDialog.class, DEVICE_LABEL));
-		Label deviceLabelWave = new Label(lanHandler.getLocalizedText(AddRemoveDialog.class, DEVICE_LABEL_WAVE));
-
-		choiceBox.setMaxWidth(Double.MAX_VALUE);choiceBoxWave.setMaxWidth(Double.MAX_VALUE);
-		GridPane gridPane = new GridPane();gridPane.setPadding(new Insets(5));gridPane.setHgap(5);gridPane.setVgap(5);gridPane.add(deviceLabel,0,0);gridPane.add(choiceBox,1,0);gridPane.add(deviceLabelWave,0,1);gridPane.add(choiceBoxWave,1,1);GridPane.setHgrow(choiceBox,Priority.ALWAYS);GridPane.setHgrow(choiceBoxWave,Priority.ALWAYS);GridPane.setHalignment(choiceBox,HPos.LEFT);GridPane.setHalignment(deviceLabel,HPos.RIGHT);GridPane.setHalignment(choiceBoxWave,HPos.LEFT);GridPane.setHalignment(deviceLabelWave,HPos.RIGHT);dialogPane.setContent(gridPane);
-
-		Button applyButton = (Button) dialogPane
-				.lookupButton(ButtonType.APPLY);applyButton.addEventFilter(ActionEvent.ACTION,e->
-		{
-			selected = choiceBox.getSelectionModel().getSelectedItem();
-			selectedWaveName = choiceBoxWave.getSelectionModel().getSelectedItem();
-			if (selected == null && (selectedWaveName == null || (selectedWave == null && add))) {
-				Alert alert = new Alert(AlertType.WARNING);
-				alert.setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_TITLE));
-				alert.setHeaderText(lanHandler.getLocalizedText(AddRemoveDialog.class, EMPTY_ALERT_HEADER));
-				alert.showAndWait();
-				e.consume();
-			} else if (add) {
-
-				if (input) {
-
-					if (selected != null) {
-						for (String device : channel.getChannelConfig().getInputDevices()) {
-							if (device.equals(selected)) {
-								duplicateAlert.showAndWait();
-								e.consume();
-								return;
-							}
-						}
-					}
-
-					if (selectedWave != null && selectedWaveName != null) {
-						for (String file : channel.getChannelConfig().getInputWaveFiles().keySet()) {
-							if (file.equals(selectedWaveName)) {
-								duplicateAlert.showAndWait();
-								e.consume();
-								return;
-							}
-						}
-					}
-
-					if (selected != null) {
-						inputAdmin.addDeviceToInputDataListener(channel, selected);
-						inputPane.addDevice(selected);
-						channel.addInputDevice(selected);
-						getChannelConfig().addInputDevice(selected);
-						SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, true);
-					}
-
-					if (selectedWave != null && selectedWaveName != null) {
-						HashMap<String, File> waveFiles = new HashMap<>();
-						waveFiles.put(selectedWaveName, selectedWave);
-						inputAdmin.openWaveFiles(waveFiles, channel);
-
-						inputPane.addDevice(selectedWaveName);
-						channel.addInputDevice(selectedWaveName);
-						getChannelConfig().addInputWaveFile(selectedWaveName, selectedWave);
-						SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, true);
-					}
-				} else {
-
-					if (selected != null) {
-						for (String device : channel.getChannelConfig().getOutputDevices()) {
-							if (device.equals(selected)) {
-								duplicateAlert.showAndWait();
-								e.consume();
-								return;
-							}
-						}
-					}
-
-					if (selectedWave != null && selectedWaveName != null) {
-						for (String file : channel.getChannelConfig().getOutputWaveFiles().keySet()) {
-							if (file.equals(selectedWaveName)) {
-								duplicateAlert.showAndWait();
-								e.consume();
-								return;
-							}
-						}
-					}
-
-					if (selected != null) {
-						outputAdmin.addSoundOutputDeviceToSpeaker(channel, selected);
-						outputPane.addDevice(selected);
-						channel.addOutputDevice(selected);
-						getChannelConfig().addOutputDevice(selected);
-						SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selected, channel, false);
-					}
-
-					if (selectedWave != null && selectedWaveName != null) {
-						HashMap<String, File> waveFiles = new HashMap<>();
-						waveFiles.put(selectedWaveName, selectedWave);
-						outputAdmin.setWaveFileEntries(waveFiles, channel);
-						outputPane.addDevice(selectedWaveName);
-						channel.addOutputDevice(selectedWaveName);
-						getChannelConfig().addOutputWaveFile(selectedWaveName, selectedWave);
-						SoundLevelBar.getSoundLevelBar().addDeviceToChannel(selectedWaveName, channel, false);
-					}
-				}
-			} else {
-				if (input) {
-					if (selected != null) {
-						inputAdmin.removeDeviceFromInputDataListener(channel, selected);
-						inputPane.removeDevice(selected);
-						channel.removeInputDevice(selected);
-						getChannelConfig().removeInputDevice(selected);
-						SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, true);
-					}
-
-					if (selectedWaveName != null) {
-						HashMap<String, File> waveFiles = new HashMap<>();
-						waveFiles.put(selectedWaveName, null);
-						inputAdmin.removeWaveFiles(waveFiles, channel);
-						inputPane.removeDevice(selectedWaveName);
-						channel.removeInputDevice(selectedWaveName);
-						getChannelConfig().removeInputWaveFile(selectedWaveName);
-						SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, true);
-					}
-				} else {
-					if (selected != null) {
-						outputAdmin.removeDeviceFromOutputDataSpeaker(channel, selected);
-						outputPane.removeDevice(selected);
-						channel.removeOutputDevice(selected);
-						getChannelConfig().removeOutputDevice(selected);
-						SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selected, channel, false);
-					}
-
-					if (selectedWaveName != null) {
-						HashMap<String, File> waveFiles = new HashMap<>();
-						waveFiles.put(selectedWaveName, null);
-						outputAdmin.removeWaveFileEntries(waveFiles, channel);
-						outputPane.removeDevice(selectedWaveName);
-						channel.removeOutputDevice(selectedWaveName);
-						getChannelConfig().removeOutputWaveFile(selectedWaveName);
-						SoundLevelBar.getSoundLevelBar().removeDeviceFromChannel(selectedWaveName, channel, false);
-					}
-				}
-			}
-		});
-
 	}
-
-}
 
 }
