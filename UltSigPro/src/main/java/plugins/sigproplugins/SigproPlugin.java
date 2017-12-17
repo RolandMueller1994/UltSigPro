@@ -27,6 +27,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
 import plugins.sigproplugins.signalrouting.WaveChartProbe;
+import resourceframework.ResourceProviderException;
 
 /**
  * Basic interface for signal processing plugins. Every plugin has to implement

@@ -5,6 +5,8 @@ import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.WindowEvent;
 import resourceframework.ResourceProviderException;
 

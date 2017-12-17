@@ -10,6 +10,8 @@ import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -27,9 +29,12 @@ import resourceframework.ResourceProviderException;
 public class SaveMenuItem extends MenuItem {
 
 	private static final String TITLE = "title";
+	
 
 	public SaveMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(SaveMenuItem.class, TITLE));
+		ImageView saveMenuItemIcon = new ImageView(new Image("file:icons/saveMenuItemIcon.png"));
+		super.setGraphic(saveMenuItemIcon);
 		super.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
 		super.setOnAction(new EventHandler<ActionEvent>() {
 			@Override

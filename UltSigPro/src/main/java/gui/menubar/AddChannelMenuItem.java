@@ -293,9 +293,11 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 			});
 
-			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			Button addButton = new Button();
+			addButton.getStyleClass().add("plusButton");
 			addButton.setFocusTraversable(false);
-			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			Button removeButton = new Button();
+			removeButton.getStyleClass().add("minusButton");
 			removeButton.setFocusTraversable(false);
 			GridPane.getHgrow(removeButton);
 			removeButton.setMaxWidth(Double.MAX_VALUE);
@@ -400,9 +402,11 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 			});
 
-			Button addButton = new Button(lanHandler.getLocalizedText("add"));
+			Button addButton = new Button();
+			addButton.getStyleClass().add("plusButton");
 			addButton.setFocusTraversable(false);
-			Button removeButton = new Button(lanHandler.getLocalizedText("remove"));
+			Button removeButton = new Button();
+			removeButton.getStyleClass().add("minusButton");
 			removeButton.setFocusTraversable(false);
 			GridPane.getHgrow(removeButton);
 			removeButton.setMaxWidth(Double.MAX_VALUE);

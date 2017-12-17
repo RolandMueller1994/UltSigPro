@@ -11,6 +11,8 @@ import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -23,6 +25,8 @@ public class SaveAsMenuItem extends MenuItem {
 	public SaveAsMenuItem() throws ResourceProviderException {		
 		super(LanguageResourceHandler.getInstance().getLocalizedText(SaveAsMenuItem.class, TITLE));	
 		super.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN));
+		ImageView saveAsMenuItem = new ImageView(new Image("file:icons/saveAsMenuItemIcon.png"));
+		super.setGraphic(saveAsMenuItem);
 		super.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {

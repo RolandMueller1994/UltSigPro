@@ -4,6 +4,8 @@ import i18n.LanguageResourceHandler;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -15,6 +17,8 @@ public class NewProjectMenuItem extends MenuItem {
 
 	public NewProjectMenuItem() throws ResourceProviderException {
 		super(LanguageResourceHandler.getInstance().getLocalizedText(NewProjectMenuItem.class, TITLE));
+		ImageView newProjectMenuItem = new ImageView(new Image("file:icons/newProjectMenuItemIcon.png"));
+		super.setGraphic(newProjectMenuItem);
 		super.setAccelerator(new KeyCodeCombination(KeyCode.N, KeyCombination.SHORTCUT_DOWN));
 		super.setOnAction(new EventHandler<ActionEvent>() {
 

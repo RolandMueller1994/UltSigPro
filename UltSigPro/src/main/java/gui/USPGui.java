@@ -52,6 +52,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -214,7 +215,7 @@ public class USPGui extends Application {
 
 		MenuBar buttonMenu = new MenuBar();
 		Menu startMenu = new Menu();
-		ImageView playButtonImageView = new ImageView(new Image("file:playButton.png"));
+		ImageView playButtonImageView = new ImageView(new Image("file:icons/playButtonNew.png"));
 		playButtonImageView.setFitHeight(playBackButtonSize);
 		playButtonImageView.setFitWidth(playBackButtonSize);
 		Label startLabel = new Label();
@@ -302,8 +303,9 @@ public class USPGui extends Application {
 
 		});
 		startMenu.setGraphic(startLabel);
+		
 		Menu stopMenu = new Menu();
-		ImageView stopButtonImageView = new ImageView(new Image("file:stopButton.png"));
+		ImageView stopButtonImageView = new ImageView(new Image("file:icons/stopButtonNew.png"));
 		stopButtonImageView.setFitHeight(playBackButtonSize);
 		stopButtonImageView.setFitWidth(playBackButtonSize);
 		Label stopLabel = new Label();
@@ -317,7 +319,7 @@ public class USPGui extends Application {
 		});
 
 		stopMenu.setGraphic(stopLabel);
-
+		
 		buttonMenu.getMenus().addAll(startMenu, stopMenu);
 
 		vBox.getChildren().addAll(menuBar, buttonMenu);
@@ -331,6 +333,7 @@ public class USPGui extends Application {
 		SplitPane centerSplit = new SplitPane();
 		centerSplit.setOrientation(Orientation.VERTICAL);
 		pluginPane = new TabPane();
+		pluginPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 		ScrollPane channelScroll = new ScrollPane();
 		channelScroll.setFitToWidth(true);
 		channelBox = new VBox();
@@ -341,6 +344,7 @@ public class USPGui extends Application {
 		pane.setBottom(soundLevelBar);
 
 		Scene scene = new Scene(pane);
+		scene.getStylesheets().add("file:USPStyleSheet.css");
 		primaryStage.setScene(scene);
 		primaryStage.setTitle(languageRes.getLocalizedText(USPGui.class, TITLE));
 		primaryStage.setMaximized(true);
@@ -433,6 +437,7 @@ public class USPGui extends Application {
 			while (iter.hasNext()) {
 				((ChannelPane) iter.next()).setPlay(false);
 			}
+			
 		}
 	}
 

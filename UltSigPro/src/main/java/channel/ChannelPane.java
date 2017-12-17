@@ -250,7 +250,7 @@ public class ChannelPane extends TitledPane {
 	public TableView<DeviceGainTuple> getInputDeviceGainTable() {
 		return inputPane.getDeviceGainTable();
 	}
-	
+
 	public TableView<DeviceGainTuple> getOutputDeviceGainTable() {
 		return outputPane.getDeviceGainTable();
 	}
@@ -268,7 +268,8 @@ public class ChannelPane extends TitledPane {
 		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
 		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles) {
-			addButton = new Button("+");
+			addButton = new Button();
+			addButton.getStyleClass().add("plusButton");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -278,7 +279,8 @@ public class ChannelPane extends TitledPane {
 				}
 
 			});
-			removeButton = new Button("-");
+			removeButton = new Button();
+			removeButton.getStyleClass().add("minusButton");
 			removeButton.setMaxWidth(Double.MAX_VALUE);
 			removeButton.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -408,7 +410,8 @@ public class ChannelPane extends TitledPane {
 		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
 		public OutputPane(Collection<String> outputDevices, Collection<String> waveFiles) {
-			addButton = new Button("+");
+			addButton = new Button();
+			addButton.getStyleClass().add("plusButton");
 			addButton.setMaxWidth(Double.MAX_VALUE);
 			addButton.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -418,7 +421,8 @@ public class ChannelPane extends TitledPane {
 				}
 
 			});
-			removeButton = new Button("-");
+			removeButton = new Button();
+			removeButton.getStyleClass().add("minusButton");
 			removeButton.setMaxWidth(Double.MAX_VALUE);
 			removeButton.setOnAction(new EventHandler<ActionEvent>() {
 

@@ -8,6 +8,8 @@ import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -20,10 +22,10 @@ public class WaveChartProbe extends SigproPlugin {
 
 	private String name = "Probe";
 
-	private final int height = 30;
-	private final int width = 55;
+	private final int height = 50;
+	private final int width = 50;
 
-	private Label label = new Label(name);
+	private Label label = new Label();
 	private ChannelPane channelPane;
 	
 	public WaveChartProbe(ChannelPane channelPane) {
@@ -71,11 +73,10 @@ public class WaveChartProbe extends SigproPlugin {
 			gui.setMaxSize(width, height);
 			
 			GridPane grid = new GridPane();
-			grid.setPadding(new Insets(5));
 			grid.add(label, 0, 0);
-
+			ImageView stopButtonImageView = new ImageView(new Image("file:icons/waveChartProbeIcon.png"));
+			label.setGraphic(stopButtonImageView);
 			gui.getChildren().add(grid);
-			gui.setBackground(new Background(new BackgroundFill(Color.DARKGRAY, new CornerRadii(3), Insets.EMPTY)));
 		}
 		return gui;
 	}

@@ -70,10 +70,10 @@ public class PluginManagerMenuItem extends MenuItem {
 		private DialogPane dialogPane;
 		private ListView<String> commonList = new ListView<> ();
 		private ListView<String> sigproList = new ListView<> ();
-		private Button addCommonButton = new Button("+");
-		private Button removeCommonButton = new Button("-");
-		private Button addSigproButton = new Button("+");
-		private Button removeSigproButton = new Button("-");
+		private Button addCommonButton = new Button();
+		private Button removeCommonButton = new Button();
+		private Button addSigproButton = new Button();
+		private Button removeSigproButton = new Button();
 		private Label commonTextField = new Label(lanHandler.getLocalizedText(PluginManagerDialog.class, COMMON));
 		private Label sigproTextField = new Label(lanHandler.getLocalizedText(PluginManagerDialog.class, SIGPRO));
 		private ScrollPane commonScrollPane = new ScrollPane();
@@ -92,12 +92,19 @@ public class PluginManagerMenuItem extends MenuItem {
 					
 			addCommonButton.setMaxWidth(Double.MAX_VALUE);
 			addCommonButton.setMinWidth(BUTTON_WIDTH);
+			addCommonButton.getStyleClass().add("plusButton");
+			
 			removeCommonButton.setMaxWidth(Double.MAX_VALUE);
 			removeCommonButton.setMinWidth(BUTTON_WIDTH);
+			removeCommonButton.getStyleClass().add("minusButton");
+			
 			addSigproButton.setMaxWidth(Double.MAX_VALUE);
 			addSigproButton.setMinWidth(BUTTON_WIDTH);
+			addSigproButton.getStyleClass().add("plusButton");
+			
 			removeSigproButton.setMaxWidth(Double.MAX_VALUE);
 			removeSigproButton.setMinWidth(BUTTON_WIDTH);
+			removeSigproButton.getStyleClass().add("minusButton");
 			
 			commonList.setPrefHeight(LIST_HEIGHT);
 			sigproList.setPrefHeight(LIST_HEIGHT);

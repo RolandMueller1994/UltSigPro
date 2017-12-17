@@ -9,11 +9,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import channel.Channel;
 import channel.ChannelConfig;
+import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TitledPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -70,7 +73,9 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 			TitledPane inputPane = new TitledPane();
 			inputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, INPUT_TITLE));
+			ImageView inputIconImageView = new ImageView(new Image("file:icons/inputIconSmall.png"));
 			inputPane.setCollapsible(false);
+			inputPane.setGraphic(inputIconImageView);
 			inputPane.setContent(inputDevicesBar);
 			inputPane.setMaxWidth(Double.MAX_VALUE);
 			inputPane.setMinHeight(HEIGHT);
@@ -78,15 +83,17 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 			TitledPane outputPane = new TitledPane();
 			outputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, OUTPUT_TITLE));
+			ImageView outputIconImageView = new ImageView(new Image("file:icons/outputIconSmall.png"));
 			outputPane.setCollapsible(false);
+			outputPane.setGraphic(outputIconImageView);
 			outputPane.setContent(outputDevicesBar);
 			outputPane.setMaxWidth(Double.MAX_VALUE);
-			GridPane.setHgrow(outputPane, Priority.ALWAYS);
 			outputPane.setMinHeight(HEIGHT);
+			GridPane.setHgrow(outputPane, Priority.ALWAYS);
 
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
-
+			
 			inputDeviceItems = new HashMap<>();
 			outputDeviceItems = new HashMap<>();
 
