@@ -11,14 +11,17 @@ import channel.Channel;
 import channel.ChannelConfig;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import resourceframework.ResourceProviderException;
 
@@ -28,6 +31,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	private static final String OUTPUT_TITLE = "outputTitle";
 
 	private static final int HEIGHT = 85;
+	private static final double TITLE_HEIGHT = 27;
 
 	private LanguageResourceHandler lanHandler;
 
@@ -80,6 +84,15 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			inputPane.setMaxWidth(Double.MAX_VALUE);
 			inputPane.setMinHeight(HEIGHT);
 			GridPane.setHgrow(inputPane, Priority.ALWAYS);
+			Platform.runLater(new Runnable() {
+
+				@Override
+				public void run() {
+					Pane outputHeader = (Pane) inputPane.lookup(".title");
+					outputHeader.setPrefHeight(TITLE_HEIGHT);
+				}
+				
+			});
 
 			TitledPane outputPane = new TitledPane();
 			outputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, OUTPUT_TITLE));
@@ -90,6 +103,22 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			outputPane.setMaxWidth(Double.MAX_VALUE);
 			outputPane.setMinHeight(HEIGHT);
 			GridPane.setHgrow(outputPane, Priority.ALWAYS);
+			Platform.runLater(new Runnable() {
+
+				@Override
+				public void run() {
+					Pane outputHeader = (Pane) outputPane.lookup(".title");
+					outputHeader.setPrefHeight(TITLE_HEIGHT);
+				}
+				
+			});
+			
+			ColumnConstraints inputCol = new ColumnConstraints();
+			inputCol.setPercentWidth(50);
+			ColumnConstraints outputCol = new ColumnConstraints();
+			inputCol.setPercentWidth(50);
+			
+			getColumnConstraints().addAll(inputCol, outputCol);
 
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
