@@ -142,7 +142,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 					
 					if(!recursivity) {						
 						for (Line line : lines) {
-							line.setStroke(Color.RED);
+							line.setStyle("-fx-stroke: -usp-light-blue");
 						}
 						hovered = true;						
 					}
@@ -156,7 +156,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 			public void handle(MouseEvent event) {
 
 				for (Line line : lines) {
-					line.setStroke(Color.BLACK);
+					line.setStyle("-fx-stroke: black");
 				}
 				hovered = false;
 			}
