@@ -2,6 +2,7 @@ package gui.menubar;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -111,7 +112,7 @@ public class USPFileReader {
 							} else {
 								missingResources.add(deviceName);
 							}
-							
+
 						} else if (tagName == "outputDevice") {
 							NodeList deviceEntryNodeList = channelItemElement.getChildNodes();
 							String deviceName = new String();
@@ -125,14 +126,14 @@ public class USPFileReader {
 									} else if (deviceElement.getTagName() == "gain") {
 										gainValue = Double.parseDouble(deviceElement.getTextContent());
 									}
-								} 
+								}
 							}
 							if (OutputAdministrator.getOutputAdministrator().deviceAvailable(deviceName)) {
 								outputDevices.put(deviceName, new DoubleTextField(gainValue, 0.0, 20.0));
 							} else {
 								missingResources.add(deviceName);
 							}
-							
+
 						} else if (tagName == "inputWave") {
 							NodeList waveEntryNodeList = channelItemElement.getChildNodes();
 							File inputFile = null;
@@ -154,7 +155,7 @@ public class USPFileReader {
 							} else {
 								missingResources.add(inputFile.getAbsolutePath());
 							}
-							
+
 						} else if (tagName == "outputWave") {
 							NodeList waveEntryNodeList = channelItemElement.getChildNodes();
 							File outputFile = null;
@@ -176,7 +177,7 @@ public class USPFileReader {
 							} else {
 								missingResources.add(outputFile.getAbsolutePath());
 							}
-							
+
 						} else if (tagName == "plugin") {
 							NodeList pluginEntryNodeList = channelItemElement.getChildNodes();
 							String plugin = null;
@@ -199,13 +200,12 @@ public class USPFileReader {
 					}
 				}
 			}
-			
-			USPGui.addChannel(new ChannelConfig(channelName, inputDevices.keySet(), outputDevices.keySet(), choosedInputWaveFiles,
-					choosedOutputWaveFiles));
+			USPGui.addChannel(new ChannelConfig(channelName, new LinkedList<String>(inputDevices.keySet()),
+					new LinkedList<String>(outputDevices.keySet()), choosedInputWaveFiles, choosedOutputWaveFiles));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
 			TableView<DeviceGainTuple> inputGainTable = pane.getInputDeviceGainTable();
 			TableView<DeviceGainTuple> outputGainTable = pane.getOutputDeviceGainTable();
-			
+
 			for (DeviceGainTuple tuple : inputGainTable.getItems()) {
 				if (inputDevices.containsKey(tuple.getDevice())) {
 					tuple.setGain(inputDevices.get(tuple.getDevice()));
@@ -213,7 +213,7 @@ public class USPFileReader {
 					tuple.setGain(inputWaveGain.get(tuple.getDevice()));
 				}
 			}
-			
+
 			for (DeviceGainTuple tuple : outputGainTable.getItems()) {
 				if (outputDevices.containsKey(tuple.getDevice())) {
 					tuple.setGain(outputDevices.get(tuple.getDevice()));
@@ -221,48 +221,53 @@ public class USPFileReader {
 					tuple.setGain(outputWaveGain.get(tuple.getDevice()));
 				}
 			}
-			
+
 			for (PluginXMLConfigWrapper plugin : plugins) {
 				if (!plugin.getName().equals("Output") && !plugin.getName().equals("Input")) {
-					SigproPlugin current = USPGui.getPluginConfigGroup(pane).createPluginFromProjectFile(plugin.getName());
+					SigproPlugin current = USPGui.getPluginConfigGroup(pane)
+							.createPluginFromProjectFile(plugin.getName());
 					current.setPluginInfo(plugin.getConfigNode());
-				} else if(plugin.getName().equals("Output")) {
+				} else if (plugin.getName().equals("Output")) {
 					pane.getChannel().getPluginOutput().setPluginInfo(plugin.getConfigNode());
-				} else if(plugin.getName().equals("Input")) {
+				} else if (plugin.getName().equals("Input")) {
 					pane.getChannel().getPluginInput().setPluginInfo(plugin.getConfigNode());
 				}
 			}
-			
+
 			for (Element conElem : connectionLines) {
 				USPGui.getPluginConfigGroup(pane).createConnectionFromProjectFile(conElem);
 			}
-			
+
 			if (missingResources.size() != 0) {
 				new MissingResourcesDialog(missingResources);
 			}
 
 		}
 	}
-	
+
 	/**
-	 * Shows missing resources when a .usp project file is loaded and devices/waves could not be loaded. 
+	 * Shows missing resources when a .usp project file is loaded and
+	 * devices/waves could not be loaded.
+	 * 
 	 * @author Kone
 	 *
 	 */
 	private class MissingResourcesDialog extends Alert {
-		
+
 		private static final String TITLE = "title";
 		private static final String HEADER = "header";
 		private static final String CONTENT = "content";
-		
+
 		private MissingResourcesDialog(List<String> missingResources) {
 			super(AlertType.ERROR);
 			initOwner(USPGui.stage);
 			initStyle(StageStyle.UTILITY);
 			try {
 				setTitle(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, TITLE));
-				setHeaderText(LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, HEADER));
-				String contentString = LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, CONTENT);
+				setHeaderText(
+						LanguageResourceHandler.getInstance().getLocalizedText(MissingResourcesDialog.class, HEADER));
+				String contentString = LanguageResourceHandler.getInstance()
+						.getLocalizedText(MissingResourcesDialog.class, CONTENT);
 				for (String missingResource : missingResources) {
 					contentString = contentString + ("\u2022 " + missingResource + "\n\n");
 				}
@@ -270,26 +275,28 @@ public class USPFileReader {
 			} catch (ResourceProviderException e) {
 				e.printStackTrace();
 			}
-			
+
 			showAndWait();
 		}
 	}
-	
-	private class PluginXMLConfigWrapper{
-		
+
+	private class PluginXMLConfigWrapper {
+
 		String name;
 		Node configNode;
-		
+
 		public PluginXMLConfigWrapper(String name, Node configNode) {
 			this.name = name;
 			this.configNode = configNode;
 		}
+
 		public String getName() {
 			return name;
 		}
+
 		public Node getConfigNode() {
 			return configNode;
 		}
-		
+
 	}
 }
