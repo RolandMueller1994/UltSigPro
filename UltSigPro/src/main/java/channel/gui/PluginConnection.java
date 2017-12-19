@@ -1438,7 +1438,7 @@ public class PluginConnection {
 
 							if (!checkRekusivity(endpoints, !parentPane.getWorkCon().hasInput())) {
 								parentPane.setLineHovered(true);
-								setStroke(Color.RED);
+								setStyle("-fx-stroke: -usp-light-blue");
 								hovered = true;
 							}
 
@@ -1453,7 +1453,7 @@ public class PluginConnection {
 						if (!hoveredForDeletion) {
 							parentPane.setLineHovered(false);
 							hovered = false;
-							setStroke(Color.BLACK);
+							setStyle("-fx-stroke: black");
 						}
 					}
 				});
@@ -1511,10 +1511,10 @@ public class PluginConnection {
 				}
 
 				if (hoverDel) {
-					setStroke(Color.RED);
+					setStyle("-fx-stroke: -usp-light-blue");
 					hoveredForDeletion = true;
 				} else {
-					setStroke(Color.BLACK);
+					setStyle("-fx-stroke: black");
 					hoveredForDeletion = false;
 				}
 			}
