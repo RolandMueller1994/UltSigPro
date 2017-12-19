@@ -234,7 +234,6 @@ public class ChannelPane extends TitledPane {
 	}
 
 	private void deleteThisChannel() {
-		channel.delete();
 		USPGui.deleteChannel(this);
 		SoundLevelBar.getSoundLevelBar().removeChannelSoundDevices(channel.getChannelConfig());
 	}
