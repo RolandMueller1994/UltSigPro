@@ -27,6 +27,7 @@ import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableView;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.StageStyle;
 import outputhandler.OutputAdministrator;
 import plugins.sigproplugins.SigproPlugin;
@@ -67,11 +68,11 @@ public class USPFileReader {
 
 			Node channel = nodeList.item(i);
 			String channelName = new String();
-			HashMap<String, DoubleTextField> inputDevices = new HashMap<>();
-			HashMap<String, DoubleTextField> outputDevices = new HashMap<>();
+			HashMap<String, Double> inputDevices = new HashMap<>();
+			HashMap<String, Double> outputDevices = new HashMap<>();
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
-			HashMap<String, DoubleTextField> inputWaveGain = new HashMap<>();
-			HashMap<String, DoubleTextField> outputWaveGain = new HashMap<>();
+			HashMap<String, Double> inputWaveGain = new HashMap<>();
+			HashMap<String, Double> outputWaveGain = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
 			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
 			List<Element> connectionLines = new LinkedList<>();
@@ -108,7 +109,7 @@ public class USPFileReader {
 								}
 							}
 							if (InputAdministrator.getInputAdminstrator().deviceAvailable(deviceName)) {
-								inputDevices.put(deviceName, new DoubleTextField(gainValue, 0.0, 20.0));
+								inputDevices.put(deviceName, gainValue);
 							} else {
 								missingResources.add(deviceName);
 							}
@@ -129,7 +130,7 @@ public class USPFileReader {
 								}
 							}
 							if (OutputAdministrator.getOutputAdministrator().deviceAvailable(deviceName)) {
-								outputDevices.put(deviceName, new DoubleTextField(gainValue, 0.0, 20.0));
+								outputDevices.put(deviceName, gainValue);
 							} else {
 								missingResources.add(deviceName);
 							}
@@ -151,7 +152,7 @@ public class USPFileReader {
 							}
 							if (inputFile.exists()) {
 								choosedInputWaveFiles.put(inputFile.getName(), inputFile.getAbsoluteFile());
-								inputWaveGain.put(inputFile.getName(), new DoubleTextField(gainValue, 0.0, 20.0));
+								inputWaveGain.put(inputFile.getName(), gainValue);
 							} else {
 								missingResources.add(inputFile.getAbsolutePath());
 							}
@@ -173,7 +174,7 @@ public class USPFileReader {
 							}
 							if (outputFile.exists()) {
 								choosedOutputWaveFiles.put(outputFile.getName(), outputFile.getAbsoluteFile());
-								outputWaveGain.put(outputFile.getName(), new DoubleTextField(gainValue, 0.0, 20.0));
+								outputWaveGain.put(outputFile.getName(), gainValue);
 							} else {
 								missingResources.add(outputFile.getAbsolutePath());
 							}
@@ -208,17 +209,17 @@ public class USPFileReader {
 
 			for (DeviceGainTuple tuple : inputGainTable.getItems()) {
 				if (inputDevices.containsKey(tuple.getDevice())) {
-					tuple.setGain(inputDevices.get(tuple.getDevice()));
+					tuple.getGain().setValue(inputDevices.get(tuple.getDevice()));
 				} else if (inputWaveGain.containsKey(tuple.getDevice())) {
-					tuple.setGain(inputWaveGain.get(tuple.getDevice()));
+					tuple.getGain().setValue(inputWaveGain.get(tuple.getDevice()));
 				}
 			}
 
 			for (DeviceGainTuple tuple : outputGainTable.getItems()) {
 				if (outputDevices.containsKey(tuple.getDevice())) {
-					tuple.setGain(outputDevices.get(tuple.getDevice()));
+					tuple.getGain().setValue(outputDevices.get(tuple.getDevice()));
 				} else if (outputWaveGain.containsKey(tuple.getDevice())) {
-					tuple.setGain(outputWaveGain.get(tuple.getDevice()));
+					tuple.getGain().setValue(outputWaveGain.get(tuple.getDevice()));
 				}
 			}
 

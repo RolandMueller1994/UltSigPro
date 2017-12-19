@@ -337,6 +337,7 @@ public class ChannelPane extends TitledPane {
 		}
 
 		private void addDevice(String device) {
+			System.out.println("addDeviceCalled");
 			DeviceGainTuple deviceGainTuple = new DeviceGainTuple(device, 1.0);
 			tableRows.add(deviceGainTuple);
 
