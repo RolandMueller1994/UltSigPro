@@ -52,7 +52,7 @@ public class InputAdministrator {
 
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
 	private HashMap<InputDataListener, HashMap<String, Double>> inputLevelMultiplier = new HashMap<>();
-	
+
 	public static InputAdministrator getInputAdminstrator() {
 
 		if (inputAdministrator == null) {
@@ -128,7 +128,7 @@ public class InputAdministrator {
 				return;
 			}
 		}
-		
+
 		subscribedDevices.remove(name);
 		targetDataLines.get(name).stop();
 		targetDataLines.get(name).close();
@@ -206,7 +206,7 @@ public class InputAdministrator {
 				IteratableAudioInputStream stream;
 				stream = new IteratableAudioInputStream(waveFiles.get(fileName));
 				inputStreams.put(fileName, stream);
-				
+
 				HashMap<String, Double> inputLevel = new HashMap<>();
 				inputLevel.put(fileName, 1.0);
 				if (inputLevelMultiplier.containsKey(listener)) {
@@ -217,28 +217,28 @@ public class InputAdministrator {
 			}
 		}
 	}
-	
+
 	public synchronized void removeWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
-		
-		for(String fileName : waveFiles.keySet()) {
+
+		for (String fileName : waveFiles.keySet()) {
 			distributionMap.get(listener).remove(fileName);
-			
+
 			inputLevelMultiplier.get(listener).remove(fileName);
-			
+
 			boolean removeWaveFile = true;
-			
-			for(Collection<String> devices : distributionMap.values()) {
-				if(devices.contains(fileName)) {
+
+			for (Collection<String> devices : distributionMap.values()) {
+				if (devices.contains(fileName)) {
 					removeWaveFile = false;
 					break;
 				}
 			}
-			
-			if(removeWaveFile) {
+
+			if (removeWaveFile) {
 				inputStreams.remove(fileName);
 			}
 		}
-		
+
 	}
 
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
@@ -265,7 +265,7 @@ public class InputAdministrator {
 		if (devices != null) {
 			devices.add(device);
 			setSubscribedDevices(device);
-			
+
 			HashMap<String, Double> inputLevel = new HashMap<>();
 			inputLevel.put(device, 1.0);
 			if (inputLevelMultiplier.containsKey(listener)) {
@@ -293,7 +293,7 @@ public class InputAdministrator {
 		for (String device : devices) {
 			removeSubscribedDevice(device);
 		}
-		inputLevelMultiplier.remove(listener);		
+		inputLevelMultiplier.remove(listener);
 	}
 
 	public void waitForStartup() {
@@ -308,25 +308,25 @@ public class InputAdministrator {
 			lock.unlock();
 		}
 	}
-	
+
 	private class IteratableAudioInputStream {
-		
+
 		private AudioInputStream inputStream;
 		private byte[] dataBuffer;
 		private byte[] nullBuffer;
-		
+
 		private long startupTime;
 		private int cursor;
 		private int samplingFreq = 44100;
-		
+
 		public IteratableAudioInputStream(File waveFile) {
 			try {
 				// At first we capture the complete sound file.
 				inputStream = AudioSystem.getAudioInputStream(waveFile);
-				
+
 				int avail = inputStream.available();
 				dataBuffer = new byte[avail];
-				
+
 				inputStream.read(dataBuffer, 0, avail);
 			} catch (UnsupportedAudioFileException e) {
 				// TODO Auto-generated catch block
@@ -335,45 +335,48 @@ public class InputAdministrator {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-			// Array filled with zeros -> We can just copy this array afterwards and don't have to write zeros manually.
+
+			// Array filled with zeros -> We can just copy this array afterwards
+			// and don't have to write zeros manually.
 			nullBuffer = new byte[1000];
-			
-			for(int i=0; i<nullBuffer.length; i++) {
+
+			for (int i = 0; i < nullBuffer.length; i++) {
 				nullBuffer[i] = 0;
 			}
 		}
-		
+
 		public void start() {
 			// Set the cursor to start of the sound file
 			startupTime = System.currentTimeMillis();
 			cursor = 0;
 		}
-		
+
 		public long available() {
-			
+
 			// How long the track has been played.
 			long timediff = System.currentTimeMillis() - startupTime;
-			
-			// Devide by 500 because of 4 bytes per sample -> samplingFreq * 4 / 1000
+
+			// Devide by 500 because of 4 bytes per sample -> samplingFreq * 4 /
+			// 1000
 			long curpos = (long) (timediff * ((double) samplingFreq) / 250);
-			
-			if(curpos > cursor) {
+
+			if (curpos > cursor) {
 				return curpos - cursor;
 			}
-			
+
 			return 0;
 		}
-		
+
 		public byte[] read(int packageSize) {
 
 			byte[] outData = new byte[packageSize];
-			
-			// Check if there are enough data from file or if we have to write zeros.
-			if(cursor + packageSize < dataBuffer.length) {
+
+			// Check if there are enough data from file or if we have to write
+			// zeros.
+			if (cursor + packageSize < dataBuffer.length) {
 				System.arraycopy(dataBuffer, cursor, outData, 0, packageSize);
 				cursor += packageSize;
-			} else if(cursor < dataBuffer.length) {
+			} else if (cursor < dataBuffer.length) {
 				// Still date to write but not enough for packageSize
 				int remaining = dataBuffer.length - cursor;
 				System.arraycopy(dataBuffer, cursor, outData, 0, remaining);
@@ -384,7 +387,7 @@ public class InputAdministrator {
 				System.arraycopy(nullBuffer, 0, outData, 0, packageSize);
 				cursor += packageSize;
 			}
-			
+
 			return outData;
 		}
 	}
@@ -428,13 +431,13 @@ public class InputAdministrator {
 							return;
 						}
 					}
-					
-					if(!first) {
-						for(IteratableAudioInputStream inputStream : inputStreams.values()) {
+
+					if (!first) {
+						for (IteratableAudioInputStream inputStream : inputStreams.values()) {
 							if (inputStream.available() < packageSize * 2) {
 								return;
 							}
-						}						
+						}
 					}
 
 					if (startCount < 3000) {
@@ -454,7 +457,7 @@ public class InputAdministrator {
 							targetEntry.getValue().read(new byte[avail], 0, avail);
 						}
 
-						for(IteratableAudioInputStream inputStream : inputStreams.values()) {
+						for (IteratableAudioInputStream inputStream : inputStreams.values()) {
 							inputStream.start();
 						}
 
@@ -508,8 +511,9 @@ public class InputAdministrator {
 							int intValueLeftStereo = 0;
 							int intValueRightStereo = 0;
 							int intValueMono = 0;
-							
-							// TODO byte to integer conversion works here only for 4
+
+							// TODO byte to integer conversion works here only
+							// for 4
 							// bytes/frame and big endian
 							// need different conversions implementations
 							// for different coding formats
@@ -518,24 +522,20 @@ public class InputAdministrator {
 							// data left to read). Left and right stereo channel
 							// from the wave file are merged to a mono channel
 							// (average value is calculated)
-							
-							intValueLeftStereo = intValueLeftStereo
-									| Byte.toUnsignedInt(readData[4 * i + 1]);
+
+							intValueLeftStereo = intValueLeftStereo | Byte.toUnsignedInt(readData[4 * i + 1]);
 							intValueLeftStereo <<= 8;
-							intValueLeftStereo = intValueLeftStereo
-									| Byte.toUnsignedInt(readData[4 * i]);
+							intValueLeftStereo = intValueLeftStereo | Byte.toUnsignedInt(readData[4 * i]);
 							intValueLeftStereo <<= 16;
 							intValueLeftStereo >>= 16;
 
-							intValueRightStereo = intValueRightStereo
-									| Byte.toUnsignedInt(readData[4 * i + 3]);
+							intValueRightStereo = intValueRightStereo | Byte.toUnsignedInt(readData[4 * i + 3]);
 							intValueRightStereo <<= 8;
-							intValueRightStereo = intValueRightStereo
-									| Byte.toUnsignedInt(readData[4 * i + 2]);
+							intValueRightStereo = intValueRightStereo | Byte.toUnsignedInt(readData[4 * i + 2]);
 							intValueRightStereo <<= 16;
 							intValueRightStereo >>= 16;
 
-							intValueMono = (intValueRightStereo + intValueLeftStereo) / 2;		
+							intValueMono = (intValueRightStereo + intValueLeftStereo) / 2;
 
 							marshalledData[i] = intValueMono;
 							soundLevelData.add(intValueMono);
@@ -585,11 +585,11 @@ public class InputAdministrator {
 			executor.scheduleAtFixedRate(readRunnable, 0, 1, TimeUnit.MILLISECONDS);
 		}
 	}
-	
+
 	public void inputLevelMultiplierChanged(InputDataListener listener, String device, double multiplier) {
 		inputLevelMultiplier.get(listener).put(device, multiplier);
 	}
-	
+
 	public boolean deviceAvailable(String deviceName) {
 		collectSoundInputDevices();
 		if (allSoundInputDevices.containsKey(deviceName)) {
