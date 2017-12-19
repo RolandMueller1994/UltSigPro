@@ -41,6 +41,7 @@ import inputhandler.InputAdministrator;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -121,6 +122,9 @@ public class USPGui extends Application {
 	private static boolean shift = false;
 	
 	private final double playBackButtonSize = 30;
+	
+	private Label startLabel;
+	private Label stopLabel;
 
 	/**
 	 * This method must be called at startup. The GUI will be set up.
@@ -218,8 +222,9 @@ public class USPGui extends Application {
 		ImageView playButtonImageView = new ImageView(new Image("file:icons/playButtonNew.png"));
 		playButtonImageView.setFitHeight(playBackButtonSize);
 		playButtonImageView.setFitWidth(playBackButtonSize);
-		Label startLabel = new Label();
+		startLabel = new Label();
 		startLabel.setGraphic(playButtonImageView);
+		startLabel.setDisable(true);
 		startLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
@@ -298,6 +303,8 @@ public class USPGui extends Application {
 					OutputAdministrator.getOutputAdministrator().startOutput();
 					InputAdministrator.getInputAdminstrator().startListening();
 					soundLevelBar.setPlay(true);
+					startLabel.setDisable(true);
+					stopLabel.setDisable(false);
 				}
 			}
 
@@ -308,13 +315,16 @@ public class USPGui extends Application {
 		ImageView stopButtonImageView = new ImageView(new Image("file:icons/stopButtonNew.png"));
 		stopButtonImageView.setFitHeight(playBackButtonSize);
 		stopButtonImageView.setFitWidth(playBackButtonSize);
-		Label stopLabel = new Label();
+		stopLabel = new Label();
 		stopLabel.setGraphic(stopButtonImageView);
+		stopLabel.setDisable(true);
 		stopLabel.setOnMousePressed(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
 				stopPlay();
+				stopLabel.setDisable(true);
+				startLabel.setDisable(false);
 			}
 		});
 
@@ -337,6 +347,19 @@ public class USPGui extends Application {
 		ScrollPane channelScroll = new ScrollPane();
 		channelScroll.setFitToWidth(true);
 		channelBox = new VBox();
+		channelBox.getChildren().addListener(new ListChangeListener<Node>() {
+
+			@Override
+			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Node> c) {
+				System.out.println("vbox size: " + channelBox.getChildren().size());
+				if (channelBox.getChildren().size() > 0) {
+					startLabel.setDisable(false);
+				} else {
+					startLabel.setDisable(true);
+				}
+			}
+			
+		});
 		channelScroll.setContent(channelBox);
 		soundLevelBar = SoundLevelBar.getSoundLevelBar();
 		centerSplit.getItems().addAll(pluginPane, channelScroll);
