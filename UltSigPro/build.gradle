@@ -44,8 +44,8 @@ dependencies {
     
 	compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
 
-	compile 'com.github.RolandMueller1994:commonjavaframework:1.0.1'
-	compile group: 'com.github.RolandMueller1994', name: 'javasignalprocessingtools', version: '9ea139a326'
+	compile group: 'com.github.RolandMueller1994', name: 'commonjavaframework', version: 'fd51a20'
+	//compile group: 'com.github.RolandMueller1994', name: 'javasignalprocessingtools', version: '9ea139a326'
 	
 
 	// https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
