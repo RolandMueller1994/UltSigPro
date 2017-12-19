@@ -396,6 +396,7 @@ public class USPGui extends Application {
 		channelBox.getChildren().remove(pane);
 		Tab curTab = tabMap.remove(pane.getName());
 		pluginPane.getTabs().remove(curTab);
+		pane.getChannel().delete();
 	}
 
 	public static void deleteAllChannels() {
