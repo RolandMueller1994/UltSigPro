@@ -223,14 +223,16 @@ public class USPFileReader {
 			}
 
 			for (PluginXMLConfigWrapper plugin : plugins) {
-				if (!plugin.getName().equals("Output") && !plugin.getName().equals("Input")) {
-					SigproPlugin current = USPGui.getPluginConfigGroup(pane)
-							.createPluginFromProjectFile(plugin.getName());
-					current.setPluginInfo(plugin.getConfigNode());
-				} else if (plugin.getName().equals("Output")) {
+				if (plugin.getName().equals("Output")) {
 					pane.getChannel().getPluginOutput().setPluginInfo(plugin.getConfigNode());
 				} else if (plugin.getName().equals("Input")) {
 					pane.getChannel().getPluginInput().setPluginInfo(plugin.getConfigNode());
+				} else if (plugin.getName().equals("Probe")) {
+					USPGui.getPluginConfigGroup(pane).getWaveChartProbe().setPluginInfo(plugin.getConfigNode());
+				} else {
+					SigproPlugin current = USPGui.getPluginConfigGroup(pane)
+							.createPluginFromProjectFile(plugin.getName());
+					current.setPluginInfo(plugin.getConfigNode());
 				}
 			}
 

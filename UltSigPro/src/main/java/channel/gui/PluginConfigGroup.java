@@ -744,6 +744,10 @@ public class PluginConfigGroup extends Pane {
 		plugins.remove(plugin);
 		getChildren().remove(plugin.getGUI());
 	}
+	
+	public SigproPlugin getWaveChartProbe() {
+		return waveChartProbe;
+	}
 
 	private class AddPluginMenuItem extends MenuItem {
 
