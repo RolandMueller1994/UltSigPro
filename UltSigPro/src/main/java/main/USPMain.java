@@ -12,6 +12,7 @@ import configfileframework.ConfigFileHandler;
 import configfileframework.ConfigFileValueWrapper;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
+import javafx.application.Platform;
 import logging.CommonLogger;
 import plugins.PluginManager;
 import plugins.sigproplugins.internal.GainBlock;
@@ -34,6 +35,9 @@ public class USPMain {
 	 *            Input arguments
 	 */
 	public static void main(String[] args) {
+		
+		SingleInstanceCheck singleInstanceCheck = new SingleInstanceCheck();
+		singleInstanceCheck.checkForAnotherInstance(args);
 
 		String current;
 		String argParserMessage = null;
@@ -118,6 +122,7 @@ public class USPMain {
 			CommonLogger.getInstance().logException(e);
 			throw new RuntimeException(e);
 		} finally {
+			singleInstanceCheck.stopSingleInstanceThread();
 			System.out.println("Exit");
 		}
 	}

@@ -115,7 +115,6 @@ public class USPGui extends Application {
 	private static HashMap<String, Tab> tabMap = new HashMap<>();
 	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>();
 
-	private String[] args;
 	private static boolean play = false;
 
 	private static boolean ctrl = false;
@@ -130,7 +129,6 @@ public class USPGui extends Application {
 	 * This method must be called at startup. The GUI will be set up.
 	 */
 	public void buildGUI(String[] args) {
-		this.args = args;
 		launch(args);
 	}
 
@@ -213,7 +211,6 @@ public class USPGui extends Application {
 		GridPane topGrid = new GridPane();
 
 		VBox vBox = new VBox();
-		ImageView iconView = new ImageView(icon);
 
 		topGrid.add(vBox, 0, 0);
 
@@ -351,9 +348,9 @@ public class USPGui extends Application {
 
 			@Override
 			public void onChanged(javafx.collections.ListChangeListener.Change<? extends Node> c) {
-				System.out.println("vbox size: " + channelBox.getChildren().size());
 				if (channelBox.getChildren().size() > 0) {
 					startLabel.setDisable(false);
+					startLabel.getStyleClass().add("controlLabelEnabled");
 				} else {
 					startLabel.setDisable(true);
 				}
