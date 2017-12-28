@@ -2,7 +2,8 @@
 	-usp-light-grey: #DDD9D9;
 	-usp-dark-grey: #5B5B5B;
 	-usp-light-blue: #127A93;
-	-usp-font-color: #FFFFFF
+	-usp-font-color: #FFFFFF;
+	-effect-highlight: dropshadow(three-pass-box, -usp-light-blue, 5, 0.05, 0, 1);
 }
 
 .root {
@@ -17,7 +18,7 @@
 }
 
 .plusButton:hover {
-    -fx-effect: dropshadow(three-pass-box, -usp-light-blue, 5, 0.05, 0, 1);
+    -fx-effect: -effect-highlight;
 }
 
 .minusButton {
@@ -27,7 +28,7 @@
 }
 
 .minusButton:hover {
-	-fx-effect: dropshadow(three-pass-box, -usp-light-blue, 5, 0.05, 0, 1);
+	-fx-effect: -effect-highlight;
 }
 
 .table-view {

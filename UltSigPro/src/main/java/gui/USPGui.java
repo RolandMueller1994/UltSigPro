@@ -1,66 +1,38 @@
 package gui;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import javax.imageio.ImageIO;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import channel.Channel;
 import channel.ChannelConfig;
 import channel.ChannelPane;
-import channel.gui.Input;
-import channel.gui.Output;
 import channel.gui.PluginConfigGroup;
 import channel.gui.SignalFlowConfigException;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
+import gui.menubar.AddChannelMenuItem;
 import gui.menubar.MenuBarCreator;
-import gui.menubar.SaveMenuItem;
 import gui.menubar.SaveProjectDialog;
 import gui.menubar.USPFileCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TabPane.TabClosingPolicy;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -73,18 +45,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import plugins.PluginManager;
-import plugins.sigproplugins.SigproPlugin;
 import plugins.sigproplugins.internal.GainBlock;
 import resourceframework.ResourceProviderException;
 
@@ -111,6 +79,7 @@ public class USPGui extends Application {
 
 	private static VBox channelBox;
 	private static TabPane pluginPane;
+	private static Button addChannelButton;
 	private static SoundLevelBar soundLevelBar;
 	private static HashMap<String, Tab> tabMap = new HashMap<>();
 	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>();
@@ -119,9 +88,9 @@ public class USPGui extends Application {
 
 	private static boolean ctrl = false;
 	private static boolean shift = false;
-	
+
 	private final double playBackButtonSize = 30;
-	
+
 	private Label startLabel;
 	private Label stopLabel;
 
@@ -307,7 +276,7 @@ public class USPGui extends Application {
 
 		});
 		startMenu.setGraphic(startLabel);
-		
+
 		Menu stopMenu = new Menu();
 		ImageView stopButtonImageView = new ImageView(new Image("file:icons/stopButtonNew.png"));
 		stopButtonImageView.setFitHeight(playBackButtonSize);
@@ -326,7 +295,7 @@ public class USPGui extends Application {
 		});
 
 		stopMenu.setGraphic(stopLabel);
-		
+
 		buttonMenu.getMenus().addAll(startMenu, stopMenu);
 
 		vBox.getChildren().addAll(menuBar, buttonMenu);
@@ -335,6 +304,22 @@ public class USPGui extends Application {
 
 		pane.setTop(topGrid);
 		GridPane.setHgrow(vBox, Priority.ALWAYS);
+
+		addChannelButton = new Button(
+				LanguageResourceHandler.getInstance().getLocalizedText(AddChannelMenuItem.class, TITLE),
+				new ImageView(new Image("file:icons/channelIcon.png")));
+		addChannelButton.setContentDisplay(ContentDisplay.TOP);
+		addChannelButton.setOnMousePressed(new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				try {
+					new AddChannelMenuItem().fire();
+				} catch (ResourceProviderException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		// Build Channels
 		SplitPane centerSplit = new SplitPane();
@@ -351,17 +336,21 @@ public class USPGui extends Application {
 				if (channelBox.getChildren().size() > 0) {
 					startLabel.setDisable(false);
 					startLabel.getStyleClass().add("controlLabelEnabled");
+					pane.setCenter(centerSplit);
+					pane.setBottom(soundLevelBar);
 				} else {
 					startLabel.setDisable(true);
+					pane.setCenter(addChannelButton);
+					pane.setBottom(null);
 				}
 			}
-			
+
 		});
-		channelScroll.setContent(channelBox);
 		soundLevelBar = SoundLevelBar.getSoundLevelBar();
+		channelScroll.setContent(channelBox);
 		centerSplit.getItems().addAll(pluginPane, channelScroll);
-		pane.setCenter(centerSplit);
 		pane.setBottom(soundLevelBar);
+		pane.setCenter(addChannelButton);
 
 		Scene scene = new Scene(pane);
 		scene.getStylesheets().add("file:USPStyleSheet.css");
@@ -369,11 +358,11 @@ public class USPGui extends Application {
 		primaryStage.setTitle(languageRes.getLocalizedText(USPGui.class, TITLE));
 		primaryStage.setMaximized(true);
 		primaryStage.show();
+		pane.setBottom(null);
 
 		// set initial reference project (here a new blank project)
 		// any changes to this, will be noticed and can be saved before closing
 		USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
-
 	}
 
 	public static boolean isCtrlPressed() {
@@ -458,7 +447,7 @@ public class USPGui extends Application {
 			while (iter.hasNext()) {
 				((ChannelPane) iter.next()).setPlay(false);
 			}
-			
+
 		}
 	}
 

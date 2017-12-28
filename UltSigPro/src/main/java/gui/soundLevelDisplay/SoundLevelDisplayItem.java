@@ -32,7 +32,7 @@ public class SoundLevelDisplayItem extends GridPane {
 
 		deviceNameField = new Label(deviceName);
 		soundLevelBar = new ProgressBar(0.1);
-		soundLevelBar.setStyle("-fx-accent: #5B5B5B");
+		soundLevelBar.setStyle("-fx-accent: -usp-dark-grey");
 		overdriveIndicator = new ProgressBar(0);
 		overdriveIndicator.setStyle("-fx-accent: red");
 		overdriveIndicator.setMaxWidth(10);
@@ -42,7 +42,7 @@ public class SoundLevelDisplayItem extends GridPane {
 		this.add(soundLevelBar, 0, 1);
 		this.add(overdriveIndicator, 1, 1);
 		GridPane.setHalignment(soundLevelBar, HPos.CENTER);
-
+		
 		this.dataQueue = dataQueue;
 	}
 

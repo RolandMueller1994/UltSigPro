@@ -38,6 +38,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -82,6 +84,7 @@ public class ChannelPane extends TitledPane {
 	 */
 	public ChannelPane(@Nonnull ChannelConfig config) throws ResourceProviderException {
 		super.setText(config.getName());
+		super.setGraphic(new ImageView(new Image("file:icons/channelIconSmall.png")));
 		super.setContent(centralPane);
 		this.config = config;
 		name = config.getName();
