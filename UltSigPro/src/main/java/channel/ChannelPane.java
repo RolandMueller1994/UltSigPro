@@ -138,6 +138,11 @@ public class ChannelPane extends TitledPane {
 		Element channelName = doc.createElement("name");
 		channelName.appendChild(doc.createTextNode(name));
 		channel.appendChild(channelName);
+		
+		// channel expanded or collapsed
+		Element expanded = doc.createElement("expanded");
+		expanded.appendChild(doc.createTextNode(String.valueOf(super.isExpanded())));
+		channel.appendChild(expanded);
 
 		// input device elements
 		for (String inputDevice : inputDevices) {

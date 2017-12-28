@@ -371,7 +371,7 @@ public class USPGui extends Application {
 		primaryStage.show();
 
 		// set initial reference project (here a new blank project)
-		// any changes to this, will be noticed and can be safed before closing
+		// any changes to this, will be noticed and can be saved before closing
 		USPFileCreator.setReferenceDocument(USPFileCreator.collectProjectSettings());
 
 	}

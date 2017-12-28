@@ -68,6 +68,7 @@ public class USPFileReader {
 
 			Node channel = nodeList.item(i);
 			String channelName = new String();
+			boolean expanded = true;
 			HashMap<String, Double> inputDevices = new HashMap<>();
 			HashMap<String, Double> outputDevices = new HashMap<>();
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
@@ -93,6 +94,9 @@ public class USPFileReader {
 						// plugins...
 						if (tagName == "name") {
 							channelName = channelItemElement.getTextContent();
+						} else if (tagName == "expanded") {
+							expanded = Boolean.valueOf(channelItemElement.getTextContent());
+							
 						} else if (tagName == "inputDevice") {
 							NodeList deviceEntryNodeList = channelItemElement.getChildNodes();
 							String deviceName = new String();
@@ -204,6 +208,7 @@ public class USPFileReader {
 			USPGui.addChannel(new ChannelConfig(channelName, new LinkedList<String>(inputDevices.keySet()),
 					new LinkedList<String>(outputDevices.keySet()), choosedInputWaveFiles, choosedOutputWaveFiles));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
+			pane.setExpanded(expanded);
 			TableView<DeviceGainTuple> inputGainTable = pane.getInputDeviceGainTable();
 			TableView<DeviceGainTuple> outputGainTable = pane.getOutputDeviceGainTable();
 
