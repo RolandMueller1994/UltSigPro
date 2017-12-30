@@ -37,7 +37,6 @@ public class USPMain {
 	public static void main(String[] args) {
 		
 		SingleInstanceCheck singleInstanceCheck = new SingleInstanceCheck();
-		singleInstanceCheck.checkForAnotherInstance(args);
 
 		String current;
 		String argParserMessage = null;
@@ -109,12 +108,14 @@ public class USPMain {
 						Runtime.getRuntime().exec("cmd /c start java -jar " + resProv.getResource("workDir")
 								+ File.separator + "ultsigpro.jar");
 					}
-				} else {
+				} else if(!singleInstanceCheck.checkForAnotherInstance()) {
 					// Startup the GUI
 					USPGui gui = new USPGui();
 					gui.buildGUI(args);
 					System.out.println(resProv.getResource("workDir"));
-
+				} else {
+					// Show second instance gui
+					singleInstanceCheck.buildSecondInstanceGui(args);
 				}
 			}
 

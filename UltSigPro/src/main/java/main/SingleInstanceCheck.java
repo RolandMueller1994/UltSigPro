@@ -37,19 +37,21 @@ public class SingleInstanceCheck {
 	 * {@linkplain ServerSocket} running, a dialog with a hint appears and the
 	 * new instance of UltSigPro gets closed.
 	 */
-	public void checkForAnotherInstance(String[] args) {
+	public boolean checkForAnotherInstance() {
 		try {
 			Socket socket = new Socket("localhost", SingleInstanceThread.PORT);
-			// TODO show a message to the user
-			// SecondInstanceGui gui = new SecondInstanceGui();
-			// gui.buildGui(args);
 			System.out.println("usp already running");
-			System.exit(1);
+			return true;
 		} catch (Exception e) {
 			singleInstanceThread.start();
 		}
+		return false;
 	}
-
+	
+	public void buildSecondInstanceGui(String[] args) {
+		SecondInstanceGui gui = new SecondInstanceGui();
+		gui.buildGui(args);
+	}
 	/**
 	 * Thread who runs the {@linkplain ServerSocket} and waits for a connection
 	 * from a second {@linkplain ServerSocket}.
@@ -91,36 +93,6 @@ public class SingleInstanceCheck {
 		 */
 		private void stopThread() {
 			runThread = false;
-		}
-	}
-
-	private class SecondInstanceGui extends Application {
-
-		public void buildGui(String[] args) {
-			launch(args);
-		}
-
-		@Override
-		public void start(Stage primaryStage) throws Exception {
-			primaryStage.show();
-			GridPane pane = new GridPane();
-			Scene scene = new Scene(pane);
-			primaryStage.setScene(scene);
-			primaryStage.show();
-			new SecondInstanceDialog(primaryStage).showAndWait();
-		}
-	}
-
-	private class SecondInstanceDialog extends Dialog<ButtonType> {
-
-		private static final String TITLE = "title";
-		private static final String HEADER = "header";
-
-		public SecondInstanceDialog(Stage stage) {
-			initOwner(stage);
-			setHeaderText("hhuoiuoi");
-			setTitle("ttiiittitel");
-			getDialogPane().getButtonTypes().add(ButtonType.OK);
 		}
 	}
 
