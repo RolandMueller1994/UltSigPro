@@ -59,7 +59,7 @@ public class SingleInstanceCheck {
 	 */
 	class SingleInstanceThread extends Thread {
 
-		public static final int PORT = 80;
+		public static final int PORT = 30080;
 		public boolean runThread = true;
 
 		ServerSocket serverSocket = null;
