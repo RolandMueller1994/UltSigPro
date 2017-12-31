@@ -14,6 +14,8 @@ play=Play
 stop=Stop
 file=Datei
 
+main.SecondInstanceGui$SecondInstanceAlert.header=UltSigPro läuft bereits und kann nicht zweimal gestartet werden.
+
 gui.USPGui.title=UltSigPro Ultimate Signal Processing
 gui.USPGui.signalFlowAlertTitle=Fehler der Plugin-Konfiguration
 gui.USPGui.signalFlowAlertHeader=Überprüfen Sie die Konfiguration der Plugins.

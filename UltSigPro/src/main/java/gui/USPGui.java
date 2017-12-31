@@ -54,6 +54,7 @@ import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
 import plugins.PluginManager;
 import plugins.sigproplugins.internal.GainBlock;
+import plugins.sigproplugins.internal.GainBlock2;
 import resourceframework.ResourceProviderException;
 
 /**
@@ -79,7 +80,6 @@ public class USPGui extends Application {
 
 	private static VBox channelBox;
 	private static TabPane pluginPane;
-	private static Button addChannelButton;
 	private static SoundLevelBar soundLevelBar;
 	private static HashMap<String, Tab> tabMap = new HashMap<>();
 	private static HashMap<ChannelPane, PluginConfigGroup> pluginMap = new HashMap<>();
@@ -115,6 +115,7 @@ public class USPGui extends Application {
 
 		// Register internal plugins
 		PluginManager.getInstance().registerInternSigproPlugin("Gain", GainBlock.class);
+		PluginManager.getInstance().registerInternSigproPlugin("Gain2", GainBlock2.class);
 		// PluginManager.getInstance().registerInternSigproPlugin("AddBlock",
 		// SignalAdder.class);
 
@@ -305,11 +306,11 @@ public class USPGui extends Application {
 		pane.setTop(topGrid);
 		GridPane.setHgrow(vBox, Priority.ALWAYS);
 
-		addChannelButton = new Button(
+		Button addChannelButton = new Button(
 				LanguageResourceHandler.getInstance().getLocalizedText(AddChannelMenuItem.class, TITLE),
 				new ImageView(new Image("file:icons/channelIcon.png")));
 		addChannelButton.setContentDisplay(ContentDisplay.TOP);
-		addChannelButton.setOnMousePressed(new EventHandler<MouseEvent>() {
+		addChannelButton.setOnMouseReleased(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {

@@ -40,7 +40,6 @@ public class SingleInstanceCheck {
 	public boolean checkForAnotherInstance() {
 		try {
 			Socket socket = new Socket("localhost", SingleInstanceThread.PORT);
-			System.out.println("usp already running");
 			return true;
 		} catch (Exception e) {
 			singleInstanceThread.start();
