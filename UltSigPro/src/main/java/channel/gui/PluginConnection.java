@@ -297,7 +297,24 @@ public class PluginConnection {
 	 *            The y-coordinate at which the connection should end.
 	 */
 	public void endPluginConnection(@Nonnull ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
+		
+		if(drawingPoints.size() == 1 && yCoord != drawingPoints.getFirst().getY()) {
+			double startX = drawingPoints.getFirst().getX();
+			double startY = drawingPoints.getFirst().getY();
+			
+			double middleX = (xCoord - startX)/2;
+			double raster = configGroup.getRaster();
+			
+			drawingPoints.add(new USPPoint(startX + middleX, startY));
+			drawingPoints.add(new USPPoint(startX + middleX, yCoord));
+		}
 
+		drawingPoints.add(new USPPoint(xCoord, yCoord));
+		points.add(drawingPoints);
+		drawingPoint = null;
+		drawingPoints = null;
+		
+		redraw();
 	}
 
 	/**
