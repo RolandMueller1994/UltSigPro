@@ -13,6 +13,7 @@ import channel.gui.SignalFlowConfigException;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.menubar.AddChannelMenuItem;
 import gui.menubar.MenuBarCreator;
+import gui.menubar.OpenProjectMenuItem;
 import gui.menubar.SaveProjectDialog;
 import gui.menubar.USPFileCreator;
 import gui.soundLevelDisplay.SoundLevelBar;
@@ -22,7 +23,11 @@ import javafx.application.Application;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -306,10 +311,13 @@ public class USPGui extends Application {
 		pane.setTop(topGrid);
 		GridPane.setHgrow(vBox, Priority.ALWAYS);
 
+		
 		Button addChannelButton = new Button(
 				LanguageResourceHandler.getInstance().getLocalizedText(AddChannelMenuItem.class, TITLE),
-				new ImageView(new Image("file:icons/channelIcon.png")));
+				new ImageView(new Image("file:icons/addChannelIcon.png")));
 		addChannelButton.setContentDisplay(ContentDisplay.TOP);
+		addChannelButton.setMaxSize(150, 150);
+		addChannelButton.getStyleClass().add("tile-button");
 		addChannelButton.setOnMouseReleased(new EventHandler<MouseEvent>() {
 
 			@Override
@@ -321,6 +329,33 @@ public class USPGui extends Application {
 				}
 			}
 		});
+		
+		
+		Button openProjectButton = new Button(
+				LanguageResourceHandler.getInstance().getLocalizedText(OpenProjectMenuItem.class, TITLE),
+				new ImageView(new Image("file:icons/openProjectIcon.png")));
+		openProjectButton.setContentDisplay(ContentDisplay.TOP);
+		openProjectButton.setMaxSize(150, 150);
+		openProjectButton.getStyleClass().add("tile-button");
+		openProjectButton.setOnMouseReleased(new EventHandler<MouseEvent>() {
+			
+			@Override
+			public void handle(MouseEvent event) {
+				try {
+					new OpenProjectMenuItem().fire();
+				} catch (ResourceProviderException e){
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		GridPane startGridPane = new GridPane();
+		VBox startVBox = new VBox(25);
+		startVBox.setAlignment(Pos.CENTER);
+		startVBox.getChildren().addAll(openProjectButton, addChannelButton);
+		GridPane.setHgrow(startVBox, Priority.ALWAYS);
+		GridPane.setVgrow(startVBox, Priority.ALWAYS);
+		startGridPane.add(startVBox, 0, 0);
 
 		// Build Channels
 		SplitPane centerSplit = new SplitPane();
@@ -341,7 +376,7 @@ public class USPGui extends Application {
 					pane.setBottom(soundLevelBar);
 				} else {
 					startLabel.setDisable(true);
-					pane.setCenter(addChannelButton);
+					pane.setCenter(startGridPane);
 					pane.setBottom(null);
 				}
 			}
@@ -351,7 +386,7 @@ public class USPGui extends Application {
 		channelScroll.setContent(channelBox);
 		centerSplit.getItems().addAll(pluginPane, channelScroll);
 		pane.setBottom(soundLevelBar);
-		pane.setCenter(addChannelButton);
+		pane.setCenter(startGridPane);
 
 		Scene scene = new Scene(pane);
 		scene.getStylesheets().add("file:USPStyleSheet.css");

@@ -26,7 +26,6 @@ public class SecondInstanceGui extends Application {
 		GridPane pane = new GridPane();
 		Scene scene = new Scene(pane);
 		primaryStage.setScene(scene);
-		primaryStage.show();
 		primaryStage.hide();
 		new SecondInstanceAlert(AlertType.ERROR, primaryStage).showAndWait();
 		System.exit(1);

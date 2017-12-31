@@ -1,9 +1,11 @@
 * {
 	-usp-light-grey: #DDD9D9;
 	-usp-dark-grey: #5B5B5B;
+	-usp-light-blue2: #79D8F0;
 	-usp-light-blue: #127A93;
 	-usp-font-color: #FFFFFF;
 	-effect-highlight: dropshadow(three-pass-box, -usp-light-blue, 5, 0.05, 0, 1);
+	-effect-highlight-light: dropshadow(three-pass-box, -usp-light-blue2, 5, 0.05, 0, 1);
 }
 
 .root {
@@ -29,6 +31,16 @@
 
 .minusButton:hover {
 	-fx-effect: -effect-highlight;
+}
+
+.onOffButton {
+	-fx-background-color: -usp-light-grey;
+	-fx-graphic: url('icons/onOffIcon.png');
+	-fx-padding: 1 1 1 1;
+}
+
+.onOffButton:hover {
+	-fx-effect: -effect-highlight-light;
 }
 
 .table-view {
@@ -63,6 +75,18 @@
 	-fx-font-weight: bold;
 }
 
+.tile-button {
+	-fx-background-color: -usp-dark-grey;
+	-fx-font-weight: bold;
+	-fx-text-fill: -usp-font-color;
+	-fx-border-radius: 6;
+	-fx-background-radius: 8;
+	-fx-border-width: 2;
+	-fx-border-color: -usp-light-grey;
+}
 
+.tile-button:hover {
+	-fx-effect: -effect-highlight;
+}
 
 	
