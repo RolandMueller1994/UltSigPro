@@ -298,9 +298,9 @@ public class PluginConnection {
 	 */
 	public void endPluginConnection(@Nonnull ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
 		
-		if(drawingPoints.size() == 1 && yCoord != drawingPoints.getFirst().getY()) {
-			double startX = drawingPoints.getFirst().getX();
-			double startY = drawingPoints.getFirst().getY();
+		if(yCoord != drawingPoints.getFirst().getY()) {
+			double startX = drawingPoints.getLast().getX();
+			double startY = drawingPoints.getLast().getY();
 			
 			double middleX = (xCoord - startX)/2;
 			double raster = configGroup.getRaster();
