@@ -125,7 +125,29 @@ public class PluginConnection {
 		boolean first = true;
 		double maxX = 0;
 
-
+		for(LinkedList<USPPoint> pointList : points) {
+			for(USPPoint point : pointList) {
+				if(first) {
+					maxX = point.getX();
+					first = false;
+				} else {
+					maxX = point.getX() > maxX ? point.getX() : maxX;
+				}
+			}
+		}
+		
+		if(drawingPoints != null) {
+			for(USPPoint point : drawingPoints) {
+				if(first) {
+					maxX = point.getX();
+					first = false;
+				} else {
+					maxX = point.getX() > maxX ? point.getX() : maxX;
+				}
+			}
+			
+			maxX = drawingPoint.getX() > maxX ? drawingPoint.getX() : maxX;
+		}
 
 		return maxX;
 	}
@@ -134,7 +156,29 @@ public class PluginConnection {
 		boolean first = true;
 		double maxY = 0;
 
-
+		for(LinkedList<USPPoint> pointList : points) {
+			for(USPPoint point : pointList) {
+				if(first) {
+					maxY = point.getY();
+					first = false;
+				} else {
+					maxY = point.getY() > maxY ? point.getY() : maxY;
+				}
+			}
+		}
+		
+		if(drawingPoints != null) {
+			for(USPPoint point : drawingPoints) {
+				if(first) {
+					maxY = point.getY();
+					first = false;
+				} else {
+					maxY = point.getX() > maxY ? point.getY() : maxY;
+				}
+			}
+			
+			maxY = drawingPoint.getY() > maxY ? drawingPoint.getY() : maxY;
+		}
 
 		return maxY;
 	}
@@ -143,7 +187,29 @@ public class PluginConnection {
 		boolean first = true;
 		double minX = 0;
 
-
+		for(LinkedList<USPPoint> pointList : points) {
+			for(USPPoint point : pointList) {
+				if(first) {
+					minX = point.getX();
+					first = false;
+				} else {
+					minX = point.getX() < minX ? point.getX() : minX;
+				}
+			}
+		}
+		
+		if(drawingPoints != null) {
+			for(USPPoint point : drawingPoints) {
+				if(first) {
+					minX = point.getX();
+					first = false;
+				} else {
+					minX = point.getX() < minX ? point.getX() : minX;
+				}
+			}
+			
+			minX = drawingPoint.getX() < minX ? drawingPoint.getX() : minX;
+		}
 
 		return minX;
 	}
@@ -152,7 +218,29 @@ public class PluginConnection {
 		boolean first = true;
 		double minY = 0;
 
-
+		for(LinkedList<USPPoint> pointList : points) {
+			for(USPPoint point : pointList) {
+				if(first) {
+					minY = point.getY();
+					first = false;
+				} else {
+					minY = point.getY() < minY ? point.getY() : minY;
+				}
+			}
+		}
+		
+		if(drawingPoints != null) {
+			for(USPPoint point : drawingPoints) {
+				if(first) {
+					minY = point.getY();
+					first = false;
+				} else {
+					minY = point.getY() < minY ? point.getY() : minY;
+				}
+			}
+			
+			minY = drawingPoint.getY() < minY ? drawingPoint.getY() : minY;
+		}
 
 		return minY;
 	}
