@@ -1,7 +1,5 @@
 package channel.gui;
 
-import channel.gui.PluginConnection.ConnectionLine;
-
 /**
  * Marker interface for endpoints of plugin connection lines. Just to store them
  * in one collection.
@@ -11,12 +9,12 @@ import channel.gui.PluginConnection.ConnectionLine;
  */
 public interface ConnectionLineEndpointInterface {
 
-	boolean setCoordinates(ConnectionLine line, double x, double y);
+	boolean setCoordinates(PluginConnection con, double x, double y);
 	
-	void addLine(ConnectionLine line);
+	void addConnection(PluginConnection con);
 	
-	void removeLine(ConnectionLine line);
+	void removeConnection(PluginConnection con);
 	
-	void replaceLine(ConnectionLine origin, ConnectionLine replace);
+	void replaceConnection(PluginConnection origin, PluginConnection replace);
 	
 }

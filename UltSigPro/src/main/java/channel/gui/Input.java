@@ -8,7 +8,6 @@ import javax.annotation.CheckReturnValue;
 import com.sun.javafx.tk.FontLoader;
 import com.sun.javafx.tk.Toolkit;
 
-import channel.gui.PluginConnection.ConnectionLine;
 import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -42,7 +41,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	
 	private SigproPlugin plugin;
 
-	private ConnectionLine conLine;
+	private PluginConnection con;
 	
 	private boolean hovered = false;
 	
@@ -106,7 +105,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 				
-				if(conLine == null) {
+				if(con == null) {
 					
 					boolean recursivity = false;
 					
@@ -130,8 +129,8 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 							}
 							
 							for(Output output : outputs) {
-								if(output.getLine() != null) {
-									if(output.getLine().getParentConnection().checkRekusivity(endpoints, false)) {
+								if(output.getConnection() != null) {
+									if(output.getConnection().checkRekusivity(endpoints, false)) {
 										recursivity = true;
 										break;
 									}
@@ -185,8 +184,8 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		return name;
 	}
 	
-	public ConnectionLine getLine() {
-		return conLine;
+	public PluginConnection getConnection() {
+		return con;
 	}
 	
 	public static double getHeightOfInput() {
@@ -203,21 +202,22 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
-		if(conLine != null) {
+		// TODO
+		/*if(conLine != null) {
 			conLine.updateCoordinates(this, conPosX, conPosY);			
-		}
+		}*/
 	}
 
 	@Override
-	public boolean setCoordinates(ConnectionLine line, double x, double y) {
+	public boolean setCoordinates(PluginConnection con, double x, double y) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public void addLine(ConnectionLine conLine) {
+	public void addConnection(PluginConnection con) {
 		
-		this.conLine = conLine;
+		this.con = con;
 	}
 	
 	public boolean isHovered() {
@@ -225,27 +225,28 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	}
 
 	@Override
-	public void removeLine(ConnectionLine line) {
+	public void removeConnection(PluginConnection con) {
 		
-		if(conLine.equals(line)) {
-			conLine = null;
+		if(con.equals(this.con)) {
+			con = null;
 		}
 		
 	}
 
 	@Override
-	public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
+	public void replaceConnection(PluginConnection origin, PluginConnection replace) {
 		
-		if(conLine.equals(origin)) {
-			conLine = replace;
+		if(con.equals(origin)) {
+			con = replace;
 		}
 		
 	}
 	
 	public void delete() {
 		configGroup.getChildren().remove(this);
-		if(conLine != null) {
+		// TODO
+		/* if(conLine != null) {
 			conLine.delete();
-		}
+		} */
 	}
 }

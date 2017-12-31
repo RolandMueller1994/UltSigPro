@@ -24,8 +24,6 @@ import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
 import channel.PluginInput;
 import channel.PluginOutput;
-import channel.gui.PluginConnection.ConnectionLine;
-import channel.gui.PluginConnection.LineDivider;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
@@ -82,7 +80,7 @@ public class PluginConfigGroup extends Pane {
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
 
-	private ConnectionLine deletionLine;
+	//private ConnectionLine deletionLine;
 
 	private boolean lineHovered = false;
 
@@ -506,7 +504,7 @@ public class PluginConfigGroup extends Pane {
 		
 		boolean isConnection = false;
 		
-		for(SigproPlugin plugin : plugins) {
+/*		for(SigproPlugin plugin : plugins) {
 			if(!(plugin.equals(input)) && !(plugin.equals(output))) {
 				for(Input input : plugin.getInputs()) {
 					if(input.getLine() == null) {
@@ -521,7 +519,7 @@ public class PluginConfigGroup extends Pane {
 				}				
 			}
 		}
-		
+*/		
 		LinkedList<String> messages = new LinkedList<>();
 		LinkedList<SignalFlowErrorCode> errorCodes = new LinkedList<>();
 		
@@ -568,10 +566,10 @@ public class PluginConfigGroup extends Pane {
 	 * Cancel the drawing of the current {@link ConnectionLine}.
 	 */
 	public void escapeLineDrawing() {
-		if (workCon != null && workCon.getActLine() != null) {
+		/*if (workCon != null && workCon.getActLine() != null) {
 			workCon.getActLine().delete();
 			workCon = null;
-		}
+		}*/
 	}
 
 	/**
@@ -626,16 +624,17 @@ public class PluginConfigGroup extends Pane {
 
 		if (workCon == null) {
 			workCon = new PluginConnection(this, endpoint, xCoord, yCoord);
-			endpoint.addLine(workCon.getActLine());
+			// TODO endpoint.addLine(workCon.getActLine());
 		} else {
-			if (!workCon.getActLine().isHorizontal()) {
+			if (!workCon.isDrawingHorizontal()) {
 				workCon.changeOrientation(xCoord, yCoord);
 			}
 
-			if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
+			//TODO
+			/*if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
 				workCon.devideActLine(xCoord, yCoord);
-			}
-			endpoint.addLine(workCon.getActLine());
+			}*/
+			endpoint.addConnection(workCon);
 			workCon.endPluginConnection(endpoint, xCoord, yCoord);
 			allConnections.add(workCon);
 			workCon = null;
@@ -726,18 +725,20 @@ public class PluginConfigGroup extends Pane {
 		return workCon != null;
 	}
 
+	// TODO
+	/*
 	public void setDeletionLine(ConnectionLine deletionLine) {
 		this.deletionLine = deletionLine;
-	}
+	}*/
 
 	public void deleteLine() {
-		if (deletionLine != null) {
+		/*if (deletionLine != null) {
 			deletionLine.delete();
-		}
+		}*/
 	}
 
 	public void removeDeletionLine() {
-		deletionLine = null;
+		//deletionLine = null;
 	}
 
 	public void deletePlugin(SigproPlugin plugin) {
