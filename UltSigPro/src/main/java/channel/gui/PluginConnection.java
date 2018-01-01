@@ -40,6 +40,10 @@ public class PluginConnection {
 	
 	private HashSet<Line> lines = new HashSet<>();
 	private HashSet<Circle> dividers = new HashSet<>();
+	
+	private Output input;
+	private USPPoint inputPoint;
+	private HashMap<Input, USPPoint> outputs = new HashMap<>();
 
 	private boolean drawingHorizontal;
 	
@@ -62,11 +66,19 @@ public class PluginConnection {
 			double startX, double startY) {
 		this.configGroup = configGroup;
 		
+		
 		drawingPoints = new LinkedList<>();
 		drawingPoint = new USPPoint(startX, startY);
 		drawingPoints.add(new USPPoint(startX, startY));
 		drawingHorizontal = true;
 		
+		if(endpoint instanceof Output) {
+			input = (Output) endpoint;
+			inputPoint = drawingPoints.get(0);
+		} else {
+			outputs.put((Input) endpoint, drawingPoints.get(0));
+		}
+
 		redraw();
 	}
 
@@ -344,6 +356,10 @@ public class PluginConnection {
 
 	public void unifyConnections(PluginConnection other, double screenX, double screenY) {
 		
+		if(other.hasInput() && hasInput()) {
+			return;
+		}
+		
 		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
 		double x = localPoint.getX();
 		double y = localPoint.getY();
@@ -404,6 +420,14 @@ public class PluginConnection {
 		}
 		
 		if(unified && !(unifyHor ^ other.drawingHorizontal)) {
+			
+			if(other.input != null) {
+				input = other.input;
+				inputPoint = other.inputPoint;
+			}
+			
+			outputs.putAll(other.outputs);
+			
 			dividerPoints.add(dividerPoint);
 			prePoints.add(dividerPoint);
 			postPoints.add(dividerPoint);
@@ -518,9 +542,7 @@ public class PluginConnection {
 	 */
 	public boolean hasInput() {
 
-		
-
-		return false;
+		return input != null;
 	}
 
 	/**
@@ -530,10 +552,11 @@ public class PluginConnection {
 	 */
 	public HashSet<Input> getInputs() {
 
-		HashSet<Input> inputs = new HashSet<>();
+		HashSet<Input> retInputs = new HashSet<>();
 
+		retInputs.addAll(outputs.keySet());
 		
-		return inputs;
+		return retInputs;
 	}
 
 	/**
@@ -543,10 +566,13 @@ public class PluginConnection {
 	 */
 	public HashSet<Output> getOutputs() {
 
-		HashSet<Output> outputs = new HashSet<>();
+		HashSet<Output> retOutputs = new HashSet<>();
 
+		if(input != null) {
+			retOutputs.add(input);
+		}
 		
-		return outputs;
+		return retOutputs;
 	}
 
 	/**
@@ -578,9 +604,17 @@ public class PluginConnection {
 		} else if(yCoord != drawingPoints.getFirst().getY()) {
 			drawingPoints.add(new USPPoint(drawingPoints.getLast().getX(), yCoord));
 		}
-
+		
 		drawingPoints.add(new USPPoint(xCoord, yCoord));
 		points.add(drawingPoints);
+
+		if(endpoint instanceof Output) {
+			input = (Output) endpoint;
+			inputPoint = drawingPoints.getLast();
+		} else {
+			outputs.put((Input) endpoint, drawingPoints.getLast());
+		}
+
 		drawingPoint = null;
 		drawingPoints = null;
 		
