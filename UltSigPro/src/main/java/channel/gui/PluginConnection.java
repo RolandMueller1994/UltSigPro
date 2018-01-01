@@ -78,6 +78,8 @@ public class PluginConnection {
 		} else {
 			outputs.put((Input) endpoint, drawingPoints.get(0));
 		}
+		
+		endpoint.addConnection(this);
 
 		redraw();
 	}
@@ -301,7 +303,7 @@ public class PluginConnection {
 	}
 
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
-/*
+
 		if (!forward) {
 
 			HashSet<Input> inputs = getInputs();
@@ -316,7 +318,7 @@ public class PluginConnection {
 				}
 
 				for (Output output : nextOutputs) {
-					if (output.getLine() != null && output.getLine().parent.checkRekusivity(endpoints, forward)) {
+					if (output.getConnection() != null && output.getConnection().checkRekusivity(endpoints, forward)) {
 						return true;
 					}
 				}
@@ -335,13 +337,13 @@ public class PluginConnection {
 				}
 
 				for (Input input : nextInputs) {
-					if (input.getLine() != null && input.getLine().parent.checkRekusivity(endpoints, forward)) {
+					if (input.getConnection() != null && input.getConnection().checkRekusivity(endpoints, forward)) {
 						return true;
 					}
 				}
 			}
 		}
-*/
+
 		return false;
 	}
 
@@ -424,9 +426,14 @@ public class PluginConnection {
 			if(other.input != null) {
 				input = other.input;
 				inputPoint = other.inputPoint;
+				input.addConnection(this);
 			}
 			
 			outputs.putAll(other.outputs);
+			
+			for(Input input : other.outputs.keySet()) {
+				input.addConnection(this);
+			}
 			
 			dividerPoints.add(dividerPoint);
 			prePoints.add(dividerPoint);
@@ -615,6 +622,8 @@ public class PluginConnection {
 			outputs.put((Input) endpoint, drawingPoints.getLast());
 		}
 
+		endpoint.addConnection(this);
+		
 		drawingPoint = null;
 		drawingPoints = null;
 		
