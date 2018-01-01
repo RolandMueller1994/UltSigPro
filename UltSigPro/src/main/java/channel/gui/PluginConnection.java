@@ -14,6 +14,7 @@ import com.sun.javafx.geom.Line2D;
 
 import javafx.geometry.Point2D;
 import javafx.scene.layout.Pane;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
 /**
@@ -26,14 +27,19 @@ import javafx.scene.shape.Line;
  *
  */
 public class PluginConnection {
+	
+	private static final double LINE_OFFSET = 6;
+	private static final double DIVIDER_DIAMETER = 10;
 
 	private PluginConfigGroup configGroup;
 	
 	private HashSet<LinkedList<USPPoint>> points = new HashSet<>();
 	private LinkedList<USPPoint> drawingPoints = new LinkedList<>();
 	private USPPoint drawingPoint;
+	private HashSet<USPPoint> dividerPoints = new HashSet<>();
 	
 	private HashSet<Line> lines = new HashSet<>();
+	private HashSet<Circle> dividers = new HashSet<>();
 
 	private boolean drawingHorizontal;
 	
@@ -70,8 +76,10 @@ public class PluginConnection {
 
 	private void redraw() {
 		configGroup.getChildren().removeAll(lines);
+		configGroup.getChildren().removeAll(dividers);
 		
 		lines.clear();
+		dividers.clear();
 		
 		for(LinkedList<USPPoint> pointList : points) {
 			USPPoint last = null;
@@ -109,7 +117,12 @@ public class PluginConnection {
 			lines.add(line);
 		}
 		
+		for(USPPoint divider : dividerPoints) {
+			dividers.add(new Circle(divider.getX(), divider.getY(), DIVIDER_DIAMETER/2));
+		}
+		
 		configGroup.getChildren().addAll(lines);
+		configGroup.getChildren().addAll(dividers);
 	}
 	
 	public void removeCurrentSelection() {
@@ -118,6 +131,36 @@ public class PluginConnection {
 
 	public boolean checkIfCoordinatesOnLine(double screenX, double screenY) {
 
+		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
+		double x = localPoint.getX();
+		double y = localPoint.getY();
+		
+		for(LinkedList<USPPoint> pointList : points) {
+			USPPoint last = null;
+			
+			for(USPPoint point : pointList) {
+				
+				if(last != null) {
+					
+					if(point.getX() == last.getX()) {
+						// Vertical line
+						if(checkIfCoordOnLineVert(point, last, x, y)) {
+							return true;
+						}
+						
+					} else {
+						// Horizontal line
+						if(checkIfCoordOnLineHor(point, last, x, y)) {
+							return true;
+						}
+						
+					}
+				}
+
+				last = point;
+			}
+		}
+		
 		return false;
 	}
 
@@ -299,10 +342,144 @@ public class PluginConnection {
 
 	}
 
-	private void unifyConnectionsDevider() {
+	public void unifyConnections(PluginConnection other, double screenX, double screenY) {
 		
+		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
+		double x = localPoint.getX();
+		double y = localPoint.getY();
 		
+		LinkedList<USPPoint> prePoints = null;
+		LinkedList<USPPoint> postPoints = null;
+		LinkedList<USPPoint> otherPoints = null;
+		LinkedList<USPPoint> removeList = null;
+		
+		USPPoint dividerPoint = null;
+		
+		boolean unified = false;
+		boolean unifyHor = false;
+		
+		for(LinkedList<USPPoint> pointList : points) {
+			USPPoint last = null;
+			
+			prePoints = new LinkedList<>();
+			postPoints = new LinkedList<>();
+			
+			for(USPPoint point : pointList) {
+				
+				if(last != null && !unified) {
+					
+					if(point.getX() == last.getX()) {
+						// Vertical line
+						if(checkIfCoordOnLineVert(point, last, x, y)) {
+							unified = true;
+							dividerPoint = new USPPoint(point.getX(), other.drawingPoint.getY());
+							otherPoints = other.drawingPoints;
+							unifyHor = false;
+						}
+						
+					} else {
+						// Horizontal line
+						if(checkIfCoordOnLineHor(point, last, x, y)) {
+							unified = true;
+							dividerPoint = new USPPoint(other.drawingPoint.getX(), point.getY());
+							otherPoints = other.drawingPoints;
+							unifyHor = true;
+						}
+						
+					}
+				}
+				
+				if(!unified) {
+					prePoints.add(point);
+				} else {
+					postPoints.offerFirst(point);
+				}
+				
+				last = point;
+			}
+			
+			if(unified) {
+				break;
+			}
+		}
+		
+		if(unified && !(unifyHor ^ other.drawingHorizontal)) {
+			dividerPoints.add(dividerPoint);
+			prePoints.add(dividerPoint);
+			postPoints.add(dividerPoint);
+			otherPoints.add(dividerPoint);
+			points.remove(removeList);
+			points.add(prePoints);
+			points.add(postPoints);
+			points.add(otherPoints);
+			other.finalizeOnDivider();
+			redraw();
+			configGroup.finalizeDrawing();
+		}
 
+	}
+	
+	private void finalizeOnDivider() {
+		configGroup.getChildren().removeAll(lines);
+	}
+	
+	private boolean checkIfCoordOnLineVert(USPPoint p1, USPPoint p2, double x, double y) {
+		
+		USPPoint upper;
+		USPPoint lower;
+		
+		if(Math.abs(p1.getY() - p2.getY()) < LINE_OFFSET*2) {
+			return false;
+		}
+		
+		if(p1.getY() > p2.getY()) {
+			upper = p1;
+			lower = p2;
+		} else {
+			upper = p2;
+			lower = p1;
+		}
+		
+		if((p1.getX() - LINE_OFFSET) < x && (p1.getX() + LINE_OFFSET) > x) {
+			// Matching x
+			if((upper.getY() - LINE_OFFSET) > y && (lower.getY() + LINE_OFFSET) < y) {
+				// Matching y
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean checkIfCoordOnLineHor(USPPoint p1, USPPoint p2, double x, double y) {
+		USPPoint left;
+		USPPoint right;
+		
+		if(Math.abs(p1.getX() - p2.getX()) < LINE_OFFSET*2) {
+			return false;
+		}
+		
+		if(p1.getX() > p2.getX()) {
+			right = p1;
+			left = p2;
+		} else {
+			right = p2;
+			left = p1;
+		}
+		
+		if((p1.getY() - LINE_OFFSET) < y && (p1.getY() + LINE_OFFSET) > y) {
+			// Matching y
+			if((right.getX() - LINE_OFFSET) > x && (left.getX() + LINE_OFFSET) < x) {
+				// Matching x
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -393,10 +570,11 @@ public class PluginConnection {
 			double middleX = (xCoord - startX)/2;
 			double raster = configGroup.getRaster();
 			
+			middleX += startX;
 			middleX = Math.round(middleX/raster) * raster;
 			
-			drawingPoints.add(new USPPoint(startX + middleX, startY));
-			drawingPoints.add(new USPPoint(startX + middleX, yCoord));
+			drawingPoints.add(new USPPoint(middleX, startY));
+			drawingPoints.add(new USPPoint(middleX, yCoord));
 		} else if(yCoord != drawingPoints.getFirst().getY()) {
 			drawingPoints.add(new USPPoint(drawingPoints.getLast().getX(), yCoord));
 		}

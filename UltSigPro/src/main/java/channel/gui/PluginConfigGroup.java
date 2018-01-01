@@ -277,6 +277,8 @@ public class PluginConfigGroup extends Pane {
 			@Override
 			public void handle(MouseEvent event) {
 				
+				PluginConnection unifyCon = null;
+				
 				if(dragged) {
 					dragged = false;
 					return;
@@ -296,6 +298,7 @@ public class PluginConfigGroup extends Pane {
 				for(PluginConnection con : allConnections) {
 					if(con.checkIfCoordinatesOnLine(event.getScreenX(), event.getScreenY())) {
 						coordinatesOnLine = true;
+						unifyCon = con;
 						break;
 					}
 				}
@@ -321,6 +324,10 @@ public class PluginConfigGroup extends Pane {
 					for(PluginConnection con : allConnections) {
 						con.removeCurrentSelection();
 					}
+				}
+				
+				if(coordinatesOnLine && workCon != null) {
+					unifyCon.unifyConnections(workCon, event.getScreenX(), event.getScreenY());
 				}
 			}
 		});
