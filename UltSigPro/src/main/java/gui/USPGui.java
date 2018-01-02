@@ -182,6 +182,7 @@ public class USPGui extends Application {
 
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
+		
 
 		GridPane topGrid = new GridPane();
 
@@ -277,6 +278,7 @@ public class USPGui extends Application {
 					soundLevelBar.setPlay(true);
 					startLabel.setDisable(true);
 					stopLabel.setDisable(false);
+					menuBar.setDisable(true);
 				}
 			}
 
@@ -297,6 +299,7 @@ public class USPGui extends Application {
 				stopPlay();
 				stopLabel.setDisable(true);
 				startLabel.setDisable(false);
+				menuBar.setDisable(false);
 			}
 		});
 

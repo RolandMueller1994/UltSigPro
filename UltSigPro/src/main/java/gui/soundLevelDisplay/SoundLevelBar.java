@@ -88,8 +88,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 				@Override
 				public void run() {
-					Pane outputHeader = (Pane) inputPane.lookup(".title");
-					outputHeader.setPrefHeight(TITLE_HEIGHT);
+					Pane inputHeader = (Pane) inputPane.lookup(".title");
+					inputHeader.setPrefHeight(TITLE_HEIGHT);
 				}
 				
 			});
@@ -116,7 +116,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			ColumnConstraints inputCol = new ColumnConstraints();
 			inputCol.setPercentWidth(50);
 			ColumnConstraints outputCol = new ColumnConstraints();
-			inputCol.setPercentWidth(50);
+			outputCol.setPercentWidth(50);
 			
 			getColumnConstraints().addAll(inputCol, outputCol);
 
