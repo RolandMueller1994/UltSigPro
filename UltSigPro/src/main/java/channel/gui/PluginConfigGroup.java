@@ -295,12 +295,14 @@ public class PluginConfigGroup extends Pane {
 				
 				boolean coordinatesOnLine = false;
 				
-				for(PluginConnection con : allConnections) {
-					if(con.checkIfCoordinatesOnLine(event.getScreenX(), event.getScreenY())) {
-						coordinatesOnLine = true;
-						unifyCon = con;
-						break;
-					}
+				if(workCon != null) {
+					for(PluginConnection con : allConnections) {
+						if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
+							coordinatesOnLine = true;
+							unifyCon = con;
+							break;
+						}
+					}					
 				}
 
 				if (!hovered && !lineHovered) {
@@ -327,7 +329,7 @@ public class PluginConfigGroup extends Pane {
 				}
 				
 				if(coordinatesOnLine && workCon != null) {
-					unifyCon.unifyConnections(workCon, event.getScreenX(), event.getScreenY());
+					unifyCon.unifyConnections(workCon);
 				}
 			}
 		});
@@ -596,6 +598,10 @@ public class PluginConfigGroup extends Pane {
 	 */
 	public void finalizeDrawing() {
 		workCon = null;
+	}
+	
+	public void removeConnection(PluginConnection con) {
+		allConnections.remove(con);
 	}
 
 	private void drawLine(MouseEvent event) {

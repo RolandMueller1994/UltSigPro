@@ -12,7 +12,9 @@ import org.w3c.dom.NodeList;
 
 import com.sun.javafx.geom.Line2D;
 
+import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -38,7 +40,7 @@ public class PluginConnection {
 	private USPPoint drawingPoint;
 	private HashSet<USPPoint> dividerPoints = new HashSet<>();
 	
-	private HashSet<Line> lines = new HashSet<>();
+	private HashSet<USPLine> lines = new HashSet<>();
 	private HashSet<Circle> dividers = new HashSet<>();
 	
 	private Output input;
@@ -84,11 +86,19 @@ public class PluginConnection {
 		redraw();
 	}
 
+	public USPPoint getDrawingPoint() {
+		return drawingPoint;
+	}
+	
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
 		this.configGroup = configGroup;
 	}
 
 	private void redraw() {
+		for(USPLine line : lines) {
+			line.clear();
+		}
+		
 		configGroup.getChildren().removeAll(lines);
 		configGroup.getChildren().removeAll(dividers);
 		
@@ -99,10 +109,8 @@ public class PluginConnection {
 			USPPoint last = null;
 			for(USPPoint point : pointList) {
 				if(last != null) {
-					Line line = new Line(last.getX(), last.getY(), point.getX(), point.getY());
-					
-					last.addUpdateLine(line, true);
-					point.addUpdateLine(line, false);
+					USPLine line = new USPLine(last, point, configGroup, isLineHor(last, point));
+					line.setStyle(USPLineStyle.NORMAL_LINE);
 					
 					lines.add(line);					
 				}
@@ -114,19 +122,16 @@ public class PluginConnection {
 			USPPoint last = null;
 			for(USPPoint point : drawingPoints) {
 				if(last != null) {
-					Line line = new Line(last.getX(), last.getY(), point.getX(), point.getY());
-					
-					last.addUpdateLine(line, true);
-					point.addUpdateLine(line, false);
+					USPLine line = new USPLine(last, point, configGroup, isLineHor(last, point));
+					line.setStyle(USPLineStyle.DRAWING_LINE);
 					
 					lines.add(line);
 				}
 				last = point;
 			}
 			
-			Line line = new Line(last.getX(), last.getY(), drawingPoint.getX(), drawingPoint.getY());
-			last.addUpdateLine(line, true);
-			drawingPoint.addUpdateLine(line, false);
+			USPLine line = new USPLine(last, drawingPoint, configGroup, isLineHor(last, drawingPoint));
+			line.setStyle(USPLineStyle.DRAWING_LINE);
 			
 			lines.add(line);
 		}
@@ -139,15 +144,26 @@ public class PluginConnection {
 		configGroup.getChildren().addAll(dividers);
 	}
 	
+	private boolean isLineHor(USPPoint start, USPPoint end) {
+		
+		if(start.getX() == end.getX()) {
+			return false;
+		}
+		return true;
+	}
+	
 	public void removeCurrentSelection() {
 
 	}
 
-	public boolean checkIfCoordinatesOnLine(double screenX, double screenY) {
+	public boolean checkIfCoordinatesOnLine(USPPoint drawingPoint) {
 
-		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
-		double x = localPoint.getX();
-		double y = localPoint.getY();
+//		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
+//		double x = localPoint.getX();
+//		double y = localPoint.getY();
+		
+		double x = drawingPoint.getX();
+		double y = drawingPoint.getY();
 		
 		for(LinkedList<USPPoint> pointList : points) {
 			USPPoint last = null;
@@ -356,15 +372,18 @@ public class PluginConnection {
 
 	}
 
-	public void unifyConnections(PluginConnection other, double screenX, double screenY) {
+	public void unifyConnections(PluginConnection other) {
 		
 		if(other.hasInput() && hasInput()) {
 			return;
 		}
 		
-		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
-		double x = localPoint.getX();
-		double y = localPoint.getY();
+//		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
+//		double x = localPoint.getX();
+//		double y = localPoint.getY();
+		
+		double x = other.drawingPoint.getX();
+		double y = other.drawingPoint.getY();
 		
 		LinkedList<USPPoint> prePoints = null;
 		LinkedList<USPPoint> postPoints = null;
@@ -444,6 +463,7 @@ public class PluginConnection {
 			points.add(postPoints);
 			points.add(otherPoints);
 			other.finalizeOnDivider();
+			configGroup.removeConnection(other);
 			redraw();
 			configGroup.finalizeDrawing();
 		}
@@ -451,6 +471,11 @@ public class PluginConnection {
 	}
 	
 	private void finalizeOnDivider() {
+		
+		for(USPLine line : lines) {
+			line.clear();
+		}
+		
 		configGroup.getChildren().removeAll(lines);
 	}
 	
@@ -673,7 +698,7 @@ public class PluginConnection {
 
 	private class USPPoint {
 
-		private HashMap<Line, Boolean> updateLines = new HashMap<>();
+		private HashSet<USPLine> updateLines = new HashSet<>();
 		
 		private double x;
 		private double y;
@@ -688,22 +713,16 @@ public class PluginConnection {
 			updateLines.clear();
 		}
 		
-		public void addUpdateLine(Line line, boolean first) {
-			updateLines.put(line, first);
+		public void addUpdateLine(USPLine line) {
+			updateLines.add(line);
 		}
 		
 		public void setCoordinates(double x, double y) {
 			this.x = x;
 			this.y = y;
 			
-			for(Line line : updateLines.keySet()) {
-				if(updateLines.get(line).booleanValue()) {
-					line.setStartX(x);
-					line.setStartY(y);
-				} else {
-					line.setEndX(x);
-					line.setEndY(y);
-				}
+			for(USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
 			}
 		}
 		
@@ -714,6 +733,160 @@ public class PluginConnection {
 		public double getY() {
 			return y;
 		}
+	}
+	
+	public class USPLine extends Line {
+		
+		private USPPoint start;
+		private USPPoint end;
+		private MouseEventPane mouseEventPane;
+		private boolean hor;
+		
+		private PluginConfigGroup configGroup;
+		
+		public USPLine(USPPoint start, USPPoint end, PluginConfigGroup configGroup, boolean hor) {
+			super(start.getX(), start.getY(), end.getX(), end.getY());
+			this.start = start;
+			this.end = end;
+			this.configGroup = configGroup;
+			this.hor = hor;
+			end.addUpdateLine(this);
+			start.addUpdateLine(this);
+		}
+		
+		public void updateFromUSPPoint(USPPoint p) {
+			if(p.equals(start)) {
+				setStartX(start.getX());
+				setStartY(start.getY());
+			} else if(p.equals(end)) {
+				setEndX(end.getX());
+				setEndY(end.getY());
+			}
+			
+			if(mouseEventPane != null) {
+				mouseEventPane.update();
+			}
+		}
+		
+		public void setStyle(USPLineStyle style) {
+			switch(style) {
+			case NORMAL_LINE:
+				setStrokeWidth(1);
+				setStyle("-fx-stroke: -usp-black");
+				if(mouseEventPane == null) {
+					mouseEventPane = new MouseEventPane(this);
+					configGroup.getChildren().add(mouseEventPane);					
+				}
+				break;
+			case DRAWING_LINE:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				if(mouseEventPane != null) {
+					configGroup.getChildren().remove(mouseEventPane);
+				}
+				mouseEventPane = null;
+				break;
+			case HOVERED_LINE:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				break;
+			}
+				
+		}
+		
+		public void clear() {
+			if(mouseEventPane != null) {
+				configGroup.getChildren().remove(mouseEventPane);
+				mouseEventPane = null;
+			}
+			
+			start = null;
+			end = null;
+			configGroup = null;
+		}
+		
+		private class MouseEventPane extends Pane {
+			
+			private USPLine parent;
+			
+			public MouseEventPane(USPLine parent) {
+				this.parent = parent;
+				update();
+				
+				setOnMouseEntered(new EventHandler<MouseEvent> ()  {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						if(parent.configGroup.getWorkCon() != null) {
+							USPPoint drawingPoint = parent.configGroup.getWorkCon().drawingPoint;
+							Point2D screen = parent.configGroup.localToScreen(drawingPoint.getX(), drawingPoint.getY());
+							
+							Point2D local = screenToLocal(screen);
+							
+							if(local.getX() < getWidth() && local.getY() < getHeight() && local.getX() > 0 && local.getY() > 0) {
+								parent.setStyle(USPLineStyle.HOVERED_LINE);
+							}
+							return;
+						}
+						
+						parent.setStyle(USPLineStyle.HOVERED_LINE);
+					}
+					
+				});
+				
+				setOnMouseExited(new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						parent.setStyle(USPLineStyle.NORMAL_LINE);
+					}
+					
+				});
+			}
+			
+			public void update() {
+				if(parent.hor) {
+					USPPoint right = null;
+					USPPoint left = null;
+					
+					if(parent.end.getX() > parent.start.getX()) {
+						right = parent.end;
+						left = parent.start;
+					} else {
+						right = parent.start;
+						left = parent.end;
+					}
+					
+					double length = right.getX() - left.getX();
+					setPrefSize(length - 2 * LINE_OFFSET, 2*LINE_OFFSET);
+					setLayoutX(left.getX() + LINE_OFFSET);
+					setLayoutY(left.getY() - LINE_OFFSET);
+				} else {
+					USPPoint upper = null;
+					USPPoint lower = null;
+					
+					if(parent.end.getY() > parent.start.getY()) {
+						upper = parent.end;
+						lower = parent.start;
+					} else {
+						upper = parent.start;
+						lower = parent.end;
+					}
+					
+					double length = upper.getY() - lower.getY();
+					setPrefSize(2*LINE_OFFSET, length - 2 * LINE_OFFSET);
+					setLayoutX(lower.getX() - LINE_OFFSET);
+					setLayoutY(lower.getY() + LINE_OFFSET);
+				}
+			}
+		}
+		
+	}
+	
+	public enum USPLineStyle {
+		DRAWING_LINE, NORMAL_LINE, HOVERED_LINE
 	}
 	
 	
