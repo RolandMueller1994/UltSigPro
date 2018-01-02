@@ -32,6 +32,8 @@ public class PluginConnection {
 	
 	private static final double LINE_OFFSET = 6;
 	private static final double DIVIDER_DIAMETER = 10;
+	
+	private static final double MIN_LINE_LENGTH = 10;
 
 	private PluginConfigGroup configGroup;
 	
@@ -700,6 +702,20 @@ public class PluginConnection {
 		if(drawingHorizontal) {
 			yCoord = drawingPoints.getLast().getY();
 			xCoord = Math.round(xCoord/raster) * raster;
+			
+			if(drawingPoints.size() == 1) {
+				if(input != null) {
+					// Only drawing to right
+					if(xCoord - MIN_LINE_LENGTH < drawingPoints.getFirst().getX()) {
+						xCoord = drawingPoint.getX();
+					}
+				} else {
+					// Only drawing to left
+					if(xCoord + MIN_LINE_LENGTH > drawingPoints.getFirst().getX()) {
+						xCoord = drawingPoint.getX();
+					}
+				}				
+			}
 		} else {
 			xCoord = drawingPoints.getLast().getX();
 			yCoord = Math.round(yCoord/raster) * raster;
