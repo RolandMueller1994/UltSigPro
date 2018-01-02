@@ -104,6 +104,10 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 			@Override
 			public void handle(MouseEvent event) {
 
+				if(con == null) {
+					System.out.println("Con null on mouse entered");
+				}
+				
 				if(con == null && (configGroup.getWorkCon() == null || !configGroup.getWorkCon().hasInput())) {
 					
 					boolean recursivity = false;
@@ -228,7 +232,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	public void removeConnection(PluginConnection con) {
 		
 		if(con.equals(this.con)) {
-			con = null;
+			this.con = null;
 		}
 		
 	}
@@ -237,7 +241,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	public void replaceConnection(PluginConnection origin, PluginConnection replace) {
 		
 		if(con.equals(origin)) {
-			con = replace;
+			this.con = replace;
 		}
 		
 	}

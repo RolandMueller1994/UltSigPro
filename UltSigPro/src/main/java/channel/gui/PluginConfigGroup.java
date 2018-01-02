@@ -575,10 +575,10 @@ public class PluginConfigGroup extends Pane {
 	 * Cancel the drawing of the current {@link ConnectionLine}.
 	 */
 	public void escapeLineDrawing() {
-		/*if (workCon != null && workCon.getActLine() != null) {
-			workCon.getActLine().delete();
+		if (workCon != null) {
+			workCon.escapeLineDrawing();
 			workCon = null;
-		}*/
+		}
 	}
 
 	/**

@@ -90,6 +90,35 @@ public class PluginConnection {
 		return drawingPoint;
 	}
 	
+	public void escapeLineDrawing() {
+		drawingPoint = null;
+		
+		if(drawingPoints != null) {
+			if(drawingPoints.getFirst().equals(inputPoint)) {
+				inputPoint = null;
+				input.removeConnection(this);
+			} else {
+				Input remove = null;
+				for(Input output : outputs.keySet()) {
+					if(drawingPoints.getFirst().equals(outputs.get(output))) {
+						remove = output;
+						output.removeConnection(this);
+						break;
+					}
+				}
+				
+				if(remove != null) {
+					outputs.remove(remove);
+				}
+			}
+			
+			drawingPoints.clear();
+			drawingPoints = null;
+		}
+		
+		redraw();
+	}
+	
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
 		this.configGroup = configGroup;
 	}

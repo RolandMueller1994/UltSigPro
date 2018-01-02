@@ -228,7 +228,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	public void removeConnection(PluginConnection con) {
 		
 		if(con.equals(this.con)) {
-			con = null;
+			this.con = null;
 		}
 		
 	}
@@ -237,7 +237,7 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	public void replaceConnection(PluginConnection origin, PluginConnection replace) {
 		
 		if(con.equals(origin)) {
-			con = replace;
+			this.con = replace;
 		}
 		
 	}
