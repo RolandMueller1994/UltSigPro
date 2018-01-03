@@ -9,6 +9,7 @@ import com.sun.javafx.tk.FontLoader;
 import com.sun.javafx.tk.Toolkit;
 
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -191,14 +192,24 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 	public static double getHeightOfInput() {
 		return height;
 	}
-
+	
+	private Point2D calculatePositionFromParent(double parentX, double parentY) {
+		
+		double xPosition = parentX - width;
+		double yPosition = parentY + parentHeight/2 + position * inputOffset - number/2 * inputOffset - yOffset;
+		
+		return new Point2D(xPosition, yPosition);
+	}
+	
 	public void updatePosition(double parentX, double parentY) {
 
-		double xPosition = parentX - width;
+		Point2D calculated = calculatePositionFromParent(parentX, parentY);
+		
+		double xPosition = calculated.getX();
 		setLayoutX(xPosition);
 		conPosX = xPosition + width - 17;
 
-		double yPosition = parentY + parentHeight/2 + position * inputOffset - number/2 * inputOffset - yOffset;
+		double yPosition = calculated.getY();
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
@@ -206,6 +217,16 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 		/*if(conLine != null) {
 			conLine.updateCoordinates(this, conPosX, conPosY);			
 		}*/
+	}
+		
+	public boolean checkUpdatePosition(double parentX, double parentY) {
+		
+		if(con != null) {
+			Point2D calculated = calculatePositionFromParent(parentX, parentY);
+			return con.checkDragNDrop(this, calculated.getX() + width - 17, calculated.getY() + yOffset);
+		}
+		
+		return true;
 	}
 
 	@Override

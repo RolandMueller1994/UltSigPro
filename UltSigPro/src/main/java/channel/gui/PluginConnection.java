@@ -737,6 +737,63 @@ public class PluginConnection {
 
 	}
 	
+	public boolean checkDragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
+		
+		USPPoint startPoint = null;
+		
+		if(endpoint.equals(input)) {
+			startPoint = inputPoint;
+		} else {
+			for(Input output : outputs.keySet()) {
+				if(endpoint.equals(output)) {
+					startPoint = outputs.get(output);
+					break;
+				}
+			}
+		}
+		
+		if(startPoint != null) {
+			
+			LinkedList<USPPoint> check = null;
+			USPPoint secondEnd = null;
+			
+			for(LinkedList<USPPoint> subPoints : points) {
+				if(subPoints.getFirst().equals(startPoint)) {
+					secondEnd = subPoints.getLast();
+					check = subPoints;
+					break;
+				} else if(subPoints.getLast().equals(startPoint)) {
+					secondEnd = subPoints.getFirst();
+					check = subPoints;
+					break;
+				}
+			}
+			
+			if(check != null) {
+				
+				if(check.size() == 2) {
+					if(check.getLast().getY() == y) {
+						if(endpoint instanceof Input) {
+							if(x - secondEnd.getX() < MIN_LINE_LENGTH) {
+								return false;
+							}
+						} else {
+							if(secondEnd.getX() - x < MIN_LINE_LENGTH) {
+								return false;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	public void dragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
+		
+	}
+	
 	public boolean isDrawingHorizontal() {
 		return drawingHorizontal;
 	}
