@@ -68,12 +68,10 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			outputDevicesList = new HashMap<>();
 
 			inputDevicesBar = new GridPane();
-			inputDevicesBar.setPadding(new Insets(5));
-			inputDevicesBar.setHgap(15);
+			inputDevicesBar.getStyleClass().add("sound-level-bar");
 
 			outputDevicesBar = new GridPane();
-			outputDevicesBar.setPadding(new Insets(5));
-			outputDevicesBar.setHgap(15);
+			outputDevicesBar.getStyleClass().add("sound-level-bar");
 
 			TitledPane inputPane = new TitledPane();
 			inputPane.setText(lanHandler.getLocalizedText(SoundLevelBar.class, INPUT_TITLE));

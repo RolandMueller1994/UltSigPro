@@ -90,6 +90,7 @@ public class ChannelPane extends TitledPane {
 		name = config.getName();
 		inputPane = new InputPane(config.getInputDevices(), config.getInputWaveFiles().keySet());
 		outputPane = new OutputPane(config.getOutputDevices(), config.getOutputWaveFiles().keySet());
+		centralPane.getStyleClass().add("channel-central-pane");
 
 		centralPane.add(inputPane, 0, 0);
 		centralPane.add(outputPane, 2, 0);

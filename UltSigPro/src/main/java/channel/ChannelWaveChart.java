@@ -55,6 +55,7 @@ public class ChannelWaveChart extends Pane {
 		widthProperty().addListener(new ResizeListener());
 		heightProperty().addListener(new ResizeListener());
 		getChildren().add(hBox);
+		getStyleClass().add("channel-wave-chart");
 	}
 	
 	public synchronized void setPlay(boolean play) {

@@ -1,6 +1,7 @@
 * {
 	-usp-light-grey: #DDD9D9;
 	-usp-dark-grey: #5B5B5B;
+	-usp-grey: #424242;
 	-usp-light-blue2: #79D8F0;
 	-usp-light-blue: #127A93;
 	-usp-font-color: #FFFFFF;
@@ -10,7 +11,54 @@
 
 .root {
 	-fx-font-size: 9pt;
-	-fx-background: -usp-light-grey;
+	-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 90% , -usp-light-grey, #898989);
+}
+
+.tab {
+	-fx-background-color: linear-gradient(-usp-light-grey, #898989);
+}
+
+.tab .tab-label {
+	-fx-text-fill: -usp-font-color;
+}
+
+.tab-pane {
+	-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 90% , -usp-light-grey, #898989);
+}
+
+.tab:selected .tab-label {
+	-fx-text-fill: -usp-font-color;
+	-fx-font-weight: bold;
+}
+
+.menu-bar {
+	-fx-background-color: linear-gradient(from 0% 50% to 100% 50%, #454545, #323232);
+}
+
+.menu-bar .label {
+	-fx-text-fill: -usp-font-color;
+}
+
+.menu-bar .menu-button:hover, .menu-bar .menu-button:showing {
+	-fx-background-color: -usp-light-blue;
+}
+
+.context-menu {
+	-fx-background-color: -usp-light-grey;
+}
+
+.menu-item:focused {
+	-fx-background-color: -usp-light-blue;
+}
+
+.menu-item .label{
+	-fx-background-color: -usp-light-grey;
+	-fx-text-fill: black;
+}
+
+.menu-item:focused .label {
+	-fx-background-color: transparent;
+	-fx-text-fill: white;
 }
 
 .plusButton {
@@ -37,6 +85,8 @@
 	-fx-background-color: -usp-light-grey;
 	-fx-graphic: url('icons/onOffIcon.png');
 	-fx-padding: 1 1 1 1;
+	-fx-max-width: 20px;
+	-fx-max-height: 20px;
 }
 
 .onOffButton:hover {
@@ -66,7 +116,7 @@
 }
 
 .titled-pane .title {
-	-fx-background-color: -usp-dark-grey;
+	-fx-background-color: linear-gradient(from 0% 50% to 100% 50%, -usp-dark-grey, -usp-grey);
 }
 
 .titled-pane .title .text {
@@ -89,4 +139,23 @@
 	-fx-effect: -effect-highlight;
 }
 
+.channel-wave-chart {
+	-fx-background-color: transparent;
+}
+
+.channel-central-pane {
+	-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 90% , -usp-light-grey, #898989);
+}
+
+.sound-level-bar {
+	-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 90% , -usp-light-grey, #898989);
+	-fx-padding: 5;
+	-fx-hgap: 15;
+}
+
+.channel-center-split {
+	-fx-background: #898989;
+	-fx-border-color: #898989;
+	-fx-background-color: #898989;
+}
 	

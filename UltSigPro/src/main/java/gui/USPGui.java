@@ -20,8 +20,10 @@ import gui.soundLevelDisplay.SoundLevelBar;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -43,6 +45,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -50,10 +53,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import logging.CommonLogger;
 import outputhandler.OutputAdministrator;
@@ -112,6 +117,7 @@ public class USPGui extends Application {
 		stopPlay();
 	}
 
+	
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 
@@ -182,7 +188,6 @@ public class USPGui extends Application {
 
 		MenuBarCreator menuBarCreator = new MenuBarCreator();
 		MenuBar menuBar = menuBarCreator.getMenuBar();
-		
 
 		GridPane topGrid = new GridPane();
 
@@ -359,10 +364,12 @@ public class USPGui extends Application {
 		GridPane.setHgrow(startVBox, Priority.ALWAYS);
 		GridPane.setVgrow(startVBox, Priority.ALWAYS);
 		startGridPane.add(startVBox, 0, 0);
+		startGridPane.setStyle("-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 70% , -usp-light-grey, -usp-grey)");
 
 		// Build Channels
 		SplitPane centerSplit = new SplitPane();
 		centerSplit.setOrientation(Orientation.VERTICAL);
+		centerSplit.getStyleClass().add("channel-center-split");
 		pluginPane = new TabPane();
 		pluginPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 		ScrollPane channelScroll = new ScrollPane();
