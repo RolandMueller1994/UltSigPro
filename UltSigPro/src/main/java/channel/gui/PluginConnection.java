@@ -442,6 +442,7 @@ public class PluginConnection {
 							unified = true;
 							dividerPoint = new USPPoint(point.getX(), other.drawingPoint.getY());
 							otherPoints = other.drawingPoints;
+							removeList = pointList;
 							unifyHor = false;
 						}
 						
@@ -451,6 +452,7 @@ public class PluginConnection {
 							unified = true;
 							dividerPoint = new USPPoint(other.drawingPoint.getX(), point.getY());
 							otherPoints = other.drawingPoints;
+							removeList = pointList;
 							unifyHor = true;
 						}
 						
@@ -737,7 +739,7 @@ public class PluginConnection {
 
 	}
 	
-	public boolean checkDragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
+	private USPPoint getStartPoint(ConnectionLineEndpointInterface endpoint) {
 		
 		USPPoint startPoint = null;
 		
@@ -752,22 +754,51 @@ public class PluginConnection {
 			}
 		}
 		
+		return startPoint;
+	}
+	
+	private LinkedList<USPPoint> getCheckList(USPPoint startPoint) {
+		
+		LinkedList<USPPoint> check = null;
+		
+		for(LinkedList<USPPoint> subPoints : points) {
+			if(subPoints.getFirst().equals(startPoint)) {
+				check = subPoints;
+				break;
+			} else if(subPoints.getLast().equals(startPoint)) {
+				check = subPoints;
+				break;
+			}
+		}
+		
+		return check;
+	}
+	
+	private USPPoint getSecondEnd(USPPoint startPoint) {
+		
+		USPPoint secondEnd = null;
+		
+		for(LinkedList<USPPoint> subPoints : points) {
+			if(subPoints.getFirst().equals(startPoint)) {
+				secondEnd = subPoints.getLast();
+				break;
+			} else if(subPoints.getLast().equals(startPoint)) {
+				secondEnd = subPoints.getFirst();
+				break;
+			}
+		}
+		
+		return secondEnd;
+	}
+	
+	public boolean checkDragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
+		
+		USPPoint startPoint = getStartPoint(endpoint);
+		
 		if(startPoint != null) {
 			
-			LinkedList<USPPoint> check = null;
-			USPPoint secondEnd = null;
-			
-			for(LinkedList<USPPoint> subPoints : points) {
-				if(subPoints.getFirst().equals(startPoint)) {
-					secondEnd = subPoints.getLast();
-					check = subPoints;
-					break;
-				} else if(subPoints.getLast().equals(startPoint)) {
-					secondEnd = subPoints.getFirst();
-					check = subPoints;
-					break;
-				}
-			}
+			LinkedList<USPPoint> check = getCheckList(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint);
 			
 			if(check != null) {
 				
@@ -792,6 +823,50 @@ public class PluginConnection {
 	
 	public void dragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
 		
+		USPPoint startPoint = getStartPoint(endpoint);
+		
+		boolean leftToRight;
+		
+		if(endpoint instanceof Input) {
+			leftToRight = false;
+		} else {
+			leftToRight = true;
+		}
+		
+		if(startPoint != null) {
+			
+			LinkedList<USPPoint> check = getCheckList(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint);
+			
+			if(check != null) {
+				
+				if(check.size() == 2) {
+					// Horizontal line
+					if(startPoint.getY() == y) {
+						startPoint.setX(x);
+					}
+				} else if(check.size() == 3) {
+					// Vertical connected
+					if(leftToRight) {
+						if(secondEnd.getX() - x > MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							check.get(1).setY(y);
+						} else {
+							
+						}
+					} else {
+						if(x - secondEnd.getX() > MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							check.get(1).setY(y);
+						} else {
+							
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	public boolean isDrawingHorizontal() {
@@ -834,6 +909,22 @@ public class PluginConnection {
 		
 		public double getY() {
 			return y;
+		}
+
+		public void setX(double x) {
+			this.x = x;
+			
+			for(USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
+			}
+		}
+
+		public void setY(double y) {
+			this.y = y;
+			
+			for(USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
+			}
 		}
 	}
 	

@@ -217,10 +217,9 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
-		// TODO
-		/*if(conLine != null) {			
-			conLine.updateCoordinates(this, conPosX, conPosY);
-		}*/
+		if(con != null) {
+			con.dragNDrop(this, conPosX, conPosY);
+		}
 	}
 	
 	public boolean checkUpdatePosition(double parentX, double parentY) {
