@@ -1,20 +1,13 @@
 package gui.soundLevelDisplay;
 
 import java.util.LinkedList;
-import java.util.Random;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import channel.Channel;
 import javafx.scene.control.ProgressBar;
-import channel.InputDataListener;
-import channel.OutputDataSpeaker;
 import javafx.geometry.HPos;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 
 public class SoundLevelDisplayItem extends GridPane {
 
@@ -25,12 +18,12 @@ public class SoundLevelDisplayItem extends GridPane {
 
 	private LinkedList<Integer> internalBuffer = new LinkedList<>();
 	private ScheduledThreadPoolExecutor executor;
-	
-	private boolean playInternally = false;
 
 	public SoundLevelDisplayItem(String deviceName, LinkedList<LinkedList<Integer>> dataQueue) {
 
 		deviceNameField = new Label(deviceName);
+		deviceNameField.setPrefWidth(120);
+		deviceNameField.setMaxWidth(120);
 		soundLevelBar = new ProgressBar(0.1);
 		soundLevelBar.setStyle("-fx-accent: -usp-dark-grey");
 		overdriveIndicator = new ProgressBar(0);
@@ -42,7 +35,7 @@ public class SoundLevelDisplayItem extends GridPane {
 		this.add(soundLevelBar, 0, 1);
 		this.add(overdriveIndicator, 1, 1);
 		GridPane.setHalignment(soundLevelBar, HPos.CENTER);
-		
+
 		this.dataQueue = dataQueue;
 	}
 
@@ -77,7 +70,6 @@ public class SoundLevelDisplayItem extends GridPane {
 	}
 
 	public void setPlay(boolean play) {
-		playInternally = play;
 
 		internalBuffer.clear();
 

@@ -1,20 +1,12 @@
 package gui.soundLevelDisplay;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import channel.Channel;
 import channel.ChannelConfig;
-import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -37,8 +29,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 	private static SoundLevelBar soundLevelBar;
 
-	private GridPane inputDevicesBar;
-	private GridPane outputDevicesBar;
+	private HBox inputDevicesBar;
+	private HBox outputDevicesBar;
 
 	// HashMap<DeviceName, ChannelName>
 	private HashMap<String, LinkedList<String>> inputDevicesList;
@@ -67,10 +59,10 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			inputDevicesList = new HashMap<>();
 			outputDevicesList = new HashMap<>();
 
-			inputDevicesBar = new GridPane();
+			inputDevicesBar = new HBox();
 			inputDevicesBar.getStyleClass().add("sound-level-bar");
 
-			outputDevicesBar = new GridPane();
+			outputDevicesBar = new HBox();
 			outputDevicesBar.getStyleClass().add("sound-level-bar");
 
 			TitledPane inputPane = new TitledPane();
@@ -168,7 +160,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
 			}
 
@@ -185,7 +177,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+//				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
 			}
 		}
@@ -199,7 +192,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
 				outputQueues.put(device, queue);
 			}
 
@@ -216,7 +209,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 				
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
 				outputQueues.put(device, queue);
 			}
 		}
@@ -299,7 +292,8 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+//				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
 			}
 		} else {
@@ -315,7 +309,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.addRow(0, outputDeviceItems.get(device));
+				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
 				outputQueues.put(device, queue);
 			}
 		}

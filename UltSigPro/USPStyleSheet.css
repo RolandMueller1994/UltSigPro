@@ -150,7 +150,7 @@
 .sound-level-bar {
 	-fx-background-color: radial-gradient(focus-distance 0% , center 50% 50% , radius 90% , -usp-light-grey, #898989);
 	-fx-padding: 5;
-	-fx-hgap: 15;
+	-fx-spacing: 15;
 }
 
 .channel-center-split {
