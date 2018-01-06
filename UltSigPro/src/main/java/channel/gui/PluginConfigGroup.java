@@ -317,8 +317,10 @@ public class PluginConfigGroup extends Pane {
 					} else if (workCon == null && contextMenu.isShowing()) {
 						contextMenu.hide();
 					} else if (event.getButton().equals(MouseButton.PRIMARY) && workCon != null) {
-						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
-								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
+						if(!coordinatesOnLine) {
+							workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
+									sceneToLocal(event.getSceneX(), event.getSceneY()).getY());							
+						}
 					}
 				}
 				
