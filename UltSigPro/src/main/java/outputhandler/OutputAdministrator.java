@@ -396,12 +396,14 @@ public class OutputAdministrator {
 		// SoundOutputDevice
 		if (!distributionQueue.containsKey(device)) {
 			distributionQueue.put(device, new HashSet<OutputDataSpeaker>());
-			outputLevelMultiplier.put(speaker, new HashMap<String, Double>());
 		}
 		distributionQueue.get(device).add(speaker);
 		setSelectedDevice(device);
 		allSpeaker.add(speaker);
-		outputLevelMultiplier.get(speaker).put(device, 1.0);
+		
+		HashMap<String, Double> outputLevel = new HashMap<>();
+		outputLevel.put(device, 1.0);
+		outputLevelMultiplier.get(speaker).putAll(outputLevel);
 	}
 
 	/**
@@ -541,7 +543,6 @@ public class OutputAdministrator {
 					System.out.println("First data output at: " + System.currentTimeMillis());
 					firstOutput = false;
 				}
-
 				for (Map.Entry<String, HashSet<OutputDataSpeaker>> entry : distributionQueue.entrySet()) {
 					boolean firstData = true;
 
