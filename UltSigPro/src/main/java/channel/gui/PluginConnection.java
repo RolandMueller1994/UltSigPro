@@ -42,8 +42,11 @@ public class PluginConnection {
 	private USPPoint drawingPoint;
 	private HashSet<USPPoint> dividerPoints = new HashSet<>();
 	
-	private HashSet<USPLine> lines = new HashSet<>();
+	private HashMap<HashSet<USPLine>, LinkedList<USPPoint>> lines = new HashMap<>();
 	private HashSet<Circle> dividers = new HashSet<>();
+	
+	private HashSet<USPLine> deletionLines;
+	private LinkedList<USPPoint> deletionPoints;
 	
 	private Output input;
 	private USPPoint inputPoint;
@@ -126,11 +129,13 @@ public class PluginConnection {
 	}
 
 	private void redraw() {
-		for(USPLine line : lines) {
-			line.clear();
+		for(HashSet<USPLine> part : lines.keySet()) {
+			for(USPLine line : part) {
+				line.clear();
+			}			
+			configGroup.getChildren().removeAll(part);
 		}
-		
-		configGroup.getChildren().removeAll(lines);
+			
 		configGroup.getChildren().removeAll(dividers);
 		
 		lines.clear();
@@ -138,40 +143,48 @@ public class PluginConnection {
 		
 		for(LinkedList<USPPoint> pointList : points) {
 			USPPoint last = null;
+			HashSet<USPLine> part = new HashSet<>();
 			for(USPPoint point : pointList) {
 				if(last != null) {
-					USPLine line = new USPLine(last, point, configGroup, isLineHor(last, point));
+					USPLine line = new USPLine(last, point, this, configGroup, isLineHor(last, point));
 					line.setStyle(USPLineStyle.NORMAL_LINE);
 					
-					lines.add(line);					
+					part.add(line);					
 				}
 				last = point;
 			}
+			
+			lines.put(part, pointList);
 		}
 		
 		if(drawingPoints != null) {
 			USPPoint last = null;
+			HashSet<USPLine> part = new HashSet<>();
 			for(USPPoint point : drawingPoints) {
 				if(last != null) {
-					USPLine line = new USPLine(last, point, configGroup, isLineHor(last, point));
+					USPLine line = new USPLine(last, point, this, configGroup, isLineHor(last, point));
 					line.setStyle(USPLineStyle.DRAWING_LINE);
 					
-					lines.add(line);
+					part.add(line);
 				}
 				last = point;
 			}
 			
-			USPLine line = new USPLine(last, drawingPoint, configGroup, isLineHor(last, drawingPoint));
+			USPLine line = new USPLine(last, drawingPoint, this, configGroup, isLineHor(last, drawingPoint));
 			line.setStyle(USPLineStyle.DRAWING_LINE);
 			
-			lines.add(line);
+			part.add(line);
+			lines.put(part, drawingPoints);
 		}
 		
 		for(USPPoint divider : dividerPoints) {
 			dividers.add(new Circle(divider.getX(), divider.getY(), DIVIDER_DIAMETER/2));
 		}
 		
-		configGroup.getChildren().addAll(lines);
+		for(HashSet<USPLine> part : lines.keySet()) {
+			configGroup.getChildren().addAll(part);			
+		}
+		
 		configGroup.getChildren().addAll(dividers);
 	}
 	
@@ -184,7 +197,16 @@ public class PluginConnection {
 	}
 	
 	public void removeCurrentSelection() {
-
+		
+		if(deletionLines != null) {
+			for(USPLine deletionLine : deletionLines) {
+				deletionLine.setStyle(USPLineStyle.NORMAL_LINE);
+			}
+			
+			deletionLines = null;
+			deletionPoints = null;
+		}
+		
 	}
 
 	public boolean checkIfCoordinatesOnLine(USPPoint drawingPoint) {
@@ -505,11 +527,13 @@ public class PluginConnection {
 	
 	private void finalizeOnDivider() {
 		
-		for(USPLine line : lines) {
-			line.clear();
+		for(HashSet<USPLine> part : lines.keySet()) {
+			for(USPLine line : part) {
+				line.clear();
+			}
+			
+			configGroup.getChildren().removeAll(part);
 		}
-		
-		configGroup.getChildren().removeAll(lines);
 	}
 	
 	private boolean checkIfCoordOnLineVert(USPPoint p1, USPPoint p2, double x, double y) {
@@ -1032,6 +1056,26 @@ public class PluginConnection {
 		}
 	}
 	
+	public void setHoveredForDeletion(USPLine line) {
+		
+		System.out.println("set hovered called");
+		
+		configGroup.removeCurrentSelection();
+		
+		for(HashSet<USPLine> part : lines.keySet()) {
+			if(part.contains(line)) {
+				deletionLines = part;
+				deletionPoints = lines.get(part);
+				break;
+			}
+		}
+		
+		for(USPLine deletionLine : deletionLines) {
+			deletionLine.setStyle(USPLineStyle.HOVERED_FOR_DELETION);
+		}
+		
+	}
+	
 	public boolean isDrawingHorizontal() {
 		return drawingHorizontal;
 	}
@@ -1098,12 +1142,16 @@ public class PluginConnection {
 		private MouseEventPane mouseEventPane;
 		private boolean hor;
 		
-		private PluginConfigGroup configGroup;
+		private USPLineStyle style;
 		
-		public USPLine(USPPoint start, USPPoint end, PluginConfigGroup configGroup, boolean hor) {
+		private PluginConfigGroup configGroup;
+		private PluginConnection parentCon;
+		
+		public USPLine(USPPoint start, USPPoint end, PluginConnection parentCon, PluginConfigGroup configGroup, boolean hor) {
 			super(start.getX(), start.getY(), end.getX(), end.getY());
 			this.start = start;
 			this.end = end;
+			this.parentCon = parentCon;
 			this.configGroup = configGroup;
 			this.hor = hor;
 			end.addUpdateLine(this);
@@ -1146,8 +1194,13 @@ public class PluginConnection {
 				setStrokeWidth(3);
 				setStyle("-fx-stroke: -usp-light-blue");
 				break;
+			case HOVERED_FOR_DELETION:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				break;
 			}
-				
+			
+			this.style = style;
 		}
 		
 		public void clear() {
@@ -1174,19 +1227,21 @@ public class PluginConnection {
 					@Override
 					public void handle(MouseEvent event) {
 						
-						if(parent.configGroup.getWorkCon() != null) {
-							USPPoint drawingPoint = parent.configGroup.getWorkCon().drawingPoint;
-							Point2D screen = parent.configGroup.localToScreen(drawingPoint.getX(), drawingPoint.getY());
-							
-							Point2D local = screenToLocal(screen);
-							
-							if(local.getX() < getWidth() && local.getY() < getHeight() && local.getX() > 0 && local.getY() > 0) {
-								parent.setStyle(USPLineStyle.HOVERED_LINE);
+						if(parent.style != USPLineStyle.HOVERED_FOR_DELETION) {
+							if(parent.configGroup.getWorkCon() != null) {
+								USPPoint drawingPoint = parent.configGroup.getWorkCon().drawingPoint;
+								Point2D screen = parent.configGroup.localToScreen(drawingPoint.getX(), drawingPoint.getY());
+								
+								Point2D local = screenToLocal(screen);
+								
+								if(local.getX() < getWidth() && local.getY() < getHeight() && local.getX() > 0 && local.getY() > 0) {
+									parent.setStyle(USPLineStyle.HOVERED_LINE);
+								}
+								return;
 							}
-							return;
+							
+							parent.setStyle(USPLineStyle.HOVERED_LINE);							
 						}
-						
-						parent.setStyle(USPLineStyle.HOVERED_LINE);
 					}
 					
 				});
@@ -1196,7 +1251,24 @@ public class PluginConnection {
 					@Override
 					public void handle(MouseEvent event) {
 						
-						parent.setStyle(USPLineStyle.NORMAL_LINE);
+						if(parent.style != USPLineStyle.HOVERED_FOR_DELETION) {
+							parent.setStyle(USPLineStyle.NORMAL_LINE);							
+						}
+					}
+					
+				});
+				
+				setOnMouseClicked(new EventHandler<MouseEvent> () {
+
+					@Override
+					public void handle(MouseEvent event) {
+						
+						if(parent.style == USPLineStyle.HOVERED_FOR_DELETION) {
+							parent.parentCon.removeCurrentSelection();
+						} else {
+							parent.parentCon.setHoveredForDeletion(parent);
+						}
+						
 					}
 					
 				});
@@ -1242,7 +1314,7 @@ public class PluginConnection {
 	}
 	
 	public enum USPLineStyle {
-		DRAWING_LINE, NORMAL_LINE, HOVERED_LINE
+		DRAWING_LINE, NORMAL_LINE, HOVERED_LINE, HOVERED_FOR_DELETION
 	}
 	
 	
