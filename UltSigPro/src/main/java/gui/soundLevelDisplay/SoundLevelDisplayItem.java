@@ -4,7 +4,6 @@ import java.util.LinkedList;
 
 import javafx.scene.control.ProgressBar;
 import javafx.animation.AnimationTimer;
-import javafx.geometry.HPos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
