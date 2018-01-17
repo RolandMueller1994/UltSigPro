@@ -104,10 +104,6 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 
 			@Override
 			public void handle(MouseEvent event) {
-
-				if(con == null) {
-					System.out.println("Con null on mouse entered");
-				}
 				
 				if(con == null && (configGroup.getWorkCon() == null || !configGroup.getWorkCon().hasInput())) {
 					

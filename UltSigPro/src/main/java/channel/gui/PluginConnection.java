@@ -131,6 +131,7 @@ public class PluginConnection {
 	}
 
 	private void redraw() {
+		
 		for(HashSet<USPLine> part : lines.keySet()) {
 			for(USPLine line : part) {
 				line.clear();
@@ -1075,9 +1076,7 @@ public class PluginConnection {
 	}
 	
 	public void setHoveredForDeletion(USPLine line) {
-		
-		System.out.println("set hovered called");
-		
+				
 		configGroup.removeCurrentSelection();
 		
 		for(HashSet<USPLine> part : lines.keySet()) {
@@ -1089,6 +1088,7 @@ public class PluginConnection {
 		}
 		
 		for(USPLine deletionLine : deletionLines) {
+
 			deletionLine.setStyle(USPLineStyle.HOVERED_FOR_DELETION);
 		}
 		
@@ -1191,6 +1191,7 @@ public class PluginConnection {
 		}
 		
 		public void setStyle(USPLineStyle style) {
+			
 			switch(style) {
 			case NORMAL_LINE:
 				setStrokeWidth(1);
@@ -1276,20 +1277,21 @@ public class PluginConnection {
 					
 				});
 				
-				/*setOnMouseClicked(new EventHandler<MouseEvent> () {
+				setOnMouseClicked(new EventHandler<MouseEvent> () {
 
 					@Override
 					public void handle(MouseEvent event) {
 						
 						if(parent.style == USPLineStyle.HOVERED_FOR_DELETION) {
 							parent.parentCon.removeCurrentSelection();
-						} else {
+						} else if (parent.configGroup.getWorkCon() == null) {
 							parent.parentCon.setHoveredForDeletion(parent);
 						}
 						
+						event.consume();
 					}
 					
-				});*/
+				});
 			}
 			
 			public void update() {
