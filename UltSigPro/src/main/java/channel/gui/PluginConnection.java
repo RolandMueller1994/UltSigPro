@@ -48,6 +48,8 @@ public class PluginConnection {
 	private HashSet<USPLine> deletionLines;
 	private LinkedList<USPPoint> deletionPoints;
 	
+	private LinkedList<USPPoint> unifyPoints;
+	
 	private Output input;
 	private USPPoint inputPoint;
 	private HashMap<Input, USPPoint> outputs = new HashMap<>();
@@ -228,13 +230,19 @@ public class PluginConnection {
 					if(point.getX() == last.getX()) {
 						// Vertical line
 						if(checkIfCoordOnLineVert(point, last, x, y)) {
+							unifyPoints = pointList;
 							return true;
+						} else {
+							unifyPoints = null;
 						}
 						
 					} else {
 						// Horizontal line
 						if(checkIfCoordOnLineHor(point, last, x, y)) {
+							unifyPoints = pointList;
 							return true;
+						} else {
+							unifyPoints = null;
 						}
 						
 					}
@@ -448,7 +456,9 @@ public class PluginConnection {
 		boolean unified = false;
 		boolean unifyHor = false;
 		
-		for(LinkedList<USPPoint> pointList : points) {
+		if(unifyPoints != null) {
+			LinkedList<USPPoint> pointList = unifyPoints;
+			
 			USPPoint last = null;
 			
 			prePoints = new LinkedList<>();
@@ -488,10 +498,6 @@ public class PluginConnection {
 				}
 				
 				last = point;
-			}
-			
-			if(unified) {
-				break;
 			}
 		}
 		
@@ -1258,7 +1264,7 @@ public class PluginConnection {
 					
 				});
 				
-				setOnMouseClicked(new EventHandler<MouseEvent> () {
+				/*setOnMouseClicked(new EventHandler<MouseEvent> () {
 
 					@Override
 					public void handle(MouseEvent event) {
@@ -1271,7 +1277,7 @@ public class PluginConnection {
 						
 					}
 					
-				});
+				});*/
 			}
 			
 			public void update() {
