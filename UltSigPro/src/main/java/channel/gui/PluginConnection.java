@@ -522,7 +522,6 @@ public class PluginConnection {
 			prePoints.add(dividerPoint);
 			postPoints.add(dividerPoint);
 			otherPoints.add(dividerPoint);
-			points.remove(unifyPoints);
 			
 			//This is necessary due to remove doesn't work here.
 			HashSet<LinkedList<USPPoint>> cachedList = new HashSet<>();
