@@ -75,6 +75,7 @@ public class USPFileReader {
 			HashMap<String, Double> inputWaveGain = new HashMap<>();
 			HashMap<String, Double> outputWaveGain = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
+			List<String> signalSources = new LinkedList<>();
 			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
 			List<Element> connectionLines = new LinkedList<>();
 			List<String> missingResources = new LinkedList<>();
@@ -206,7 +207,7 @@ public class USPFileReader {
 				}
 			}
 			USPGui.addChannel(new ChannelConfig(channelName, new LinkedList<String>(inputDevices.keySet()),
-					new LinkedList<String>(outputDevices.keySet()), choosedInputWaveFiles, choosedOutputWaveFiles));
+					new LinkedList<String>(outputDevices.keySet()), choosedInputWaveFiles, choosedOutputWaveFiles, signalSources));
 			ChannelPane pane = (ChannelPane) USPGui.getChannelBox().getChildren().get(i);
 			pane.setExpanded(expanded);
 			TableView<DeviceGainTuple> inputGainTable = pane.getInputDeviceGainTable();

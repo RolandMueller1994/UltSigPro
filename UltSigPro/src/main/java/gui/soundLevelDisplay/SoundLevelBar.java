@@ -182,6 +182,19 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				inputQueues.put(device, queue);
 			}
 		}
+		
+		for (String signalSource : config.getSignalSources()) {
+			
+			// new input device entry
+			if (!inputDevicesList.containsKey(signalSource)) {
+				inputDevicesList.put(signalSource, new LinkedList<>());
+				
+				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+				inputDeviceItems.put(signalSource, new SoundLevelDisplayItem(signalSource, queue));
+				inputDevicesBar.getChildren().add(inputDeviceItems.get(signalSource));
+				inputQueues.put(signalSource, queue);
+			}
+		}
 
 		for (String device : config.getOutputDevices()) {
 

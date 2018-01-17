@@ -21,7 +21,8 @@ public class ChannelConfig {
 	private Collection<String> outputDevices;
 	private HashMap<String, File> inputWaveFiles;
 	private HashMap<String, File> outputWaveFiles;
-	
+	private Collection<String> signalSources;
+
 	private HashSet<ChannelDeviceUpdateListener> listeners = new HashSet<>();
 
 	/**
@@ -42,7 +43,7 @@ public class ChannelConfig {
 	 */
 	public ChannelConfig(@Nonnull String name, @Nullable Collection<String> inputDevices,
 			@Nullable Collection<String> outputDevices, HashMap<String, File> inputWaveFiles,
-			HashMap<String, File> outputWaveFiles) {
+			HashMap<String, File> outputWaveFiles, Collection<String> signalSources) {
 		this.name = name;
 		if (inputDevices != null) {
 			this.inputDevices = inputDevices;
@@ -63,6 +64,11 @@ public class ChannelConfig {
 			this.outputWaveFiles = outputWaveFiles;
 		} else {
 			this.outputWaveFiles = new HashMap<String, File>();
+		}
+		if (!signalSources.isEmpty()) {
+			this.signalSources = signalSources;
+		} else {
+			this.signalSources = new HashSet<String>();
 		}
 	}
 
@@ -117,6 +123,15 @@ public class ChannelConfig {
 	}
 
 	/**
+	 * Get the signal sources.
+	 * 
+	 * @return A {@link HashSet} of {@link String}s.
+	 */
+	public Collection<String> getSignalSources() {
+		return signalSources;
+	}
+
+	/**
 	 * Adds the given device to the input device list.
 	 * 
 	 * @param device
@@ -124,28 +139,42 @@ public class ChannelConfig {
 	 */
 	public void addInputDevice(@Nonnull String device) {
 		inputDevices.add(device);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
 
 	public void removeInputDevice(@Nonnull String device) {
 		inputDevices.remove(device);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
-	
+
 	public void addInputWaveFile(String name, File file) {
 		inputWaveFiles.put(name, file);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
+			listener.fireDevicesUpdates();
+		}
+	}
+
+	public void removeInputWaveFile(String name) {
+		inputWaveFiles.remove(name);
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
 	
-	public void removeInputWaveFile(String name) {
-		inputWaveFiles.remove(name);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+	public void addSignalSource(String name) {
+		signalSources.add(name);
+		for (ChannelDeviceUpdateListener listener : listeners) {
+			listener.fireDevicesUpdates();
+		}
+	}
+	
+	public void removeSignalSource(String name) {
+		signalSources.remove(name);
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
@@ -168,38 +197,38 @@ public class ChannelConfig {
 	 */
 	public void addOutputDevice(@Nonnull String device) {
 		outputDevices.add(device);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
 
 	public void removeOutputDevice(@Nonnull String device) {
 		outputDevices.remove(device);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
-	
+
 	public void addOutputWaveFile(String name, File file) {
 		outputWaveFiles.put(name, file);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
-	
+
 	public void removeOutputWaveFile(String name) {
 		outputWaveFiles.remove(name);
-		for(ChannelDeviceUpdateListener listener : listeners) {
+		for (ChannelDeviceUpdateListener listener : listeners) {
 			listener.fireDevicesUpdates();
 		}
 	}
- 	
+
 	public void registerChannelDeviceUpdateListener(ChannelDeviceUpdateListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	public interface ChannelDeviceUpdateListener {
-		
+
 		void fireDevicesUpdates();
 	}
 

@@ -36,11 +36,14 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 		config.getName();
 		this.channelConfig = config;
 		this.pane = pane;
+		
 		inputAdmin = InputAdministrator.getInputAdminstrator();
 		inputAdmin.registerInputDataListener(this, config.getInputDevices());
+		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
+		inputAdmin.createSignalSource(config.getSignalSources(), this);
+		
 		outputAdmin = OutputAdministrator.getOutputAdministrator();
 		outputAdmin.registerOutputDevices(this, config.getOutputDevices());
-		inputAdmin.openWaveFiles(config.getInputWaveFiles(), this);
 		outputAdmin.setWaveFileEntries(config.getOutputWaveFiles(), this);
 
 		for(String device : config.getInputDevices()) {
@@ -59,7 +62,11 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			addOutputDevice(outputWaveFile);
 		}
 		
-		if(config.getInputDevices().size() != 0 || config.getInputWaveFiles().size() != 0) {
+		for(String signalSource : config.getSignalSources()) {
+			addInputDevice(signalSource);
+		}
+		
+		if(config.getInputDevices().size() != 0 || config.getInputWaveFiles().size() != 0 || config.getSignalSources().size() != 0) {
 			pluginInput = new PluginInput();			
 		}
 		

@@ -13,6 +13,7 @@ delete=Delete
 play=Play
 stop=Stop
 file=File
+signalsource=Signal source
 
 main.SecondInstanceGui$SecondInstanceAlert.header=UltSigPro is already running and cannot be started twice.
 

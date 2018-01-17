@@ -88,7 +88,8 @@ public class ChannelPane extends TitledPane {
 		super.setContent(centralPane);
 		this.config = config;
 		name = config.getName();
-		inputPane = new InputPane(config.getInputDevices(), config.getInputWaveFiles().keySet());
+		inputPane = new InputPane(config.getInputDevices(), config.getInputWaveFiles().keySet(),
+				config.getSignalSources());
 		outputPane = new OutputPane(config.getOutputDevices(), config.getOutputWaveFiles().keySet());
 		centralPane.getStyleClass().add("channel-central-pane");
 
@@ -142,7 +143,7 @@ public class ChannelPane extends TitledPane {
 		Element channelName = doc.createElement("name");
 		channelName.appendChild(doc.createTextNode(name));
 		channel.appendChild(channelName);
-		
+
 		// channel expanded or collapsed
 		Element expanded = doc.createElement("expanded");
 		expanded.appendChild(doc.createTextNode(String.valueOf(super.isExpanded())));
@@ -275,7 +276,8 @@ public class ChannelPane extends TitledPane {
 
 		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
-		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles) {
+		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles,
+				Collection<String> signalSources) {
 			addButton = new Button();
 			addButton.getStyleClass().add("plusButton");
 			addButton.setMaxWidth(Double.MAX_VALUE);
@@ -318,6 +320,10 @@ public class ChannelPane extends TitledPane {
 
 			for (String device : waveFiles) {
 				addDevice(device);
+			}
+			
+			for (String signalSource : signalSources) {
+				addDevice(signalSource);
 			}
 
 			deviceGainTable.setItems(tableRows);

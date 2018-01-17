@@ -18,16 +18,13 @@ import channel.gui.Output;
 import channel.gui.PluginConfigGroup;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Point2D;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import pluginframework.PluginInterface;
 import plugins.sigproplugins.signalrouting.WaveChartProbe;
-import resourceframework.ResourceProviderException;
 
 /**
  * Basic interface for signal processing plugins. Every plugin has to implement

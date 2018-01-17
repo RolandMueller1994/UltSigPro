@@ -7,17 +7,12 @@ import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
 import guicomponents.AbstractNumberTextField.ValueChangedInterface;
 import guicomponents.DoubleTextField;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.effect.Glow;
-import javafx.scene.effect.SepiaTone;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -26,7 +21,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.util.Duration;
 import plugins.sigproplugins.SigproPlugin;
 
 /**

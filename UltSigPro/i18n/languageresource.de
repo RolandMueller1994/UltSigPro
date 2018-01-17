@@ -13,6 +13,7 @@ delete=Löschen
 play=Play
 stop=Stop
 file=Datei
+signalsource=Signalquelle
 
 main.SecondInstanceGui$SecondInstanceAlert.header=UltSigPro läuft bereits und kann nicht zweimal gestartet werden.
 

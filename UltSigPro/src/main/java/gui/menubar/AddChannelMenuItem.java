@@ -119,14 +119,14 @@ public class AddChannelMenuItem extends MenuItem {
 
 			Label titleLabel = new Label(lanHandler.getLocalizedText(AddChannelDialog.class, TITLE_LABEL) + ": *");
 			titleTextField = new TextField();
-			
+
 			Platform.runLater(new Runnable() {
 
 				@Override
 				public void run() {
 					titleTextField.requestFocus();
 				}
-				
+
 			});
 
 			inputBoxes.add(new ChoiceBox<String>());
@@ -226,12 +226,17 @@ public class AddChannelMenuItem extends MenuItem {
 			List<String> outputDevices = new LinkedList<>();
 			HashMap<String, File> choosedInputWaveFiles = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
+			List<String> signalSources = new LinkedList<>();
 
 			for (ChoiceBox<String> choiceBox : inputBoxes) {
 				String cur;
 				if ((cur = choiceBox.getSelectionModel().getSelectedItem()) != null) {
 					if (inputWaveFiles.containsKey(cur)) {
 						choosedInputWaveFiles.put(cur, inputWaveFiles.get(cur));
+
+					} else if (cur.equals(lanHandler.getLocalizedText("signalsource"))) {
+						signalSources.add(cur);
+
 					} else {
 						inputDevices.add(cur);
 					}
@@ -249,7 +254,8 @@ public class AddChannelMenuItem extends MenuItem {
 				}
 			}
 
-			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices, choosedInputWaveFiles, choosedOutputWaveFiles);
+			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices, choosedInputWaveFiles,
+					choosedOutputWaveFiles, signalSources);
 		}
 
 		private GridPane getInputPane() {
@@ -270,6 +276,7 @@ public class AddChannelMenuItem extends MenuItem {
 
 			ObservableList<String> list = FXCollections.observableArrayList(inputAdmin.getInputDevices());
 			list.add("Wave " + lanHandler.getLocalizedText("file"));
+			list.add(lanHandler.getLocalizedText("signalsource"));
 			firstBox.setItems(list);
 
 			firstBox.setOnAction(new EventHandler<ActionEvent>() {
@@ -279,7 +286,8 @@ public class AddChannelMenuItem extends MenuItem {
 					if (firstBox.getSelectionModel().getSelectedItem()
 							.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 						FileChooser fileChooser = new FileChooser();
-						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+								"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 						File waveFile = fileChooser.showOpenDialog(USPGui.stage);
 						if (waveFile != null) {
 							list.add(waveFile.getName());
@@ -289,6 +297,9 @@ public class AddChannelMenuItem extends MenuItem {
 								inputWaveFiles.put(waveFile.getName(), waveFile);
 							}
 						}
+					} else if (firstBox.getSelectionModel().getSelectedItem()
+							.equals(lanHandler.getLocalizedText("signalsource"))) {
+						// TODO create dialog for creating a signal source
 					}
 				}
 			});
@@ -308,6 +319,7 @@ public class AddChannelMenuItem extends MenuItem {
 					ChoiceBox<String> box = new ChoiceBox<>();
 					ObservableList<String> list = FXCollections.observableArrayList(inputAdmin.getInputDevices());
 					list.add("Wave " + lanHandler.getLocalizedText("file"));
+					list.add(lanHandler.getLocalizedText("signalsource"));
 					box.setItems(list);
 
 					box.setOnAction(new EventHandler<ActionEvent>() {
@@ -317,7 +329,8 @@ public class AddChannelMenuItem extends MenuItem {
 							if (box.getSelectionModel().getSelectedItem()
 									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 								FileChooser fileChooser = new FileChooser();
-								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+										"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 								File waveFile = fileChooser.showOpenDialog(USPGui.stage);
 								if (waveFile != null) {
 									list.add(waveFile.getName());
@@ -327,6 +340,10 @@ public class AddChannelMenuItem extends MenuItem {
 										inputWaveFiles.put(waveFile.getName(), waveFile);
 									}
 								}
+							} else if (firstBox.getSelectionModel().getSelectedItem()
+									.equals(lanHandler.getLocalizedText("signalsource"))) {
+								// TODO create dialog for creating a signal
+								// source
 							}
 						}
 					});
@@ -380,7 +397,7 @@ public class AddChannelMenuItem extends MenuItem {
 			ObservableList<String> list = FXCollections.observableArrayList(outputAdmin.getOutputDevices());
 			list.add("Wave " + lanHandler.getLocalizedText("file"));
 			firstBox.setItems(list);
-			
+
 			firstBox.setOnAction(new EventHandler<ActionEvent>() {
 
 				@Override
@@ -388,7 +405,8 @@ public class AddChannelMenuItem extends MenuItem {
 					if (firstBox.getSelectionModel().getSelectedItem()
 							.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 						FileChooser fileChooser = new FileChooser();
-						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+								"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 						File waveFile = fileChooser.showSaveDialog(USPGui.stage);
 						if (waveFile != null) {
 							list.add(waveFile.getName());
@@ -418,7 +436,7 @@ public class AddChannelMenuItem extends MenuItem {
 					ObservableList<String> list = FXCollections.observableArrayList(outputAdmin.getOutputDevices());
 					list.add("Wave " + lanHandler.getLocalizedText("file"));
 					box.setItems(list);
-					
+
 					box.setOnAction(new EventHandler<ActionEvent>() {
 
 						@Override
@@ -426,7 +444,8 @@ public class AddChannelMenuItem extends MenuItem {
 							if (box.getSelectionModel().getSelectedItem()
 									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 								FileChooser fileChooser = new FileChooser();
-								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
+								fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+										"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 								File waveFile = fileChooser.showSaveDialog(USPGui.stage);
 								if (waveFile != null) {
 									list.add(waveFile.getName());
