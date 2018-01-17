@@ -435,6 +435,8 @@ public class PluginConnection {
 
 	public void unifyConnections(PluginConnection other) {
 		
+		System.out.println(points.size());
+		
 		if(other.hasInput() && hasInput()) {
 			return;
 		}
@@ -519,7 +521,17 @@ public class PluginConnection {
 			prePoints.add(dividerPoint);
 			postPoints.add(dividerPoint);
 			otherPoints.add(dividerPoint);
-			points.remove(removeList);
+			points.remove(unifyPoints);
+			
+			//This is necessary due to remove doesn't work here.
+			HashSet<LinkedList<USPPoint>> cachedList = new HashSet<>();
+			for(LinkedList<USPPoint> list : points) {
+				if(list.hashCode() != removeList.hashCode()) {
+					cachedList.add(list);
+				}
+			}			
+			points = cachedList;
+			
 			points.add(prePoints);
 			points.add(postPoints);
 			points.add(otherPoints);
