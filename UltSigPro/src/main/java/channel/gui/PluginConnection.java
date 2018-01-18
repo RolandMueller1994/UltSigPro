@@ -2,6 +2,7 @@ package channel.gui;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import javax.annotation.Nonnull;
@@ -436,15 +437,9 @@ public class PluginConnection {
 
 	public void unifyConnections(PluginConnection other) {
 		
-		System.out.println(points.size());
-		
 		if(other.hasInput() && hasInput()) {
 			return;
 		}
-		
-//		Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
-//		double x = localPoint.getX();
-//		double y = localPoint.getY();
 		
 		double x = other.drawingPoint.getX();
 		double y = other.drawingPoint.getY();
@@ -1093,6 +1088,169 @@ public class PluginConnection {
 		
 	}
 	
+	public void deleteSelection() {
+		
+		if(deletionPoints != null) {
+			
+			if(deletionPoints.getFirst().equals(inputPoint)) {
+				input.removeConnection(this);
+				input = null;
+				inputPoint = null;
+			} else {
+				for(Input out : outputs.keySet()) {
+					if(outputs.get(out).equals(deletionPoints.getFirst())) {
+						out.removeConnection(this);
+						outputs.remove(out);
+						break;
+					}
+				}
+			}
+			
+			if(deletionPoints.getLast().equals(inputPoint)) {
+				input.removeConnection(this);
+				input = null;
+				inputPoint = null;
+			} else {
+				for(Input out : outputs.keySet()) {
+					if(outputs.get(out).equals(deletionPoints.getLast())) {
+						out.removeConnection(this);
+						outputs.remove(out);
+						break;
+					}
+				}
+			}
+			
+			HashSet<LinkedList<USPPoint>> cached = new HashSet<>();
+			
+			for(LinkedList<USPPoint> list : points) {
+				if(list.hashCode() != deletionPoints.hashCode()) {
+					cached.add(list);
+				}
+			}
+			
+			points = cached;
+			deletionPoints = null;
+			deletionLines = null;
+			clearPoints();
+			redraw();
+		}
+	}
+	
+	public boolean clearPoints() {
+		
+		boolean redraw = false;
+		
+		HashSet<USPPoint> removePoints = new HashSet<>();
+		
+		for(USPPoint point : dividerPoints) {
+			HashSet<LinkedList<USPPoint>> connectedLists = new HashSet<>();
+			
+			for(LinkedList<USPPoint> list : points) {
+				if(point.equals(list.getFirst()) || point.equals(list.getLast())) {
+					connectedLists.add(list);
+				}
+			}
+			
+			if(connectedLists.size() == 2) {
+				LinkedList<USPPoint> firstList = null;
+				LinkedList<USPPoint> secondList = null;
+				
+				removePoints.add(point);
+				
+				boolean first = true;
+				
+				for(LinkedList<USPPoint> list : connectedLists) {
+					if(first) {
+						firstList = list;
+						first = false;
+					} else {
+						secondList = list;
+					}
+				}
+				
+				HashSet<LinkedList<USPPoint>> cached = new HashSet<>();
+				
+				for(LinkedList<USPPoint> list : points) {
+					if(list.hashCode() != firstList.hashCode() && list.hashCode() != secondList.hashCode()) {
+						cached.add(list);
+					}
+				}
+				
+				points = cached;
+				
+				if(!(firstList.getFirst().equals(inputPoint) || outputs.containsValue(firstList.getFirst()))) {
+					LinkedList<USPPoint> tmp = firstList;
+					firstList = secondList;
+					secondList = tmp;
+				}
+				
+				if(point.equals(firstList.getFirst())) {
+					LinkedList<USPPoint> tmp = new LinkedList<>();
+					
+					Iterator<USPPoint> revIter = firstList.descendingIterator();
+					
+					while(revIter.hasNext()) {
+						tmp.add(revIter.next());
+					}
+					
+					firstList = tmp;
+				}
+				
+				if(point.equals(secondList.getLast())) {
+					LinkedList<USPPoint> tmp = new LinkedList<>();
+					
+					Iterator<USPPoint> revIter = secondList.descendingIterator();
+					
+					while(revIter.hasNext()) {
+						tmp.add(revIter.next());
+					}
+					
+					secondList = tmp;
+				}
+				
+				firstList.removeLast();
+				
+				if(firstList.getLast().getX() == secondList.get(1).getX() || firstList.getLast().getY() == secondList.get(1).getY()) {
+					secondList.removeFirst();
+				}
+				
+				firstList.addAll(secondList);
+				points.add(firstList);
+			}
+		}
+		
+		dividerPoints.removeAll(removePoints);
+		
+		for(LinkedList<USPPoint> list : points) {
+			
+			HashSet<USPPoint> removeList = new HashSet<>();
+			USPPoint last = null;
+			
+			for(USPPoint point : list) {
+				
+				if(last != null) {
+					if(point.equalCoordinates(last)) {
+						removeList.add(last);
+						removeList.add(point);
+					}
+				}
+				last = point;
+			}
+			
+			if(removeList.size() != 0) {
+				
+				list.removeAll(removeList);
+				redraw = true;				
+			}
+		}
+		
+		if(redraw) {
+			redraw();
+		}
+		
+		return redraw;
+	}
+	
 	public boolean isDrawingHorizontal() {
 		return drawingHorizontal;
 	}
@@ -1149,6 +1307,13 @@ public class PluginConnection {
 			for(USPLine line : updateLines) {
 				line.updateFromUSPPoint(this);
 			}
+		}
+		
+		public boolean equalCoordinates(USPPoint other) {
+			if(x == other.getX() && y == other.getY()) {
+				return true;
+			}
+			return false;
 		}
 	}
 	

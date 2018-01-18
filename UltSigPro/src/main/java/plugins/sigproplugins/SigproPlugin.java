@@ -125,6 +125,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				public void handle(MouseEvent event) {
 
 					dragged = false;
+					coordinatesListener.clearPoints();
 				}
 
 			});

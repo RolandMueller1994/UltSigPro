@@ -747,9 +747,17 @@ public class PluginConfigGroup extends Pane {
 	}*/
 
 	public void deleteLine() {
-		/*if (deletionLine != null) {
-			deletionLine.delete();
-		}*/
+		
+		for(PluginConnection con : allConnections) {
+			con.deleteSelection();
+		}
+		
+	}
+	
+	public void clearPoints() {
+		for(PluginConnection con : allConnections) {
+			con.clearPoints();
+		}
 	}
 
 	public void removeDeletionLine() {
