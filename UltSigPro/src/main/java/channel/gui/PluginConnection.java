@@ -957,9 +957,22 @@ public class PluginConnection {
 						if(secondEnd.getX() - x <= MIN_LINE_LENGTH) {
 							check.get(1).setX(check.get(1).getX() + configGroup.getRaster());
 							startPoint.setY(y);
+							startPoint.setX(x);
 							check.get(1).setY(y);
 							
 							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if(secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if(secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							
+							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if(secondEnd.getX() - x > MIN_LINE_LENGTH) {
 							startPoint.setX(x);
@@ -972,9 +985,22 @@ public class PluginConnection {
 						if(x - secondEnd.getX() <= MIN_LINE_LENGTH) {
 							check.get(1).setX(check.get(1).getX() - configGroup.getRaster());
 							startPoint.setY(y);
+							startPoint.setX(x);
 							check.get(1).setY(y);
 							
 							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if(secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if(secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+							
+							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if(x - secondEnd.getX() > MIN_LINE_LENGTH) {
 							startPoint.setX(x);
