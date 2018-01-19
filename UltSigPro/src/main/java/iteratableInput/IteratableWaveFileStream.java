@@ -66,4 +66,9 @@ public class IteratableWaveFileStream extends IteratableInputStream {
 		return outData;
 	}
 
+	@Override
+	public int[] readInt(int packageSize) {
+		return null;
+	}
+
 }

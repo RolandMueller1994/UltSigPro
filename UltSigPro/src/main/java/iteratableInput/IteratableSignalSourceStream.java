@@ -1,34 +1,67 @@
 package iteratableInput;
 
-import javax.sound.sampled.AudioInputStream;
+import inputhandler.InputAdministrator;
 
 public class IteratableSignalSourceStream extends IteratableInputStream {
 
-	AudioInputStream inputStream;
-	private byte[] dataBuffer;
-	private final int samplingFreq = 44100;
-	private int frequency = 1000;
-	
+	private int[] dataBuffer;
+	private int frequency = 600;
+	private int amplitude = 4000;
+	private final int samplingFrequency = 44100;
+	private int samplesPerPeriod;
+	private int periodNumber;
+	private final int minPackageSize = InputAdministrator.getInputAdminstrator().getOutPackageSize();
+
 	/**
 	 * Constructor for a signal source.
 	 */
 	public IteratableSignalSourceStream() {
-		int value = 0;
-		inputStream = null;
+
+		samplesPerPeriod = samplingFrequency / frequency;
+		int sinValue = 0;
+		double time = 0;
+
+		if (samplesPerPeriod < minPackageSize) {
+
+			// calculate how much periods of the signal are needed, to create
+			// more bytes than minPackageSize is
+			periodNumber = minPackageSize / samplesPerPeriod + 1;
+			
+		} else {
+			periodNumber = 1;
+		}
 		
-		dataBuffer = new byte[samplingFreq];
-		for (int i = 0; i < (samplingFreq /2); i++) {
-			value = (int) (5000*Math.sin(frequency*i));
-			dataBuffer[2 * i] = (byte) ((value & 0xFF00) >> 8);
-			dataBuffer[2 * i + 1] = (byte) ((value & 0xFF));						
+		dataBuffer = new int[periodNumber * samplesPerPeriod];
+
+		// fill the dataBuffer with a integer number of periods
+		for (int i = 0; i < dataBuffer.length; i++) {
+			time = i % samplesPerPeriod;
+			sinValue = (int) (amplitude * Math.sin(2 * Math.PI * (time / samplesPerPeriod)));
+			dataBuffer[i] = sinValue;
 		}
 	}
-	
-	
+
+	@Override
+	public int[] readInt(int packageSize) {
+
+		int cursor = getCursor();
+		int[] outData = new int[packageSize];
+		int srcPos = cursor % (dataBuffer.length);
+
+		if (srcPos + packageSize < dataBuffer.length) {
+			System.arraycopy(dataBuffer, srcPos, outData, 0, packageSize);
+		} else {
+			System.arraycopy(dataBuffer, srcPos, outData, 0, (dataBuffer.length - srcPos));
+			System.arraycopy(dataBuffer, 0, outData, (dataBuffer.length - srcPos),
+					(packageSize - (dataBuffer.length - srcPos)));
+		}
+		setCursor(cursor + packageSize);
+
+		return outData;
+	}
+
 	@Override
 	public byte[] read(int packageSize) {
-		int cursor = getCursor();
-		
 		return null;
 	}
 

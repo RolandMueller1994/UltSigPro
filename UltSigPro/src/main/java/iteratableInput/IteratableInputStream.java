@@ -30,6 +30,8 @@ public abstract class IteratableInputStream {
 
 	public abstract byte[] read(int packageSize);
 	
+	public abstract int[] readInt(int packageSize);
+	
 	public int getCursor() {
 		return cursor;
 	}

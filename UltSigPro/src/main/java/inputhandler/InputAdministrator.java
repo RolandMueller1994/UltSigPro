@@ -24,7 +24,6 @@ import javax.sound.sampled.TargetDataLine;
 import channel.Channel;
 import channel.InputDataListener;
 import gui.soundLevelDisplay.SoundLevelBar;
-import iteratableInput.IteratableInputStream;
 import iteratableInput.IteratableSignalSourceStream;
 import iteratableInput.IteratableWaveFileStream;
 
@@ -41,7 +40,8 @@ public class InputAdministrator {
 
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
-	private HashMap<String, IteratableInputStream> inputStreams;
+	private HashMap<String, IteratableWaveFileStream> inputWaveStreams;
+	private HashMap<String, IteratableSignalSourceStream> inputSignalSourceStreams;
 	private HashMap<String, Mixer> subscribedDevices;
 	private HashMap<String, TargetDataLine> targetDataLines;
 	private ScheduledThreadPoolExecutor executor;
@@ -52,6 +52,9 @@ public class InputAdministrator {
 
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
 	private HashMap<InputDataListener, HashMap<String, Double>> inputLevelMultiplier = new HashMap<>();
+	
+	int packageSize = 200;
+	int outPackageSize = packageSize / 2;
 
 	public static InputAdministrator getInputAdminstrator() {
 
@@ -65,7 +68,8 @@ public class InputAdministrator {
 		allSoundInputDevices = new HashMap<>();
 		subscribedDevices = new HashMap<>();
 		targetDataLines = new HashMap<>();
-		inputStreams = new HashMap<>();
+		inputWaveStreams = new HashMap<>();
+		inputSignalSourceStreams = new HashMap<>();
 	}
 
 	/**
@@ -197,6 +201,10 @@ public class InputAdministrator {
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
 
 	}
+	
+	public int getOutPackageSize() {
+		return outPackageSize;
+	}
 
 	public synchronized void openWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
 		if (!waveFiles.isEmpty()) {
@@ -205,7 +213,7 @@ public class InputAdministrator {
 				distributionMap.get(listener).add(fileName);
 				IteratableWaveFileStream stream;
 				stream = new IteratableWaveFileStream(waveFiles.get(fileName));
-				inputStreams.put(fileName, stream);
+				inputWaveStreams.put(fileName, stream);
 
 				HashMap<String, Double> inputLevel = new HashMap<>();
 				inputLevel.put(fileName, 1.0);
@@ -217,14 +225,14 @@ public class InputAdministrator {
 			}
 		}
 	}
-	
+
 	public synchronized void createSignalSource(Collection<String> names, InputDataListener listener) {
 		if (!names.isEmpty()) {
 			for (String name : names) {
 				distributionMap.get(listener).add(name);
 				IteratableSignalSourceStream stream = new IteratableSignalSourceStream();
-				inputStreams.put(name, stream);
-				
+				inputSignalSourceStreams.put(name, stream);
+
 				HashMap<String, Double> inputLevel = new HashMap<>();
 				inputLevel.put(name, 1.0);
 				if (inputLevelMultiplier.containsKey(listener)) {
@@ -253,7 +261,7 @@ public class InputAdministrator {
 			}
 
 			if (removeWaveFile) {
-				inputStreams.remove(fileName);
+				inputWaveStreams.remove(fileName);
 			}
 		}
 
@@ -336,8 +344,6 @@ public class InputAdministrator {
 		@Override
 		public void run() {
 
-			int packageSize = 200;
-			int outPackageSize = packageSize / 2;
 			HashMap<String, byte[]> data = new HashMap<>();
 			HashMap<String, int[]> marshalledBuffer = new HashMap<>();
 			Set<Entry<String, TargetDataLine>> targetEntrySet = targetDataLines.entrySet();
@@ -368,8 +374,14 @@ public class InputAdministrator {
 					}
 
 					if (!first) {
-						for (IteratableInputStream inputStream : inputStreams.values()) {
+						for (IteratableWaveFileStream inputStream : inputWaveStreams.values()) {
 							if (inputStream.available() < packageSize * 2) {
+								return;
+							}
+						}
+						
+						for (IteratableSignalSourceStream signalSourceStream : inputSignalSourceStreams.values()) {
+							if (signalSourceStream.available() < outPackageSize) {
 								return;
 							}
 						}
@@ -392,8 +404,12 @@ public class InputAdministrator {
 							targetEntry.getValue().read(new byte[avail], 0, avail);
 						}
 
-						for (IteratableInputStream inputStream : inputStreams.values()) {
+						for (IteratableWaveFileStream inputStream : inputWaveStreams.values()) {
 							inputStream.start();
+						}
+						
+						for (IteratableSignalSourceStream signalSourceStream : inputSignalSourceStreams.values()) {
+							signalSourceStream.start();
 						}
 
 						first = false;
@@ -411,7 +427,6 @@ public class InputAdministrator {
 						byte[] readData = data.get(targetEntry.getKey());
 
 						targetEntry.getValue().read(readData, 0, packageSize);
-
 						// ArrayList<Integer> marshalledData = new ArrayList<>
 						// (outPackageSize);
 						int[] marshalledData = new int[packageSize];
@@ -437,7 +452,7 @@ public class InputAdministrator {
 						marshalledBuffer.put(targetEntry.getKey(), marshalledData);
 					}
 
-					for (Map.Entry<String, IteratableInputStream> inputEntry : inputStreams.entrySet()) {
+					for (Map.Entry<String, IteratableWaveFileStream> inputEntry : inputWaveStreams.entrySet()) {
 						byte[] readData = inputEntry.getValue().read(packageSize * 2);
 						int[] marshalledData = new int[outPackageSize];
 						LinkedList<Integer> soundLevelData = new LinkedList<>();
@@ -480,13 +495,25 @@ public class InputAdministrator {
 								true);
 					}
 
+					for (Map.Entry<String, IteratableSignalSourceStream> inputEntry : inputSignalSourceStreams
+							.entrySet()) {
+						int[] marshalledData = new int[outPackageSize];
+						LinkedList<Integer> soundLevelData = new LinkedList<>();
+						marshalledData = inputEntry.getValue().readInt(outPackageSize);
+						for (int data : marshalledData) {
+							soundLevelData.add(data);
+						}
+						marshalledBuffer.put(inputEntry.getKey(), marshalledData);
+						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(inputEntry.getKey(), soundLevelData,
+								true);
+					}
+
 					for (Map.Entry<InputDataListener, Collection<String>> destEntry : distributionMap.entrySet()) {
 						boolean first = true;
 						int[] destData = new int[outPackageSize];
 						for (String input : destEntry.getValue()) {
 							double multiplier = (inputLevelMultiplier.get(destEntry.getKey())).get(input);
 							int[] inputData = marshalledBuffer.get(input);
-
 							if (multiplier != 1) {
 								if (first) {
 									for (int i = 0; i < outPackageSize; i++) {
