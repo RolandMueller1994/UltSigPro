@@ -4,7 +4,7 @@ import inputhandler.InputAdministrator;
 
 public class IteratableSignalSourceStream extends IteratableInputStream {
 
-	private int[] dataBuffer;
+	private byte[] byteBuffer;
 	private int frequency = 600;
 	private int amplitude = 4000;
 	private final int samplingFrequency = 44100;
@@ -17,6 +17,8 @@ public class IteratableSignalSourceStream extends IteratableInputStream {
 	 */
 	public IteratableSignalSourceStream() {
 
+		super.setSignalSource(true);
+		
 		samplesPerPeriod = samplingFrequency / frequency;
 		int sinValue = 0;
 		double time = 0;
@@ -31,38 +33,17 @@ public class IteratableSignalSourceStream extends IteratableInputStream {
 			periodNumber = 1;
 		}
 		
-		dataBuffer = new int[periodNumber * samplesPerPeriod];
+		byteBuffer = new byte[2 * periodNumber * samplesPerPeriod];
 
 		// fill the dataBuffer with a integer number of periods
-		for (int i = 0; i < dataBuffer.length; i++) {
+		for (int i = 0; i < (byteBuffer.length/2); i++) {
 			time = i % samplesPerPeriod;
 			sinValue = (int) (amplitude * Math.sin(2 * Math.PI * (time / samplesPerPeriod)));
-			dataBuffer[i] = sinValue;
+			
+			byteBuffer[2 * i] = (byte) ((0xFF00 & sinValue) >> 8);
+			byteBuffer[2 * i + 1] = (byte) (0xFF & sinValue);
+			
 		}
+		super.setDataBuffer(byteBuffer);
 	}
-
-	@Override
-	public int[] readInt(int packageSize) {
-
-		int cursor = getCursor();
-		int[] outData = new int[packageSize];
-		int srcPos = cursor % (dataBuffer.length);
-
-		if (srcPos + packageSize < dataBuffer.length) {
-			System.arraycopy(dataBuffer, srcPos, outData, 0, packageSize);
-		} else {
-			System.arraycopy(dataBuffer, srcPos, outData, 0, (dataBuffer.length - srcPos));
-			System.arraycopy(dataBuffer, 0, outData, (dataBuffer.length - srcPos),
-					(packageSize - (dataBuffer.length - srcPos)));
-		}
-		setCursor(cursor + packageSize);
-
-		return outData;
-	}
-
-	@Override
-	public byte[] read(int packageSize) {
-		return null;
-	}
-
 }

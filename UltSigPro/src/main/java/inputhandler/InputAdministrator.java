@@ -375,18 +375,18 @@ public class InputAdministrator {
 
 					if (!first) {
 						for (IteratableWaveFileStream inputStream : inputWaveStreams.values()) {
-							if (inputStream.available() < packageSize * 2) {
+							if (inputStream.available(4) < packageSize * 2) {
 								return;
 							}
 						}
 						
 						for (IteratableSignalSourceStream signalSourceStream : inputSignalSourceStreams.values()) {
-							if (signalSourceStream.available() < outPackageSize) {
+							if (signalSourceStream.available(2) < packageSize) {
 								return;
 							}
 						}
 					}
-
+					
 					if (startCount < 3000) {
 						startCount++;
 						return;
@@ -498,10 +498,18 @@ public class InputAdministrator {
 					for (Map.Entry<String, IteratableSignalSourceStream> inputEntry : inputSignalSourceStreams
 							.entrySet()) {
 						int[] marshalledData = new int[outPackageSize];
+						byte[] readData = inputEntry.getValue().read(2*outPackageSize);
 						LinkedList<Integer> soundLevelData = new LinkedList<>();
-						marshalledData = inputEntry.getValue().readInt(outPackageSize);
-						for (int data : marshalledData) {
-							soundLevelData.add(data);
+						for (int i = 0; i < marshalledData.length; i++) {
+							int value = 0;
+							value = value | Byte.toUnsignedInt(readData[2 * i]);
+							value <<= 8;
+							value = value | Byte.toUnsignedInt(readData[2 * i + 1]);
+							value <<= 16;
+							value >>= 16;
+							
+							marshalledData[i] = value;
+							soundLevelData.add(value);
 						}
 						marshalledBuffer.put(inputEntry.getKey(), marshalledData);
 						SoundLevelBar.getSoundLevelBar().updateSoundLevelItems(inputEntry.getKey(), soundLevelData,
