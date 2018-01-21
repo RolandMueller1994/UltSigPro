@@ -1474,11 +1474,11 @@ public class PluginConnection {
 						
 						if(parent.style == USPLineStyle.HOVERED_FOR_DELETION) {
 							parent.parentCon.removeCurrentSelection();
+							event.consume();
 						} else if (parent.configGroup.getWorkCon() == null) {
 							parent.parentCon.setHoveredForDeletion(parent);
+							event.consume();
 						}
-						
-						event.consume();
 					}
 					
 				});
