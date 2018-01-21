@@ -82,7 +82,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 					Pane inputHeader = (Pane) inputPane.lookup(".title");
 					inputHeader.setPrefHeight(TITLE_HEIGHT);
 				}
-				
+
 			});
 
 			TitledPane outputPane = new TitledPane();
@@ -101,19 +101,19 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 					Pane outputHeader = (Pane) outputPane.lookup(".title");
 					outputHeader.setPrefHeight(TITLE_HEIGHT);
 				}
-				
+
 			});
-			
+
 			ColumnConstraints inputCol = new ColumnConstraints();
 			inputCol.setPercentWidth(50);
 			ColumnConstraints outputCol = new ColumnConstraints();
 			outputCol.setPercentWidth(50);
-			
+
 			getColumnConstraints().addAll(inputCol, outputCol);
 
 			add(inputPane, 0, 0);
 			add(outputPane, 1, 0);
-			
+
 			inputDeviceItems = new HashMap<>();
 			outputDeviceItems = new HashMap<>();
 
@@ -170,7 +170,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 		}
 
 		for (String device : config.getInputWaveFiles().keySet()) {
-			
+
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
 				inputDevicesList.put(device, new LinkedList<>());
@@ -178,18 +178,18 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-//				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				// inputDevicesBar.addRow(0, inputDeviceItems.get(device));
 				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
 			}
 		}
-		
+
 		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
-			
+
 			// new input device entry
 			if (!inputDevicesList.containsKey(signalSource)) {
 				inputDevicesList.put(signalSource.getName(), new LinkedList<>());
-				
+
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 				inputDeviceItems.put(signalSource.getName(), new SoundLevelDisplayItem(signalSource.getName(), queue));
 				inputDevicesBar.getChildren().add(inputDeviceItems.get(signalSource.getName()));
@@ -213,15 +213,15 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// add channel name to this device
 			outputDevicesList.get(device).add(config.getName());
 		}
-		
+
 		for (String device : config.getOutputWaveFiles().keySet()) {
-			
+
 			// new output device entry
 			if (!outputDevicesList.containsKey(device)) {
 				outputDevicesList.put(device, new LinkedList<>());
-				
+
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-				
+
 				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
 				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
 				outputQueues.put(device, queue);
@@ -270,7 +270,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 		for (String inputWaveFile : config.getInputWaveFiles().keySet()) {
 			inputDevicesList.get(inputWaveFile).remove(config.getName());
 			
-			if(inputDevicesList.get(inputWaveFile).isEmpty()) {
+			if (inputDevicesList.get(inputWaveFile).isEmpty()) {
 				inputDevicesList.remove(inputWaveFile);
 				inputDevicesBar.getChildren().remove(inputDeviceItems.get(inputWaveFile));
 				inputQueues.remove(inputWaveFile);
@@ -281,38 +281,49 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 		for (String outputWaveFile : config.getOutputWaveFiles().keySet()) {
 			outputDevicesList.get(outputWaveFile).remove(config.getName());
 			
-			if(outputDevicesList.get(outputWaveFile).isEmpty()) {
+			if (outputDevicesList.get(outputWaveFile).isEmpty()) {
 				outputDevicesList.remove(outputWaveFile);
 				outputDevicesBar.getChildren().remove(outputDeviceItems.get(outputWaveFile));
 				outputQueues.remove(outputWaveFile);
 				outputDeviceItems.remove(outputWaveFile);
 			}
 		}
+		
+		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
+			inputDevicesList.get(signalSource.getName()).remove(config.getName());
+			
+			if (inputDevicesList.get(signalSource.getName()).isEmpty()) {
+				inputDevicesList.remove(signalSource.getName());
+				inputDevicesBar.getChildren().remove(inputDeviceItems.get(signalSource.getName()));
+				inputQueues.remove(signalSource.getName());
+				inputDeviceItems.remove(signalSource.getName());
+			}
+		}
 	}
-	
+
 	public void addDeviceToChannel(String device, Channel channel, boolean input) {
 		String channelName = channel.getChannelConfig().getName();
-		
-		if(input) {
-			if(inputDevicesList.containsKey(device)) {
-				if(!inputDevicesList.get(device).contains(channelName)) {
+
+		if (input) {
+			if (inputDevicesList.containsKey(device)) {
+				if (!inputDevicesList.get(device).contains(channelName)) {
 					inputDevicesList.get(device).add(channelName);
 				}
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
 				channels.add(channelName);
 				inputDevicesList.put(device, channels);
-				
+
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
 
 				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-//				inputDevicesBar.addRow(0, inputDeviceItems.get(device));
+				// inputDevicesBar.addRow(0, inputDeviceItems.get(device));
 				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
 				inputQueues.put(device, queue);
 			}
 		} else {
-			if(outputDevicesList.containsKey(device)) {
-				if(!outputDevicesList.get(device).contains(channelName)) {
+			if (outputDevicesList.containsKey(device)) {
+				if (!outputDevicesList.get(device).contains(channelName)) {
 					outputDevicesList.get(device).add(channelName);
 				}
 			} else {
@@ -331,32 +342,32 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 	public void removeDeviceFromChannel(String device, Channel channel, boolean input) {
 		String channelName = channel.getChannelConfig().getName();
-		
-		if(input) {
-			if(inputDevicesList.containsKey(device)) {
+
+		if (input) {
+			if (inputDevicesList.containsKey(device)) {
 				inputDevicesList.get(device).remove(channelName);
-				
-				if(inputDevicesList.get(device).isEmpty()) {
+
+				if (inputDevicesList.get(device).isEmpty()) {
 					inputDevicesList.remove(device);
 					inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
 					inputQueues.remove(device);
 					inputDeviceItems.remove(device);
-				}				
+				}
 			}
 		} else {
-			if(outputDevicesList.containsKey(device)) {
+			if (outputDevicesList.containsKey(device)) {
 				outputDevicesList.get(device).remove(channelName);
-				
-				if(outputDevicesList.get(device).isEmpty()) {
+
+				if (outputDevicesList.get(device).isEmpty()) {
 					outputDevicesList.remove(device);
 					outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
 					outputQueues.remove(device);
 					outputDeviceItems.remove(device);
-				}				
+				}
 			}
 		}
 	}
-	
+
 	public void setPlay(boolean play) {
 
 		for (SoundLevelDisplayItem item : inputDeviceItems.values()) {

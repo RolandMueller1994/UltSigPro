@@ -269,6 +269,16 @@ public class InputAdministrator {
 
 	}
 
+	public synchronized void removeSignalSources(
+			HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources, InputDataListener listener) {
+		
+		for (IteratableSignalSourceStream source : signalSources.keySet()) {
+			distributionMap.get(listener).remove(source.getName());
+			inputLevelMultiplier.get(listener).remove(source.getName());
+			inputSignalSourceStreams.remove(source.getName());
+		}
+	}
+
 	public synchronized void registerInputDataListener(InputDataListener listener, Collection<String> devices) {
 		Collection<String> inputDevices = new HashSet<String>();
 		inputDevices.addAll(devices);
