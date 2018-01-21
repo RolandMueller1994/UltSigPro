@@ -24,8 +24,8 @@ import javax.sound.sampled.TargetDataLine;
 import channel.Channel;
 import channel.InputDataListener;
 import gui.soundLevelDisplay.SoundLevelBar;
-import iteratableInput.IteratableSignalSourceStream;
-import iteratableInput.IteratableWaveFileStream;
+import iteratableinput.IteratableSignalSourceStream;
+import iteratableinput.IteratableWaveFileStream;
 
 /**
  * Administrates which input devices are available and requests their sampled
@@ -52,7 +52,7 @@ public class InputAdministrator {
 
 	private HashMap<InputDataListener, Collection<String>> distributionMap = new HashMap<>();
 	private HashMap<InputDataListener, HashMap<String, Double>> inputLevelMultiplier = new HashMap<>();
-	
+
 	int packageSize = 200;
 	int outPackageSize = packageSize / 2;
 
@@ -201,7 +201,7 @@ public class InputAdministrator {
 		System.out.println("Recording stopped at: " + System.currentTimeMillis());
 
 	}
-	
+
 	public int getOutPackageSize() {
 		return outPackageSize;
 	}
@@ -226,15 +226,17 @@ public class InputAdministrator {
 		}
 	}
 
-	public synchronized void createSignalSource(Collection<String> names, InputDataListener listener) {
-		if (!names.isEmpty()) {
-			for (String name : names) {
-				distributionMap.get(listener).add(name);
-				IteratableSignalSourceStream stream = new IteratableSignalSourceStream();
-				inputSignalSourceStreams.put(name, stream);
+	public synchronized void createSignalSource(HashMap<IteratableSignalSourceStream, HashMap<String, Double>> sources,
+			InputDataListener listener) {
+		if (!sources.isEmpty()) {
+			for (Map.Entry<IteratableSignalSourceStream, HashMap<String, Double>> source : sources.entrySet()) {
+				distributionMap.get(listener).add(source.getKey().getName());
+				IteratableSignalSourceStream stream = new IteratableSignalSourceStream(source.getKey().getName(),
+						source.getValue().get("frequency"), source.getValue().get("amplitude"));
+				inputSignalSourceStreams.put(source.getKey().getName(), stream);
 
 				HashMap<String, Double> inputLevel = new HashMap<>();
-				inputLevel.put(name, 1.0);
+				inputLevel.put(source.getKey().getName(), 1.0);
 				if (inputLevelMultiplier.containsKey(listener)) {
 					inputLevelMultiplier.get(listener).putAll(inputLevel);
 				} else {
@@ -379,14 +381,14 @@ public class InputAdministrator {
 								return;
 							}
 						}
-						
+
 						for (IteratableSignalSourceStream signalSourceStream : inputSignalSourceStreams.values()) {
 							if (signalSourceStream.available(2) < packageSize) {
 								return;
 							}
 						}
 					}
-					
+
 					if (startCount < 3000) {
 						startCount++;
 						return;
@@ -407,7 +409,7 @@ public class InputAdministrator {
 						for (IteratableWaveFileStream inputStream : inputWaveStreams.values()) {
 							inputStream.start();
 						}
-						
+
 						for (IteratableSignalSourceStream signalSourceStream : inputSignalSourceStreams.values()) {
 							signalSourceStream.start();
 						}
@@ -498,7 +500,7 @@ public class InputAdministrator {
 					for (Map.Entry<String, IteratableSignalSourceStream> inputEntry : inputSignalSourceStreams
 							.entrySet()) {
 						int[] marshalledData = new int[outPackageSize];
-						byte[] readData = inputEntry.getValue().read(2*outPackageSize);
+						byte[] readData = inputEntry.getValue().read(2 * outPackageSize);
 						LinkedList<Integer> soundLevelData = new LinkedList<>();
 						for (int i = 0; i < marshalledData.length; i++) {
 							int value = 0;
@@ -507,7 +509,7 @@ public class InputAdministrator {
 							value = value | Byte.toUnsignedInt(readData[2 * i + 1]);
 							value <<= 16;
 							value >>= 16;
-							
+
 							marshalledData[i] = value;
 							soundLevelData.add(value);
 						}

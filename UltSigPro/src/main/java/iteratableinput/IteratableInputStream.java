@@ -1,4 +1,4 @@
-package iteratableInput;
+package iteratableinput;
 
 public abstract class IteratableInputStream {
 

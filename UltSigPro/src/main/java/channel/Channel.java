@@ -6,6 +6,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import inputhandler.InputAdministrator;
+import iteratableinput.IteratableSignalSourceStream;
 import outputhandler.OutputAdministrator;
 import plugins.sigproplugins.SigproPlugin;
 
@@ -62,8 +63,8 @@ public class Channel implements InputDataListener, OutputDataSpeaker {
 			addOutputDevice(outputWaveFile);
 		}
 		
-		for(String signalSource : config.getSignalSources()) {
-			addInputDevice(signalSource);
+		for(IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
+			addInputDevice(signalSource.getName());
 		}
 		
 		if(config.getInputDevices().size() != 0 || config.getInputWaveFiles().size() != 0 || config.getSignalSources().size() != 0) {

@@ -1,4 +1,4 @@
-package iteratableInput;
+package iteratableinput;
 
 import java.io.File;
 import java.io.IOException;

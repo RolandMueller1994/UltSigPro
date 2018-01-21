@@ -1,13 +1,14 @@
-package iteratableInput;
+package iteratableinput;
 
 import inputhandler.InputAdministrator;
 
 public class IteratableSignalSourceStream extends IteratableInputStream {
 
+	private String name;
 	private byte[] byteBuffer;
-	private int frequency = 600;
-	private int amplitude = 4000;
-	private final int samplingFrequency = 44100;
+	private double frequency;
+	private int amplitude;
+	private final double samplingFrequency = 44100;
 	private int samplesPerPeriod;
 	private int periodNumber;
 	private final int minPackageSize = InputAdministrator.getInputAdminstrator().getOutPackageSize();
@@ -15,11 +16,14 @@ public class IteratableSignalSourceStream extends IteratableInputStream {
 	/**
 	 * Constructor for a signal source.
 	 */
-	public IteratableSignalSourceStream() {
+	public IteratableSignalSourceStream(String name, double frequency, double amplitude) {
 
 		super.setSignalSource(true);
+		this.name = name;
+		this.frequency = (int) frequency;
+		this.amplitude = (int) (amplitude * 10000);
+		samplesPerPeriod = (int) (samplingFrequency / this.frequency);
 		
-		samplesPerPeriod = samplingFrequency / frequency;
 		int sinValue = 0;
 		double time = 0;
 
@@ -38,12 +42,16 @@ public class IteratableSignalSourceStream extends IteratableInputStream {
 		// fill the dataBuffer with a integer number of periods
 		for (int i = 0; i < (byteBuffer.length/2); i++) {
 			time = i % samplesPerPeriod;
-			sinValue = (int) (amplitude * Math.sin(2 * Math.PI * (time / samplesPerPeriod)));
+			sinValue = (int) (this.amplitude * Math.sin(2 * Math.PI * (time / samplesPerPeriod)));
 			
 			byteBuffer[2 * i] = (byte) ((0xFF00 & sinValue) >> 8);
 			byteBuffer[2 * i + 1] = (byte) (0xFF & sinValue);
 			
 		}
 		super.setDataBuffer(byteBuffer);
+	}
+	
+	public String getName() {
+		return name;
 	}
 }

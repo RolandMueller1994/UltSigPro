@@ -95,3 +95,9 @@ inputhandler.InputAdministrator.alertText=Kontrollieren Sie die Konfiguration un
 outputhandler.OutputAdministrator$OutputAlert.alertTitle=Ausgabefehler
 outputhandler.OutputAdministrator$OutputAlert.alertHeader=Es ist ein Fehler beim Schreiben der Ausgangsdaten aufgetreten. Signalverarbeitung beendet.
 outputhandler.OutputAdministrator$OutputAlert.alertText=Kontrollieren Sie die Konfiguration und stellen sie sicher, dass keine weitere USP-Instanz geöffnet ist, oder eine andere Applikation auf die Hardware zugreift.
+
+iteratableinput.IteratableSignalSourceDialog.title=Signalquelle
+iteratableinput.IteratableSignalSourceDialog.name=Bezeichnung
+iteratableinput.IteratableSignalSourceDialog.frequency=Frequenz
+iteratableinput.IteratableSignalSourceDialog.amplitude=Amplitude
+iteratableinput.IteratableSignalSourceDialog.warning=Es müssen alle Felder ausgefüllt werden!

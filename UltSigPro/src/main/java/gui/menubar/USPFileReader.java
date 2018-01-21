@@ -25,6 +25,7 @@ import gui.USPGui;
 import guicomponents.DoubleTextField;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
+import iteratableinput.IteratableSignalSourceStream;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyEvent;
@@ -75,7 +76,7 @@ public class USPFileReader {
 			HashMap<String, Double> inputWaveGain = new HashMap<>();
 			HashMap<String, Double> outputWaveGain = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
-			List<String> signalSources = new LinkedList<>();
+			HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources = new HashMap<>();
 			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
 			List<Element> connectionLines = new LinkedList<>();
 			List<String> missingResources = new LinkedList<>();

@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import channel.Channel;
 import channel.ChannelConfig;
 import i18n.LanguageResourceHandler;
+import iteratableinput.IteratableSignalSourceStream;
 import javafx.application.Platform;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
@@ -183,16 +184,16 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			}
 		}
 		
-		for (String signalSource : config.getSignalSources()) {
+		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
 			
 			// new input device entry
 			if (!inputDevicesList.containsKey(signalSource)) {
-				inputDevicesList.put(signalSource, new LinkedList<>());
+				inputDevicesList.put(signalSource.getName(), new LinkedList<>());
 				
 				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-				inputDeviceItems.put(signalSource, new SoundLevelDisplayItem(signalSource, queue));
-				inputDevicesBar.getChildren().add(inputDeviceItems.get(signalSource));
-				inputQueues.put(signalSource, queue);
+				inputDeviceItems.put(signalSource.getName(), new SoundLevelDisplayItem(signalSource.getName(), queue));
+				inputDevicesBar.getChildren().add(inputDeviceItems.get(signalSource.getName()));
+				inputQueues.put(signalSource.getName(), queue);
 			}
 		}
 

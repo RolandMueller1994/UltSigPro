@@ -94,4 +94,10 @@ inputhandler.InputAdministrator.alertText=Check your configuration and ensure th
 
 outputhandler.OutputAdministrator$OutputAlert.alertTitle=Output error
 outputhandler.OutputAdministrator$OutputAlert.alertHeader=An error occurred while writing output data. Signal processing terminated.
-outputhandler.OutputAdministrator$OutputAlert.alertText=Check your configuration and ensure that there is no further USP instance running or another application uses the requested hardware. 
+outputhandler.OutputAdministrator$OutputAlert.alertText=Check your configuration and ensure that there is no further USP instance running or another application uses the requested hardware.
+
+iteratableinput.IteratableSignalSourceDialog.title=Signal source 
+iteratableinput.IteratableSignalSourceDialog.name=Label
+iteratableinput.IteratableSignalSourceDialog.frequency=Frequency
+iteratableinput.IteratableSignalSourceDialog.amplitude=Amplitude
+iteratableinput.IteratableSignalSourceDialog.warning=All fields have to be filled!
