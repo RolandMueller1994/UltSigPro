@@ -91,6 +91,10 @@ public class PluginConfigGroup extends Pane {
 	private double startDragY;
 
 	private boolean dragged = false;
+	private boolean coordinatesOnLine = false;
+	
+	private PluginConnection coordinatesCon;
+	
 	private double scrollValue = 20;
 	
 	/**
@@ -235,6 +239,18 @@ public class PluginConfigGroup extends Pane {
 
 		});
 		
+		addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				
+				if(workCon == null && coordinatesCon != null) {
+					coordinatesCon.clearPoints();
+				}
+			}
+			
+		});
+		
 		addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
 
 			@Override
@@ -242,6 +258,27 @@ public class PluginConfigGroup extends Pane {
 				
 				startDragX = event.getScreenX();
 				startDragY = event.getScreenY();
+				
+				coordinatesOnLine = false;
+				coordinatesCon = null;
+				
+				if(workCon != null) {
+					for(PluginConnection con : allConnections) {
+						if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
+							coordinatesOnLine = true;
+							coordinatesCon = con;
+							break;
+						}
+					}					
+				} else {
+					for(PluginConnection con : allConnections) {
+						if(con.checkIfCoordinatesOnLine(event.getX(), event.getY())) {
+							coordinatesOnLine = true;
+							coordinatesCon = con;
+							break;
+						}
+					}
+				}
 				
 			}
 			
@@ -267,6 +304,10 @@ public class PluginConfigGroup extends Pane {
 					
 					startDragX = endDragX;
 					startDragY = endDragY;
+				} else if(event.isPrimaryButtonDown()) {
+					if(coordinatesCon != null) {
+						coordinatesCon.dragLine(event.getX(), event.getY());						
+					}
 				}
 				
 			}
@@ -276,8 +317,6 @@ public class PluginConfigGroup extends Pane {
 
 			@Override
 			public void handle(MouseEvent event) {
-				
-				PluginConnection unifyCon = null;
 				
 				if(dragged) {
 					dragged = false;
@@ -292,23 +331,21 @@ public class PluginConfigGroup extends Pane {
 						break;
 					}
 				}
-				
-				boolean coordinatesOnLine = false;
-				
-				if(workCon != null) {
-					for(PluginConnection con : allConnections) {
-						if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
-							coordinatesOnLine = true;
-							unifyCon = con;
-							break;
-						}
-					}					
-				}
 
 				if (!hovered && !lineHovered) {
 					if (event.getButton().equals(MouseButton.SECONDARY) && workCon == null
 							&& !contextMenu.isShowing()) {
-						showContextMenu(event.getScreenX(), event.getScreenY());
+						showContextMenu(event.getScreenX(), event.getScreenY());boolean coordinatesOnLine = false;
+						
+						if(workCon != null) {
+							for(PluginConnection con : allConnections) {
+								if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
+									coordinatesOnLine = true;
+									coordinatesCon = con;
+									break;
+								}
+							}					
+						}
 
 						Point2D point = screenToLocal(event.getScreenX(), event.getScreenY());
 
@@ -331,7 +368,7 @@ public class PluginConfigGroup extends Pane {
 				}
 				
 				if(coordinatesOnLine && workCon != null) {
-					unifyCon.unifyConnections(workCon);
+					coordinatesCon.unifyConnections(workCon);
 				}
 			}
 		});

@@ -50,7 +50,10 @@ public class PluginConnection {
 	private HashSet<USPLine> deletionLines;
 	private LinkedList<USPPoint> deletionPoints;
 
-	private LinkedList<USPPoint> unifyPoints;
+	private LinkedList<USPPoint> coordinatesPoints;
+	private USPPoint firstCoordinatesPoint;
+	private USPPoint secondCoordinatesPoint;
+	private boolean coordinatesHorizontal;
 
 	private Output input;
 	private USPPoint inputPoint;
@@ -216,6 +219,10 @@ public class PluginConnection {
 		}
 
 	}
+	
+	public boolean checkIfCoordinatesOnLine(double x, double y) {
+		return checkIfCoordinatesOnLine(new USPPoint(x, y));
+	}
 
 	public boolean checkIfCoordinatesOnLine(USPPoint drawingPoint) {
 
@@ -236,19 +243,25 @@ public class PluginConnection {
 					if (point.getX() == last.getX()) {
 						// Vertical line
 						if (checkIfCoordOnLineVert(point, last, x, y)) {
-							unifyPoints = pointList;
+							coordinatesPoints = pointList;
+							firstCoordinatesPoint = last;
+							secondCoordinatesPoint = point;
+							coordinatesHorizontal = false;
 							return true;
 						} else {
-							unifyPoints = null;
+							coordinatesPoints = null;
 						}
 
 					} else {
 						// Horizontal line
 						if (checkIfCoordOnLineHor(point, last, x, y)) {
-							unifyPoints = pointList;
+							coordinatesPoints = pointList;
+							firstCoordinatesPoint = last;
+							secondCoordinatesPoint = point;
+							coordinatesHorizontal = true;
 							return true;
 						} else {
-							unifyPoints = null;
+							coordinatesPoints = null;
 						}
 
 					}
@@ -259,6 +272,188 @@ public class PluginConnection {
 		}
 
 		return false;
+	}
+	
+	public void dragLine(double x, double y) {
+		
+		double raster = configGroup.getRaster();
+		
+		boolean redraw = false;
+		
+		if(coordinatesPoints != null) {
+			
+			y = Math.round(y/raster) * raster;
+			x = Math.round(x/raster) * raster;
+			
+			if(coordinatesHorizontal && y != firstCoordinatesPoint.getY()) {
+				USPPoint left = null;
+				USPPoint right = null;
+				
+				if(firstCoordinatesPoint.getX() > secondCoordinatesPoint.getX()) {
+					left = secondCoordinatesPoint;
+					right = firstCoordinatesPoint;
+				} else {
+					right = secondCoordinatesPoint;
+					left = firstCoordinatesPoint;
+				}
+				
+				if(right.getX() - left.getX() < 3*MIN_LINE_LENGTH) {
+					return;
+				}
+				
+				if(left.equals(coordinatesPoints.getFirst())) {
+					double divideX = left.getX() + MIN_LINE_LENGTH;
+					divideX = Math.ceil(divideX/raster)*raster;
+					
+					coordinatesPoints.add(1, new USPPoint(divideX, left.getY()));
+					coordinatesPoints.add(2, new USPPoint(divideX, y));
+					redraw = true;
+					
+					if(left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if(left.equals(coordinatesPoints.getLast())) {
+					double divideX = left.getX() + MIN_LINE_LENGTH;
+					divideX = Math.ceil(divideX/raster)*raster;
+					
+					int index = coordinatesPoints.size();
+					index -= 1;
+					
+					coordinatesPoints.add(index, new USPPoint(divideX, left.getY()));
+					coordinatesPoints.add(index, new USPPoint(divideX, y));
+					redraw = true;
+					
+					if(left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else {
+					left.setY(y);
+				}
+				
+				if(right.equals(coordinatesPoints.getFirst())) {
+					double divideX = right.getX() - MIN_LINE_LENGTH;
+					divideX = Math.floor(divideX/raster)*raster;
+					
+					coordinatesPoints.add(1, new USPPoint(divideX, right.getY()));
+					coordinatesPoints.add(2, new USPPoint(divideX, y));
+					redraw = true;
+					
+					if(right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if(right.equals(coordinatesPoints.getLast())) {
+					double divideX = right.getX() - MIN_LINE_LENGTH;
+					divideX = Math.floor(divideX/raster)*raster;
+					
+					int index = coordinatesPoints.size();
+					index -= 1;
+					
+					coordinatesPoints.add(index, new USPPoint(divideX, right.getY()));
+					coordinatesPoints.add(index, new USPPoint(divideX, y));
+					redraw = true;
+					
+					if(right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else {
+					right.setY(y);
+				}
+			} else if (x != firstCoordinatesPoint.getX()){
+				USPPoint lower = null;
+				USPPoint upper = null;
+				
+				if(firstCoordinatesPoint.getY() > secondCoordinatesPoint.getY()) {
+					lower = secondCoordinatesPoint;
+					upper = firstCoordinatesPoint;
+				} else {
+					upper = secondCoordinatesPoint;
+					lower = firstCoordinatesPoint;
+				}
+				
+				if(upper.getY() - lower.getY() < 3*MIN_LINE_LENGTH) {
+					return;
+				}
+				
+				if(lower.equals(coordinatesPoints.getFirst())) {
+					double divideY = lower.getY() + MIN_LINE_LENGTH;
+					divideY = Math.ceil(divideY/raster)*raster;
+					
+					coordinatesPoints.add(1, new USPPoint(lower.getX(), divideY));
+					coordinatesPoints.add(2, new USPPoint(x, divideY));
+					redraw = true;
+					
+					if(lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if(lower.equals(coordinatesPoints.getLast())) {
+					double divideY = lower.getY() + MIN_LINE_LENGTH;
+					divideY = Math.ceil(divideY/raster)*raster;
+					
+					int index = coordinatesPoints.size();
+					index -= 1;
+					
+					coordinatesPoints.add(index, new USPPoint(lower.getX(), divideY));
+					coordinatesPoints.add(index, new USPPoint(x, divideY));
+					redraw = true;
+					
+					if(lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else {
+					lower.setX(x);
+				}
+				
+				if(upper.equals(coordinatesPoints.getFirst())) {
+					double divideY = upper.getY() - MIN_LINE_LENGTH;
+					divideY = Math.floor(divideY/raster)*raster;
+					
+					coordinatesPoints.add(1, new USPPoint(upper.getX(), divideY));
+					coordinatesPoints.add(2, new USPPoint(x, divideY));
+					redraw = true;
+					
+					if(upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if(upper.equals(coordinatesPoints.getLast())) {
+					double divideY = upper.getY() - MIN_LINE_LENGTH;
+					divideY = Math.floor(divideY/raster)*raster;
+					
+					int index = coordinatesPoints.size();
+					index -= 1;
+					
+					coordinatesPoints.add(index, new USPPoint(upper.getX(), divideY));
+					coordinatesPoints.add(index, new USPPoint(x, divideY));
+					redraw = true;
+					
+					if(upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else {
+					upper.setX(x);
+				}
+			}
+		}
+		
+		if(redraw) {
+			redraw();
+		}
+		
 	}
 
 	public double getMaxX() {
@@ -457,8 +652,8 @@ public class PluginConnection {
 		boolean unified = false;
 		boolean unifyHor = false;
 
-		if (unifyPoints != null) {
-			LinkedList<USPPoint> pointList = unifyPoints;
+		if (coordinatesPoints != null) {
+			LinkedList<USPPoint> pointList = coordinatesPoints;
 
 			USPPoint last = null;
 
