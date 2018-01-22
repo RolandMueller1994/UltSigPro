@@ -18,6 +18,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import resourceframework.ResourceProviderException;
 
+/**
+ * This class holds and administrates all {@linkplain SoundLevelDisplayItem}s. 
+ * @author Kone
+ *
+ */
 public class SoundLevelBar extends GridPane implements SoundValueInterface {
 
 	private static final String INPUT_TITLE = "inputTitle";
@@ -120,7 +125,6 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			inputQueues = new HashMap<>();
 			outputQueues = new HashMap<>();
 		} catch (ResourceProviderException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -153,78 +157,41 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 	public synchronized void addNewChannelSoundDevices(ChannelConfig config) {
 
 		for (String device : config.getInputDevices()) {
-
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
-				inputDevicesList.put(device, new LinkedList<>());
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
-				inputQueues.put(device, queue);
+				createInputDeviceEntry(device);
 			}
-
 			// add channel name to this device
 			inputDevicesList.get(device).add(config.getName());
 		}
 
 		for (String device : config.getInputWaveFiles().keySet()) {
-
 			// new input device entry
 			if (!inputDevicesList.containsKey(device)) {
-				inputDevicesList.put(device, new LinkedList<>());
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				// inputDevicesBar.addRow(0, inputDeviceItems.get(device));
-				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
-				inputQueues.put(device, queue);
+				createInputDeviceEntry(device);
 			}
 		}
 
 		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
-
 			// new input device entry
 			if (!inputDevicesList.containsKey(signalSource)) {
-				inputDevicesList.put(signalSource.getName(), new LinkedList<>());
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-				inputDeviceItems.put(signalSource.getName(), new SoundLevelDisplayItem(signalSource.getName(), queue));
-				inputDevicesBar.getChildren().add(inputDeviceItems.get(signalSource.getName()));
-				inputQueues.put(signalSource.getName(), queue);
+				createInputDeviceEntry(signalSource.getName());
 			}
 		}
 
 		for (String device : config.getOutputDevices()) {
-
 			// new output device entry
 			if (!outputDevicesList.containsKey(device)) {
-				outputDevicesList.put(device, new LinkedList<>());
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
-				outputQueues.put(device, queue);
+				createOutputDeviceEntry(device);
 			}
-
 			// add channel name to this device
 			outputDevicesList.get(device).add(config.getName());
 		}
 
 		for (String device : config.getOutputWaveFiles().keySet()) {
-
 			// new output device entry
 			if (!outputDevicesList.containsKey(device)) {
-				outputDevicesList.put(device, new LinkedList<>());
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
-				outputQueues.put(device, queue);
+				createOutputDeviceEntry(device);
 			}
 		}
 
@@ -246,10 +213,23 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// remove the device if there are no longer any channels with this
 			// device
 			if (inputDevicesList.get(device).isEmpty()) {
-				inputDevicesList.remove(device);
-				inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
-				inputQueues.remove(device);
-				inputDeviceItems.remove(device);
+				deleteInputDeviceEntry(device);
+			}
+		}
+
+		for (String inputWaveFile : config.getInputWaveFiles().keySet()) {
+			inputDevicesList.get(inputWaveFile).remove(config.getName());
+
+			if (inputDevicesList.get(inputWaveFile).isEmpty()) {
+				deleteInputDeviceEntry(inputWaveFile);
+			}
+		}
+
+		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
+			inputDevicesList.get(signalSource.getName()).remove(config.getName());
+
+			if (inputDevicesList.get(signalSource.getName()).isEmpty()) {
+				deleteInputDeviceEntry(signalSource.getName());
 			}
 		}
 
@@ -260,47 +240,34 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			// remove the device if there are no longer any channels with this
 			// device
 			if (outputDevicesList.get(device).isEmpty()) {
-				outputDevicesList.remove(device);
-				outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
-				outputQueues.remove(device);
-				outputDeviceItems.remove(device);
+				deleteOutputDeviceEntry(device);
 			}
 		}
-		
-		for (String inputWaveFile : config.getInputWaveFiles().keySet()) {
-			inputDevicesList.get(inputWaveFile).remove(config.getName());
-			
-			if (inputDevicesList.get(inputWaveFile).isEmpty()) {
-				inputDevicesList.remove(inputWaveFile);
-				inputDevicesBar.getChildren().remove(inputDeviceItems.get(inputWaveFile));
-				inputQueues.remove(inputWaveFile);
-				inputDeviceItems.remove(inputWaveFile);
-			}
-		}
-		
+
 		for (String outputWaveFile : config.getOutputWaveFiles().keySet()) {
 			outputDevicesList.get(outputWaveFile).remove(config.getName());
-			
+
 			if (outputDevicesList.get(outputWaveFile).isEmpty()) {
-				outputDevicesList.remove(outputWaveFile);
-				outputDevicesBar.getChildren().remove(outputDeviceItems.get(outputWaveFile));
-				outputQueues.remove(outputWaveFile);
-				outputDeviceItems.remove(outputWaveFile);
+				deleteOutputDeviceEntry(outputWaveFile);
 			}
 		}
-		
-		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
-			inputDevicesList.get(signalSource.getName()).remove(config.getName());
-			
-			if (inputDevicesList.get(signalSource.getName()).isEmpty()) {
-				inputDevicesList.remove(signalSource.getName());
-				inputDevicesBar.getChildren().remove(inputDeviceItems.get(signalSource.getName()));
-				inputQueues.remove(signalSource.getName());
-				inputDeviceItems.remove(signalSource.getName());
-			}
-		}
+
 	}
 
+	/**
+	 * Is called, when a single device is added to a {@linkplain Channel}.
+	 * Checks if there are already any entries for the selected devices in any
+	 * {@linkplain Channel}s. For new entries appears a
+	 * {@linkplain SoundLevelDisplayItem}.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 * @param channel
+	 *            the channel where the device got added
+	 * @param input
+	 *            indicates, if the device is a input (true) or output (false)
+	 *            device
+	 */
 	public void addDeviceToChannel(String device, Channel channel, boolean input) {
 		String channelName = channel.getChannelConfig().getName();
 
@@ -312,14 +279,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
 				channels.add(channelName);
-				inputDevicesList.put(device, channels);
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				// inputDevicesBar.addRow(0, inputDeviceItems.get(device));
-				inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
-				inputQueues.put(device, queue);
+				createInputDeviceEntry(channelName);
 			}
 		} else {
 			if (outputDevicesList.containsKey(device)) {
@@ -329,17 +289,25 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
 				channels.add(channelName);
-				outputDevicesList.put(device, channels);
-
-				LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
-
-				outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
-				outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
-				outputQueues.put(device, queue);
+				createOutputDeviceEntry(channelName);
 			}
 		}
 	}
 
+	/**
+	 * Is called, when a single device gets deleted from a {@linkplain Channel}.
+	 * Checks if there are any others channels left, who share the same sound
+	 * devices as the deleted channel. Removes unused
+	 * {@linkplain SoundLevelDisplayItem}s.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 * @param channel
+	 *            the channel where the device got deleted
+	 * @param input
+	 *            indicates, if the device is a input (true) or output (false)
+	 *            device
+	 */
 	public void removeDeviceFromChannel(String device, Channel channel, boolean input) {
 		String channelName = channel.getChannelConfig().getName();
 
@@ -348,10 +316,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				inputDevicesList.get(device).remove(channelName);
 
 				if (inputDevicesList.get(device).isEmpty()) {
-					inputDevicesList.remove(device);
-					inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
-					inputQueues.remove(device);
-					inputDeviceItems.remove(device);
+					deleteInputDeviceEntry(device);
 				}
 			}
 		} else {
@@ -359,15 +324,19 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 				outputDevicesList.get(device).remove(channelName);
 
 				if (outputDevicesList.get(device).isEmpty()) {
-					outputDevicesList.remove(device);
-					outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
-					outputQueues.remove(device);
-					outputDeviceItems.remove(device);
+					deleteOutputDeviceEntry(device);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Initiates every {@linkplain SoundLevelDisplayItem} to start or stop
+	 * updating the progress bar.
+	 * 
+	 * @param play
+	 *            indicates to start (true) or to stop (false)
+	 */
 	public void setPlay(boolean play) {
 
 		for (SoundLevelDisplayItem item : inputDeviceItems.values()) {
@@ -377,5 +346,59 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 		for (SoundLevelDisplayItem item : outputDeviceItems.values()) {
 			item.setPlay(play);
 		}
+	}
+
+	/**
+	 * Creates for a new input device all necessary entries.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 */
+	public void createInputDeviceEntry(String device) {
+		inputDevicesList.put(device, new LinkedList<>());
+		LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+		inputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+		inputDevicesBar.getChildren().add(inputDeviceItems.get(device));
+		inputQueues.put(device, queue);
+	}
+
+	/**
+	 * Creates for a new output device all necessary entries.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 */
+	public void createOutputDeviceEntry(String device) {
+		outputDevicesList.put(device, new LinkedList<>());
+		LinkedList<LinkedList<Integer>> queue = new LinkedList<LinkedList<Integer>>();
+		outputDeviceItems.put(device, new SoundLevelDisplayItem(device, queue));
+		outputDevicesBar.getChildren().add(outputDeviceItems.get(device));
+		outputQueues.put(device, queue);
+	}
+
+	/**
+	 * Deletes for a output device all created entries.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 */
+	public void deleteInputDeviceEntry(String device) {
+		inputDevicesList.remove(device);
+		inputDevicesBar.getChildren().remove(inputDeviceItems.get(device));
+		inputQueues.remove(device);
+		inputDeviceItems.remove(device);
+	}
+
+	/**
+	 * Deletes for a input device all created entries.
+	 * 
+	 * @param device
+	 *            the name of the device
+	 */
+	public void deleteOutputDeviceEntry(String device) {
+		outputDevicesList.remove(device);
+		outputDevicesBar.getChildren().remove(outputDeviceItems.get(device));
+		outputQueues.remove(device);
+		outputDeviceItems.remove(device);
 	}
 }

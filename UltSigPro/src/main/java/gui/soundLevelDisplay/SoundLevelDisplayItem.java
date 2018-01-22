@@ -11,10 +11,10 @@ public class SoundLevelDisplayItem extends GridPane {
 
 	private Label deviceNameField;
 	private ProgressBar soundLevelBar;
-	private final int itemWidth = 120; 
+	private final int itemWidth = 120;
 
 	private LinkedList<Integer> internalBuffer = new LinkedList<>();
-	
+
 	private AnimationTimer animationTimer;
 
 	public SoundLevelDisplayItem(String deviceName, LinkedList<LinkedList<Integer>> dataQueue) {
@@ -22,18 +22,17 @@ public class SoundLevelDisplayItem extends GridPane {
 		deviceNameField = new Label(deviceName);
 		deviceNameField.setPrefWidth(itemWidth);
 		deviceNameField.setMaxWidth(itemWidth);
-		
+
 		soundLevelBar = new ProgressBar(0.1);
 		soundLevelBar.setStyle("-fx-accent: -usp-dark-grey");
 		soundLevelBar.setPrefWidth(itemWidth);
 		soundLevelBar.setMaxWidth(itemWidth);
-		
+
 		this.setVgap(5);
 		this.setHgap(3);
 		this.add(deviceNameField, 0, 0);
 		this.add(soundLevelBar, 0, 1);
 
-		
 		animationTimer = new AnimationTimer() {
 
 			@Override
@@ -52,6 +51,13 @@ public class SoundLevelDisplayItem extends GridPane {
 		};
 	}
 
+	/**
+	 * Calculates the level of the progress bar for the last 2500 values. Scales
+	 * it logarithmic: -30dB equals 0% and 0dB equals 100%. Colors the bar red,
+	 * if the value is greater than -3dB.
+	 * 
+	 * @param soundValues
+	 */
 	private void setSoundLevel(LinkedList<Integer> soundValues) {
 
 		internalBuffer.addAll(soundValues);
@@ -73,7 +79,7 @@ public class SoundLevelDisplayItem extends GridPane {
 				maxValue = -30;
 			}
 			soundLevelBar.setProgress((30 + maxValue) / 30);
-			
+
 			if (maxValue > -3) {
 				soundLevelBar.setStyle("-fx-accent: red");
 			} else {
@@ -83,6 +89,12 @@ public class SoundLevelDisplayItem extends GridPane {
 		}
 	}
 
+	/**
+	 * Starts or stops the timer for the animation of the progress bars.
+	 * 
+	 * @param play
+	 *            start (true) or stop (false)
+	 */
 	public void setPlay(boolean play) {
 
 		internalBuffer.clear();

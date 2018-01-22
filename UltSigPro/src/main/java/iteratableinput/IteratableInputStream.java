@@ -5,10 +5,7 @@ public abstract class IteratableInputStream {
 	private long startupTime;
 	private int cursor;
 	private final int samplingFreq = 44100;
-	private byte[] dataBuffer;
 	private byte[] nullBuffer;
-	private boolean signalSource = false;
-	private int signalSourceCursor = 0;
 
 	public IteratableInputStream() {
 
@@ -41,47 +38,7 @@ public abstract class IteratableInputStream {
 		return 0;
 	}
 
-	public byte[] read(int packageSize) {
-		byte[] outData = new byte[packageSize];
-
-		if (signalSource) {
-			signalSourceCursor = cursor % dataBuffer.length;
-
-			if (signalSourceCursor + packageSize < dataBuffer.length) {
-				System.arraycopy(dataBuffer, signalSourceCursor, outData, 0, packageSize);
-			} else {
-				int remaining = dataBuffer.length - signalSourceCursor;
-				System.arraycopy(dataBuffer, signalSourceCursor, outData, 0, remaining);
-				System.arraycopy(dataBuffer, 0, outData, remaining, packageSize - remaining);
-			}
-			
-		} else {
-			if (cursor + packageSize < dataBuffer.length) {
-				System.arraycopy(dataBuffer, cursor, outData, 0, packageSize);
-
-			} else if (cursor < dataBuffer.length) {
-				// Still date to write but not enough for packageSize
-				int remaining = dataBuffer.length - cursor;
-				System.arraycopy(dataBuffer, cursor, outData, 0, remaining);
-				System.arraycopy(nullBuffer, 0, dataBuffer, remaining, packageSize - remaining);
-
-			} else {
-				// Only zeros will be written
-				System.arraycopy(nullBuffer, 0, outData, 0, packageSize);
-			}
-		}
-		cursor += packageSize;
-
-		return outData;
-	}
-
-	public byte[] getDataBuffer() {
-		return dataBuffer;
-	}
-
-	public void setDataBuffer(byte[] dataBuffer) {
-		this.dataBuffer = dataBuffer;
-	}
+	public abstract byte[] read(int packageSize);
 
 	public byte[] getNullBuffer() {
 		return nullBuffer;
@@ -90,8 +47,12 @@ public abstract class IteratableInputStream {
 	public void setNullBuffer(byte[] nullBuffer) {
 		this.nullBuffer = nullBuffer;
 	}
-
-	public void setSignalSource(boolean bool) {
-		signalSource = bool;
+	
+	public int getCursor() {
+		return cursor;
+	}
+	
+	public void addToCursor(int add) {
+		cursor += add;
 	}
 }

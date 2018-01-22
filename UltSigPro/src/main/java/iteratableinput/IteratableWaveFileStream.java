@@ -10,22 +10,42 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 public class IteratableWaveFileStream extends IteratableInputStream {
 
 	private AudioInputStream inputStream;
-	
+	private byte[] dataBuffer;
+
 	public IteratableWaveFileStream(File waveFile) {
 		try {
 			// At first we capture the complete sound file.
 			inputStream = AudioSystem.getAudioInputStream(waveFile);
 
 			int avail = inputStream.available();
-			super.setDataBuffer(new byte[avail]);
-
-			inputStream.read(super.getDataBuffer(), 0, avail);
-		} catch (UnsupportedAudioFileException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			dataBuffer = new byte[avail];
+			inputStream.read(dataBuffer, 0, avail);
+		} catch (UnsupportedAudioFileException | IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public byte[] read(int packageSize) {
+		int cursor = getCursor();
+		int avail = dataBuffer.length;
+		byte[] outData = new byte[packageSize];
+
+		if (cursor + packageSize < avail) {
+			System.arraycopy(dataBuffer, cursor, outData, 0, packageSize);
+
+		} else if (cursor < avail) {
+			// Still date to write but not enough for packageSize
+			int remaining = avail - cursor;
+			System.arraycopy(dataBuffer, cursor, outData, 0, remaining);
+			System.arraycopy(getNullBuffer(), 0, dataBuffer, remaining, packageSize - remaining);
+
+		} else {
+			// Only zeros will be written
+			System.arraycopy(getNullBuffer(), 0, outData, 0, packageSize);
+		}
+
+		addToCursor(packageSize);
+		return outData;
 	}
 }
