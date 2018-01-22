@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
@@ -1161,6 +1162,42 @@ public class PluginConnection {
 			deletionLines = null;
 			clearPoints();
 			redraw();
+			
+			if(points.isEmpty()) {
+				configGroup.deletePluginConnection(this);
+			}
+		}
+	}
+	
+	public void deleteFromEndpoint(ConnectionLineEndpointInterface endpoint) {
+		
+		USPPoint point = null;
+		
+		if(endpoint instanceof Input) {
+			for(Input output : outputs.keySet()) {
+				if(endpoint.equals(output)) {
+					point = outputs.get(output);
+				}
+			}
+		} else {
+			if(endpoint.equals(input)) {
+				point = inputPoint;
+			}
+		}
+		
+		if(point != null) {
+			
+			for(Entry<HashSet<USPLine>, LinkedList<USPPoint>> entry : lines.entrySet()) {
+				LinkedList<USPPoint> pointList = entry.getValue();
+				
+				if(point.equals(pointList.getFirst()) || point.equals(pointList.getLast())) {
+					deletionLines = entry.getKey();
+					deletionPoints = entry.getValue();
+					break;
+				}
+			}
+			
+			deleteSelection();
 		}
 	}
 

@@ -264,9 +264,9 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	
 	public void delete() {
 		configGroup.getChildren().remove(this);
-		// TODO
-		/*if(conLine != null) {
-			conLine.delete();
-		}*/
+		
+		if(con != null) {
+			con.deleteFromEndpoint(this);
+		}
 	}
 }
