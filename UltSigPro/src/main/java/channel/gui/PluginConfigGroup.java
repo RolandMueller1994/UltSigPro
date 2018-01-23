@@ -335,7 +335,8 @@ public class PluginConfigGroup extends Pane {
 				if (!hovered && !lineHovered) {
 					if (event.getButton().equals(MouseButton.SECONDARY) && workCon == null
 							&& !contextMenu.isShowing()) {
-						showContextMenu(event.getScreenX(), event.getScreenY());boolean coordinatesOnLine = false;
+						showContextMenu(event.getScreenX(), event.getScreenY());
+						boolean coordinatesOnLine = false;
 						
 						if(workCon != null) {
 							for(PluginConnection con : allConnections) {
@@ -368,7 +369,10 @@ public class PluginConfigGroup extends Pane {
 				}
 				
 				if(coordinatesOnLine && workCon != null) {
-					coordinatesCon.unifyConnections(workCon);
+					if(!coordinatesCon.unifyConnections(workCon)) {
+						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
+								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
+					}
 				}
 			}
 		});

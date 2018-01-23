@@ -53,6 +53,7 @@ public class PluginConnection {
 	private LinkedList<USPPoint> coordinatesPoints;
 	private USPPoint firstCoordinatesPoint;
 	private USPPoint secondCoordinatesPoint;
+	private USPPoint dividerCoordinatesPoint;
 	private boolean coordinatesHorizontal;
 
 	private Output input;
@@ -219,6 +220,22 @@ public class PluginConnection {
 		}
 
 	}
+	
+	private USPLineOrientation getOrientationForPoints(USPPoint end, USPPoint beforeEnd) {
+		if(end.getX() == beforeEnd.getX()) {
+			if(end.getY() > beforeEnd.getY()) {
+				return USPLineOrientation.BOTTOM_UP;
+			} else {
+				return USPLineOrientation.TOP_DOWN;
+			}
+		} else {
+			if(end.getX() > beforeEnd.getX()) {
+				return USPLineOrientation.LEFT_TO_RIGHT;
+			} else {
+				return USPLineOrientation.RIGHT_TO_LEFT;
+			}
+		}
+	}
 
 	public boolean checkIfCoordinatesOnLine(double x, double y) {
 		return checkIfCoordinatesOnLine(new USPPoint(x, y));
@@ -232,6 +249,38 @@ public class PluginConnection {
 
 		double x = drawingPoint.getX();
 		double y = drawingPoint.getY();
+
+		for (USPPoint dividerPoint : dividerPoints) {
+
+			double dividerX = dividerPoint.getX();
+			double dividerY = dividerPoint.getY();
+
+			if (x > dividerX - DIVIDER_DIAMETER / 2 && x < dividerX + DIVIDER_DIAMETER / 2
+					&& y > dividerY - DIVIDER_DIAMETER / 2 && y < dividerY + DIVIDER_DIAMETER / 2) {
+				
+				if(configGroup.getWorkCon() == null) {
+					return true;
+				}
+				
+				USPLineOrientation orientation = configGroup.getWorkCon().getDrawingOrientation();
+				
+				for(LinkedList<USPPoint> part : points) {
+					if(dividerPoint.equals(part.getFirst())) {
+						if(orientation == getOrientationForPoints(part.getFirst(), part.get(1))) {
+							return false;
+						}
+					} else if (dividerPoint.equals(part.getLast())) {
+						if(orientation == getOrientationForPoints(part.getLast(), part.get(part.size() - 2))) {
+							return false;
+						}
+					}
+				}
+				
+				dividerCoordinatesPoint = dividerPoint;
+				return true;
+			}
+
+		}
 
 		for (LinkedList<USPPoint> pointList : points) {
 			USPPoint last = null;
@@ -572,7 +621,7 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
 					}
-				}else {
+				} else {
 					upper.setX(x);
 				}
 			}
@@ -710,6 +759,14 @@ public class PluginConnection {
 		return minY;
 	}
 
+	public USPLineOrientation getDrawingOrientation() {
+
+		if (drawingPoint != null) {
+			return getOrientationForPoints(drawingPoint, drawingPoints.getLast());
+		}
+		return null;
+	}
+
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
 
 		if (!forward) {
@@ -763,10 +820,36 @@ public class PluginConnection {
 
 	}
 
-	public void unifyConnections(PluginConnection other) {
+	public boolean unifyConnections(PluginConnection other) {
 
 		if (other.hasInput() && hasInput()) {
-			return;
+			return false;
+		}
+		
+		if(dividerCoordinatesPoint != null) {
+			
+			if (other.input != null) {
+				input = other.input;
+				inputPoint = other.inputPoint;
+				input.addConnection(this);
+			}
+
+			outputs.putAll(other.outputs);
+
+			for (Input input : other.outputs.keySet()) {
+				input.addConnection(this);
+			}
+			
+			LinkedList<USPPoint> otherPoints = other.drawingPoints;
+			otherPoints.add(dividerCoordinatesPoint);
+			
+			points.add(otherPoints);
+			
+			other.finalizeOnDivider();
+			configGroup.removeConnection(other);
+			redraw();
+			configGroup.finalizeDrawing();
+			return true;
 		}
 
 		double x = other.drawingPoint.getX();
@@ -862,8 +945,9 @@ public class PluginConnection {
 			configGroup.removeConnection(other);
 			redraw();
 			configGroup.finalizeDrawing();
+			return true;
 		}
-
+		return false;
 	}
 
 	private void finalizeOnDivider() {
@@ -1248,17 +1332,17 @@ public class PluginConnection {
 					}
 				} else if (check.size() == 4) {
 					if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
-						if(endpoint instanceof Output) {
+						if (endpoint instanceof Output) {
 							// left to right
-							if(check.getLast().getX() > check.get(2).getX()) {
-								if(check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
+							if (check.getLast().getX() > check.get(2).getX()) {
+								if (check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
 									return false;
 								}
 							}
 						} else {
 							// right to left
-							if(check.getLast().getX() < check.get(2).getX()) {
-								if(x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
+							if (check.getLast().getX() < check.get(2).getX()) {
+								if (x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
 									return false;
 								}
 							}
@@ -1672,7 +1756,7 @@ public class PluginConnection {
 									&& list.get(3).getX() < list.getFirst().getX()) {
 								skip = true;
 							}
-							
+
 							if (list.size() > 3 && list.getFirst().getX() > point.getX()
 									&& list.get(3).getX() > list.getFirst().getX()) {
 								skip = true;
@@ -1955,6 +2039,10 @@ public class PluginConnection {
 
 	public enum USPLineStyle {
 		DRAWING_LINE, NORMAL_LINE, HOVERED_LINE, HOVERED_FOR_DELETION
+	}
+
+	private enum USPLineOrientation {
+		LEFT_TO_RIGHT, RIGHT_TO_LEFT, BOTTOM_UP, TOP_DOWN
 	}
 
 }
