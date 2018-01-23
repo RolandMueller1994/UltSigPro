@@ -475,6 +475,38 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(index);
 					}
+				} else if (lower.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
+						&& Math.abs(coordinatesPoints.getFirst().getX() - x) < MIN_LINE_LENGTH) {
+
+					double divideY = coordinatesPoints.getFirst().getY() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
+					coordinatesPoints.add(3, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (lower.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
+						.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast().getY()
+						&& Math.abs(coordinatesPoints.getLast().getX() - x) < MIN_LINE_LENGTH) {
+
+					int index = coordinatesPoints.size();
+
+					double divideY = coordinatesPoints.getLast().getY() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(coordinatesPoints.get(index - 2).getX(), divideY));
+					coordinatesPoints.add(index - 2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
 				} else {
 					lower.setX(x);
 				}
@@ -508,7 +540,39 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(index);
 					}
-				} else {
+				} else if (upper.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
+						&& Math.abs(coordinatesPoints.getFirst().getX() - x) < MIN_LINE_LENGTH) {
+
+					double divideY = coordinatesPoints.getFirst().getY() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
+					coordinatesPoints.add(3, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (upper.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
+						.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast().getY()
+						&& Math.abs(coordinatesPoints.getLast().getX() - x) < MIN_LINE_LENGTH) {
+
+					int index = coordinatesPoints.size();
+
+					double divideY = coordinatesPoints.getLast().getY() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(coordinatesPoints.get(index - 2).getX(), divideY));
+					coordinatesPoints.add(index - 2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
+				}else {
 					upper.setX(x);
 				}
 			}
