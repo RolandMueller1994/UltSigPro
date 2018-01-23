@@ -1102,6 +1102,20 @@ public class PluginConnection {
 							}
 						}
 					}
+				} else if (check.size() == 3) {
+					if(Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+						if(endpoint instanceof Output) {
+							// left to right
+							if(check.get(1).getX() - x <= MIN_LINE_LENGTH) {
+								return false;
+							}
+						} else {
+							// right to left
+							if(x - check.get(1).getX() <= MIN_LINE_LENGTH) {
+								return false;
+							}
+						}
+					}
 				}
 			}
 		}
