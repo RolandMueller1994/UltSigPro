@@ -1159,11 +1159,11 @@ public class PluginConnection {
 				if (check.size() == 2) {
 					if (check.getLast().getY() == y) {
 						if (endpoint instanceof Input) {
-							if (x - secondEnd.getX() < MIN_LINE_LENGTH) {
+							if (x - secondEnd.getX() < 2 * MIN_LINE_LENGTH) {
 								return false;
 							}
 						} else {
-							if (secondEnd.getX() - x < MIN_LINE_LENGTH) {
+							if (secondEnd.getX() - x < 2 * MIN_LINE_LENGTH) {
 								return false;
 							}
 						}
@@ -1179,6 +1179,24 @@ public class PluginConnection {
 							// right to left
 							if (x - check.get(1).getX() <= 2 * MIN_LINE_LENGTH) {
 								return false;
+							}
+						}
+					}
+				} else if (check.size() == 4) {
+					if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+						if(endpoint instanceof Output) {
+							// left to right
+							if(check.getLast().getX() > check.get(2).getX()) {
+								if(check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
+									return false;
+								}
+							}
+						} else {
+							// right to left
+							if(check.getLast().getX() < check.get(2).getX()) {
+								if(x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
+									return false;
+								}
 							}
 						}
 					}
@@ -1585,14 +1603,14 @@ public class PluginConnection {
 							}
 						}
 
-						if (list.indexOf(point) == 1) {
-							if (list.size() > 2 && list.getFirst().getY() < point.getY()
-									&& list.get(2).getY() < point.getY()) {
+						if (list.indexOf(point) == 2) {
+							if (list.size() > 3 && list.getFirst().getX() < point.getX()
+									&& list.get(3).getX() < list.getFirst().getX()) {
 								skip = true;
 							}
 							
-							if (list.size() > 2 && list.getFirst().getY() > point.getY()
-									&& list.get(2).getY() > point.getY()) {
+							if (list.size() > 3 && list.getFirst().getX() > point.getX()
+									&& list.get(3).getX() > list.getFirst().getX()) {
 								skip = true;
 							}
 						}
