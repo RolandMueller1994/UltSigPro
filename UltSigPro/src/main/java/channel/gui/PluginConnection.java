@@ -220,16 +220,16 @@ public class PluginConnection {
 		}
 
 	}
-	
+
 	private USPLineOrientation getOrientationForPoints(USPPoint end, USPPoint beforeEnd) {
-		if(end.getX() == beforeEnd.getX()) {
-			if(end.getY() > beforeEnd.getY()) {
+		if (end.getX() == beforeEnd.getX()) {
+			if (end.getY() > beforeEnd.getY()) {
 				return USPLineOrientation.BOTTOM_UP;
 			} else {
 				return USPLineOrientation.TOP_DOWN;
 			}
 		} else {
-			if(end.getX() > beforeEnd.getX()) {
+			if (end.getX() > beforeEnd.getX()) {
 				return USPLineOrientation.LEFT_TO_RIGHT;
 			} else {
 				return USPLineOrientation.RIGHT_TO_LEFT;
@@ -257,25 +257,25 @@ public class PluginConnection {
 
 			if (x > dividerX - DIVIDER_DIAMETER / 2 && x < dividerX + DIVIDER_DIAMETER / 2
 					&& y > dividerY - DIVIDER_DIAMETER / 2 && y < dividerY + DIVIDER_DIAMETER / 2) {
-				
-				if(configGroup.getWorkCon() == null) {
+
+				if (configGroup.getWorkCon() == null) {
 					return true;
 				}
-				
+
 				USPLineOrientation orientation = configGroup.getWorkCon().getDrawingOrientation();
-				
-				for(LinkedList<USPPoint> part : points) {
-					if(dividerPoint.equals(part.getFirst())) {
-						if(orientation == getOrientationForPoints(part.getFirst(), part.get(1))) {
+
+				for (LinkedList<USPPoint> part : points) {
+					if (dividerPoint.equals(part.getFirst())) {
+						if (orientation == getOrientationForPoints(part.getFirst(), part.get(1))) {
 							return false;
 						}
 					} else if (dividerPoint.equals(part.getLast())) {
-						if(orientation == getOrientationForPoints(part.getLast(), part.get(part.size() - 2))) {
+						if (orientation == getOrientationForPoints(part.getLast(), part.get(part.size() - 2))) {
 							return false;
 						}
 					}
 				}
-				
+
 				dividerCoordinatesPoint = dividerPoint;
 				return true;
 			}
@@ -825,9 +825,9 @@ public class PluginConnection {
 		if (other.hasInput() && hasInput()) {
 			return false;
 		}
-		
-		if(dividerCoordinatesPoint != null) {
-			
+
+		if (dividerCoordinatesPoint != null) {
+
 			if (other.input != null) {
 				input = other.input;
 				inputPoint = other.inputPoint;
@@ -839,12 +839,12 @@ public class PluginConnection {
 			for (Input input : other.outputs.keySet()) {
 				input.addConnection(this);
 			}
-			
+
 			LinkedList<USPPoint> otherPoints = other.drawingPoints;
 			otherPoints.add(dividerCoordinatesPoint);
-			
+
 			points.add(otherPoints);
-			
+
 			other.finalizeOnDivider();
 			configGroup.removeConnection(other);
 			redraw();
@@ -1225,18 +1225,14 @@ public class PluginConnection {
 		return check;
 	}
 
-	private USPPoint getSecondEnd(USPPoint startPoint) {
+	private USPPoint getSecondEnd(USPPoint startPoint, LinkedList<USPPoint> list) {
 
 		USPPoint secondEnd = null;
 
-		for (LinkedList<USPPoint> subPoints : points) {
-			if (subPoints.getFirst().equals(startPoint)) {
-				secondEnd = subPoints.getLast();
-				break;
-			} else if (subPoints.getLast().equals(startPoint)) {
-				secondEnd = subPoints.getFirst();
-				break;
-			}
+		if (list.getFirst().equals(startPoint)) {
+			secondEnd = list.getLast();
+		} else if (list.getLast().equals(startPoint)) {
+			secondEnd = list.getFirst();
 		}
 
 		return secondEnd;
@@ -1293,6 +1289,56 @@ public class PluginConnection {
 		}
 	}
 
+	private boolean checkDragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check,
+			USPPoint secondEnd, boolean leftToRight) {
+		if (check.size() == 2) {
+			if (check.getLast().getY() == y) {
+				if (!leftToRight) {
+					if (x - secondEnd.getX() < 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				} else {
+					if (secondEnd.getX() - x < 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				}
+			}
+		} else if (check.size() == 3) {
+			if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+				if (leftToRight) {
+					// left to right
+					if (check.get(1).getX() - x <= 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				} else {
+					// right to left
+					if (x - check.get(1).getX() <= 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				}
+			}
+		} else if (check.size() == 4) {
+			if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+				if (leftToRight) {
+					// left to right
+					if (check.getLast().getX() > check.get(2).getX()) {
+						if (check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
+							return false;
+						}
+					}
+				} else {
+					// right to left
+					if (check.getLast().getX() < check.get(2).getX()) {
+						if (x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
+
 	public boolean checkDragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
 
 		USPPoint startPoint = getStartPoint(endpoint);
@@ -1300,59 +1346,187 @@ public class PluginConnection {
 		if (startPoint != null) {
 
 			LinkedList<USPPoint> check = getCheckList(startPoint);
-			USPPoint secondEnd = getSecondEnd(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint, check);
 
 			if (check != null) {
 
-				if (check.size() == 2) {
-					if (check.getLast().getY() == y) {
-						if (endpoint instanceof Input) {
-							if (x - secondEnd.getX() < 2 * MIN_LINE_LENGTH) {
-								return false;
-							}
-						} else {
-							if (secondEnd.getX() - x < 2 * MIN_LINE_LENGTH) {
-								return false;
-							}
-						}
+				boolean leftToRight = endpoint instanceof Output;
+
+				return checkDragNDropInt(startPoint, x, y, check, secondEnd, leftToRight);
+			}
+		}
+
+		return true;
+	}
+
+	public void dragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check, USPPoint secondEnd,
+			boolean leftToRight) {
+
+		LinkedList<USPPoint> keep = null;
+
+		if (startPoint.equals(check.getLast())) {
+			keep = check;
+			check = new LinkedList<USPPoint>();
+
+			for (USPPoint point : keep) {
+				check.offerFirst(point);
+			}
+		}
+
+		boolean redraw = false;
+
+		if (check != null) {
+
+			if (check.size() == 2) {
+				// Horizontal line
+				if (startPoint.getY() == y) {
+					startPoint.setX(x);
+				} else {
+					addTwoPoints(startPoint, check, 0, false);
+					redraw = true;
+				}
+			} else if (check.size() == 3) {
+				// Vertical connected
+				if (leftToRight) {
+					if (secondEnd.getX() - x <= MIN_LINE_LENGTH) {
+						check.get(1).setX(check.get(1).getX() + configGroup.getRaster());
+						startPoint.setY(y);
+						startPoint.setX(x);
+						check.get(1).setY(y);
+
+						addTwoPoints(startPoint, check, 1, true);
+						redraw = true;
+					} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+
+						addTwoPoints(startPoint, check, 0, false);
+						redraw = true;
+					} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+
+						addTwoPoints(startPoint, check, 0, false);
+						redraw = true;
+					} else if (secondEnd.getX() - x > MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+					} else {
+
 					}
-				} else if (check.size() == 3) {
-					if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
-						if (endpoint instanceof Output) {
-							// left to right
-							if (check.get(1).getX() - x <= 2 * MIN_LINE_LENGTH) {
-								return false;
-							}
-						} else {
-							// right to left
-							if (x - check.get(1).getX() <= 2 * MIN_LINE_LENGTH) {
-								return false;
-							}
-						}
+				} else {
+					if (x - secondEnd.getX() <= MIN_LINE_LENGTH) {
+						check.get(1).setX(check.get(1).getX() - configGroup.getRaster());
+						startPoint.setY(y);
+						startPoint.setX(x);
+						check.get(1).setY(y);
+
+						addTwoPoints(startPoint, check, 1, true);
+						redraw = true;
+					} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+
+						addTwoPoints(startPoint, check, 0, false);
+						redraw = true;
+					} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+
+						addTwoPoints(startPoint, check, 0, false);
+						redraw = true;
+					} else if (x - secondEnd.getX() > MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+					} else {
+
 					}
-				} else if (check.size() == 4) {
-					if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
-						if (endpoint instanceof Output) {
-							// left to right
-							if (check.getLast().getX() > check.get(2).getX()) {
-								if (check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
-									return false;
-								}
-							}
-						} else {
-							// right to left
-							if (check.getLast().getX() < check.get(2).getX()) {
-								if (x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
-									return false;
-								}
-							}
-						}
+				}
+			} else if (check.size() == 4) {
+				if (leftToRight) {
+					if (secondEnd.getX() - x < 3 * MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+
+						addTwoPoints(startPoint, check, 1, true);
+						redraw = true;
+					} else if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+						check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
+					} else {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+					}
+				} else {
+					if (x - secondEnd.getX() < 3 * MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+
+						addTwoPoints(startPoint, check, 1, true);
+						redraw = true;
+					} else if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+						check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
+					} else {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+					}
+				}
+			} else {
+				if (leftToRight) {
+					if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+						check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
+					} else {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+					}
+				} else {
+					if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
+						startPoint.setX(x);
+						check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+						startPoint.setY(y);
+						check.get(1).setY(y);
+						check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
+					} else {
+						startPoint.setX(x);
+						startPoint.setY(y);
+						check.get(1).setY(y);
 					}
 				}
 			}
 		}
 
-		return true;
+		if (keep != null) {
+			keep.clear();
+
+			for (USPPoint point : check) {
+				keep.offerFirst(point);
+			}
+		}
+
+		if (redraw) {
+			redraw();
+		}
+		
 	}
 
 	public void dragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
@@ -1370,172 +1544,9 @@ public class PluginConnection {
 		if (startPoint != null) {
 
 			LinkedList<USPPoint> check = getCheckList(startPoint);
-			USPPoint secondEnd = getSecondEnd(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint, check);
 
-			LinkedList<USPPoint> keep = null;
-
-			if (startPoint.equals(check.getLast())) {
-				keep = check;
-				check = new LinkedList<USPPoint>();
-
-				for (USPPoint point : keep) {
-					check.offerFirst(point);
-				}
-			}
-
-			boolean redraw = false;
-
-			if (check != null) {
-
-				if (check.size() == 2) {
-					// Horizontal line
-					if (startPoint.getY() == y) {
-						startPoint.setX(x);
-					} else {
-						addTwoPoints(startPoint, check, 0, false);
-						redraw = true;
-					}
-				} else if (check.size() == 3) {
-					// Vertical connected
-					if (leftToRight) {
-						if (secondEnd.getX() - x <= MIN_LINE_LENGTH) {
-							check.get(1).setX(check.get(1).getX() + configGroup.getRaster());
-							startPoint.setY(y);
-							startPoint.setX(x);
-							check.get(1).setY(y);
-
-							addTwoPoints(startPoint, check, 1, true);
-							redraw = true;
-						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-
-							addTwoPoints(startPoint, check, 0, false);
-							redraw = true;
-						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-
-							addTwoPoints(startPoint, check, 0, false);
-							redraw = true;
-						} else if (secondEnd.getX() - x > MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						} else {
-
-						}
-					} else {
-						if (x - secondEnd.getX() <= MIN_LINE_LENGTH) {
-							check.get(1).setX(check.get(1).getX() - configGroup.getRaster());
-							startPoint.setY(y);
-							startPoint.setX(x);
-							check.get(1).setY(y);
-
-							addTwoPoints(startPoint, check, 1, true);
-							redraw = true;
-						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-
-							addTwoPoints(startPoint, check, 0, false);
-							redraw = true;
-						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-
-							addTwoPoints(startPoint, check, 0, false);
-							redraw = true;
-						} else if (x - secondEnd.getX() > MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						} else {
-
-						}
-					}
-				} else if (check.size() == 4) {
-					if (leftToRight) {
-						if (secondEnd.getX() - x < 3 * MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-
-							addTwoPoints(startPoint, check, 1, true);
-							redraw = true;
-						} else if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
-						} else {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						}
-					} else {
-						if (x - secondEnd.getX() < 3 * MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-
-							addTwoPoints(startPoint, check, 1, true);
-							redraw = true;
-						} else if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
-						} else {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						}
-					}
-				} else {
-					if (leftToRight) {
-						if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
-						} else {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						}
-					} else {
-						if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
-							startPoint.setX(x);
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
-						} else {
-							startPoint.setX(x);
-							startPoint.setY(y);
-							check.get(1).setY(y);
-						}
-					}
-				}
-			}
-
-			if (keep != null) {
-				keep.clear();
-
-				for (USPPoint point : check) {
-					keep.offerFirst(point);
-				}
-			}
-
-			if (redraw) {
-				redraw();
-			}
+			dragNDropInt(startPoint, x, y, check, secondEnd, leftToRight);
 		}
 	}
 
