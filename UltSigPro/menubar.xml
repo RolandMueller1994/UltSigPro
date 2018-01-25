@@ -19,6 +19,7 @@
 		<title>configmenutitle</title>
 		<class>gui.menubar.AddChannelMenuItem</class>
 		<class>gui.menubar.LanguageMenuItem</class>
+		<class>gui.menubar.ConfigSignalSourceItem</class>
 	</menu>
 	<menu>
 		<title>helpmenutitle</title>

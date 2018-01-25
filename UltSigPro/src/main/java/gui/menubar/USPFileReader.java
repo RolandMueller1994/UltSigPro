@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -76,7 +77,7 @@ public class USPFileReader {
 			HashMap<String, Double> inputWaveGain = new HashMap<>();
 			HashMap<String, Double> outputWaveGain = new HashMap<>();
 			HashMap<String, File> choosedOutputWaveFiles = new HashMap<>();
-			HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources = new HashMap<>();
+			Collection<String> signalSources = new HashSet<String>();
 			List<PluginXMLConfigWrapper> plugins = new LinkedList<>();
 			List<Element> connectionLines = new LinkedList<>();
 			List<String> missingResources = new LinkedList<>();

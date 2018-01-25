@@ -40,6 +40,7 @@ public class InputAdministrator {
 
 	private static InputAdministrator inputAdministrator;
 	private HashMap<String, Mixer> allSoundInputDevices;
+	private HashMap<String, IteratableSignalSourceStream> allSignalSources = new HashMap<>();
 	private HashMap<String, IteratableWaveFileStream> inputWaveStreams;
 	private HashMap<String, IteratableSignalSourceStream> inputSignalSourceStreams;
 	private HashMap<String, Mixer> subscribedDevices;
@@ -226,17 +227,14 @@ public class InputAdministrator {
 		}
 	}
 
-	public synchronized void createSignalSource(HashMap<IteratableSignalSourceStream, HashMap<String, Double>> sources,
-			InputDataListener listener) {
+	public synchronized void createSignalSource(Collection<String> sources, InputDataListener listener) {
 		if (!sources.isEmpty()) {
-			for (Map.Entry<IteratableSignalSourceStream, HashMap<String, Double>> source : sources.entrySet()) {
-				distributionMap.get(listener).add(source.getKey().getName());
-				IteratableSignalSourceStream stream = new IteratableSignalSourceStream(source.getKey().getName(),
-						source.getValue().get("frequency"), source.getValue().get("amplitude"));
-				inputSignalSourceStreams.put(source.getKey().getName(), stream);
+			for (String source : sources) {
+				distributionMap.get(listener).add(source);
+				inputSignalSourceStreams.put(source, allSignalSources.get(source));
 
 				HashMap<String, Double> inputLevel = new HashMap<>();
-				inputLevel.put(source.getKey().getName(), 1.0);
+				inputLevel.put(source, 1.0);
 				if (inputLevelMultiplier.containsKey(listener)) {
 					inputLevelMultiplier.get(listener).putAll(inputLevel);
 				} else {
@@ -244,6 +242,14 @@ public class InputAdministrator {
 				}
 			}
 		}
+	}
+
+	public void setSoundInputDevices(HashMap<String, IteratableSignalSourceStream> signalSources) {
+		allSignalSources = signalSources;
+	}
+
+	public HashMap<String, IteratableSignalSourceStream> getSoundInputDevices() {
+		return allSignalSources;
 	}
 
 	public synchronized void removeWaveFiles(HashMap<String, File> waveFiles, InputDataListener listener) {
@@ -270,12 +276,12 @@ public class InputAdministrator {
 	}
 
 	public synchronized void removeSignalSources(
-			HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources, InputDataListener listener) {
-		
-		for (IteratableSignalSourceStream source : signalSources.keySet()) {
-			distributionMap.get(listener).remove(source.getName());
-			inputLevelMultiplier.get(listener).remove(source.getName());
-			inputSignalSourceStreams.remove(source.getName());
+			Collection<String> signalSources, InputDataListener listener) {
+
+		for (String source : signalSources) {
+			distributionMap.get(listener).remove(source);
+			inputLevelMultiplier.get(listener).remove(source);
+			inputSignalSourceStreams.remove(source);
 		}
 	}
 

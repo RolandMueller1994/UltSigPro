@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import channel.Channel;
 import channel.ChannelConfig;
 import i18n.LanguageResourceHandler;
-import iteratableinput.IteratableSignalSourceStream;
 import javafx.application.Platform;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
@@ -172,10 +171,10 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			}
 		}
 
-		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
+		for (String signalSource : config.getSignalSources()) {
 			// new input device entry
 			if (!inputDevicesList.containsKey(signalSource)) {
-				createInputDeviceEntry(signalSource.getName());
+				createInputDeviceEntry(signalSource);
 			}
 		}
 
@@ -225,11 +224,11 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			}
 		}
 
-		for (IteratableSignalSourceStream signalSource : config.getSignalSources().keySet()) {
-			inputDevicesList.get(signalSource.getName()).remove(config.getName());
+		for (String signalSource : config.getSignalSources()) {
+			inputDevicesList.get(signalSource).remove(config.getName());
 
-			if (inputDevicesList.get(signalSource.getName()).isEmpty()) {
-				deleteInputDeviceEntry(signalSource.getName());
+			if (inputDevicesList.get(signalSource).isEmpty()) {
+				deleteInputDeviceEntry(signalSource);
 			}
 		}
 

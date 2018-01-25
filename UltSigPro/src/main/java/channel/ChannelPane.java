@@ -16,7 +16,6 @@ import guicomponents.AbstractNumberTextField.ValueChangedInterface;
 import guicomponents.DoubleTextField;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
-import iteratableinput.IteratableSignalSourceStream;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -33,7 +32,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -90,7 +88,7 @@ public class ChannelPane extends TitledPane {
 		this.config = config;
 		name = config.getName();
 		inputPane = new InputPane(config.getInputDevices(), config.getInputWaveFiles().keySet(),
-				config.getSignalSources().keySet());
+				config.getSignalSources());
 		outputPane = new OutputPane(config.getOutputDevices(), config.getOutputWaveFiles().keySet());
 		centralPane.getStyleClass().add("channel-central-pane");
 
@@ -278,7 +276,7 @@ public class ChannelPane extends TitledPane {
 		private ObservableList<DeviceGainTuple> tableRows = FXCollections.observableArrayList();
 
 		public InputPane(Collection<String> inputDevices, Collection<String> waveFiles,
-				Collection<IteratableSignalSourceStream> signalSources) {
+				Collection<String> signalSources) {
 			addButton = new Button();
 			addButton.getStyleClass().add("plusButton");
 			addButton.setMaxWidth(Double.MAX_VALUE);
@@ -323,8 +321,8 @@ public class ChannelPane extends TitledPane {
 				addDevice(device);
 			}
 			
-			for (IteratableSignalSourceStream signalSource : signalSources) {
-				addDevice(signalSource.getName());
+			for (String signalSource : signalSources) {
+				addDevice(signalSource);
 			}
 
 			deviceGainTable.setItems(tableRows);

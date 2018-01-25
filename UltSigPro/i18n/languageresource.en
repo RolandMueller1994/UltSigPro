@@ -40,6 +40,13 @@ gui.menubar.HelpMenuItem.title=Help
 gui.menubar.AddChannelMenuItem.title=Add channel
 gui.menubar.AddChannelMenuItem.addChannelTitle=Add new channel
 
+gui.menubar.ConfigSignalSourceItem.title=Configure signal sources
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.title=Configure signal sources
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.name=Label
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.frequency=Frequency
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.amplitude=Amplitude
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.warning=All fields have to be filled!
+
 gui.menubar.AddChannelMenuItem$AddChannelDialog.title=Add new channel
 gui.menubar.AddChannelMenuItem$AddChannelDialog.titleLabel=Name
 gui.menubar.AddChannelMenuItem$AddChannelDialog.inputLabel=Inputs

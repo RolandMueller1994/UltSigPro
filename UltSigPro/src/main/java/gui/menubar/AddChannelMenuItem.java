@@ -10,8 +10,6 @@ import channel.ChannelConfig;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
 import inputhandler.InputAdministrator;
-import iteratableinput.IteratableSignalSourceDialog;
-import iteratableinput.IteratableSignalSourceStream;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -109,7 +107,6 @@ public class AddChannelMenuItem extends MenuItem {
 		private List<ChoiceBox<String>> outputBoxes = new LinkedList<>();
 		private HashMap<String, File> inputWaveFiles = new HashMap<>();
 		private HashMap<String, File> outputWaveFiles = new HashMap<>();
-		private HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources = new HashMap<>();
 		private TextField titleTextField;
 
 		private GridPane gridPane;
@@ -238,7 +235,7 @@ public class AddChannelMenuItem extends MenuItem {
 						choosedInputWaveFiles.put(cur, inputWaveFiles.get(cur));
 					} else if (InputAdministrator.getInputAdminstrator().getInputDevices().contains(cur)) {
 						inputDevices.add(cur);
-					} else {
+					} else if (InputAdministrator.getInputAdminstrator().getSoundInputDevices().containsKey(cur)){
 						signalSources.add(cur);
 					}
 				}
@@ -256,7 +253,7 @@ public class AddChannelMenuItem extends MenuItem {
 			}
 
 			return new ChannelConfig(titleTextField.getText(), inputDevices, outputDevices, choosedInputWaveFiles,
-					choosedOutputWaveFiles, this.signalSources);
+					choosedOutputWaveFiles, signalSources);
 		}
 
 		private GridPane getInputPane() {
@@ -277,7 +274,7 @@ public class AddChannelMenuItem extends MenuItem {
 
 			ObservableList<String> list = FXCollections.observableArrayList(inputAdmin.getInputDevices());
 			list.add("Wave " + lanHandler.getLocalizedText("file"));
-			list.add(lanHandler.getLocalizedText("signalsource"));
+			list.addAll(InputAdministrator.getInputAdminstrator().getSoundInputDevices().keySet());
 			firstBox.setItems(list);
 
 			firstBox.setOnAction(new EventHandler<ActionEvent>() {
@@ -287,13 +284,6 @@ public class AddChannelMenuItem extends MenuItem {
 					if (firstBox.getSelectionModel().getSelectedItem()
 							.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 						waveFileSelected(list, firstBox);
-					} else if (firstBox.getSelectionModel().getSelectedItem()
-							.equals(lanHandler.getLocalizedText("signalsource"))) {
-						try {
-							signalSourceSelected(list, firstBox);
-						} catch (ResourceProviderException e) {
-							e.printStackTrace();
-						}
 					}
 				}
 			});
@@ -313,7 +303,7 @@ public class AddChannelMenuItem extends MenuItem {
 					ChoiceBox<String> box = new ChoiceBox<>();
 					ObservableList<String> list = FXCollections.observableArrayList(inputAdmin.getInputDevices());
 					list.add("Wave " + lanHandler.getLocalizedText("file"));
-					list.add(lanHandler.getLocalizedText("signalsource"));
+					list.addAll(InputAdministrator.getInputAdminstrator().getSoundInputDevices().keySet());
 					box.setItems(list);
 
 					box.setOnAction(new EventHandler<ActionEvent>() {
@@ -323,13 +313,6 @@ public class AddChannelMenuItem extends MenuItem {
 							if (box.getSelectionModel().getSelectedItem()
 									.equals("Wave " + lanHandler.getLocalizedText("file"))) {
 								waveFileSelected(list, box);
-							} else if (box.getSelectionModel().getSelectedItem()
-									.equals(lanHandler.getLocalizedText("signalsource"))) {
-								try {
-									signalSourceSelected(list, box);
-								} catch (ResourceProviderException e) {
-									e.printStackTrace();
-								}
 							}
 						}
 					});
@@ -376,43 +359,6 @@ public class AddChannelMenuItem extends MenuItem {
 				if (!inputWaveFiles.containsKey(waveFile.getName())) {
 					inputWaveFiles.put(waveFile.getName(), waveFile);
 				}
-			}
-		}
-
-		private void signalSourceSelected(ObservableList<String> list, ChoiceBox<String> box)
-				throws ResourceProviderException {
-			IteratableSignalSourceDialog dialog = new IteratableSignalSourceDialog();
-			dialog.initOwner(USPGui.stage);
-			dialog.initStyle(StageStyle.UTILITY);
-
-			Button btOk = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-			btOk.setDefaultButton(false);
-			btOk.addEventFilter(ActionEvent.ACTION, e -> {
-				if (dialog.inputsMissing()) {
-					Alert alert = new Alert(AlertType.WARNING);
-					alert.setHeaderText(lanHandler.getLocalizedText(IteratableSignalSourceDialog.class, WARNING));
-					alert.showAndWait();
-					e.consume();
-				} 
-
-			});
-
-			Optional<ButtonType> result = dialog.showAndWait();
-
-			if (result.isPresent() && result.get() == ButtonType.OK) {
-				IteratableSignalSourceStream signalSource = new IteratableSignalSourceStream(dialog.getName(),
-						dialog.getFrequency(), dialog.getAmplitude());
-
-				HashMap<String, Double> values = new HashMap<>();
-				values.put("frequency", dialog.getFrequency());
-				values.put("amplitude", dialog.getAmplitude());
-
-				HashMap<IteratableSignalSourceStream, HashMap<String, Double>> source = new HashMap<>();
-				source.put(signalSource, values);
-				signalSources.putAll(source);
-				list.add(dialog.getName());
-				box.setItems(list);
-				box.setValue(dialog.getName());
 			}
 		}
 

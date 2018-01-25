@@ -40,6 +40,13 @@ gui.menubar.HelpMenuItem.title=Hilfe
 gui.menubar.AddChannelMenuItem.title=Kanal hinzufügen
 gui.menubar.AddChannelMenuItem.addChannelTitle=Neuen Kanal hinzufügen
 
+gui.menubar.ConfigSignalSourceItem.title=Signalquellen verwalten
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.title=Signalquellen verwalten
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.name=Bezeichnung
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.frequency=Frequenz
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.amplitude=Amplitude
+gui.menubar.ConfigSignalSourceItem$ConfigSignalSourceDialog.warning=Es müssen alle Felder ausgefüllt werden!
+
 gui.menubar.AddChannelMenuItem$AddChannelDialog.title=Neuen Kanal hinzufügen
 gui.menubar.AddChannelMenuItem$AddChannelDialog.titleLabel=Name
 gui.menubar.AddChannelMenuItem$AddChannelDialog.inputLabel=Eingänge

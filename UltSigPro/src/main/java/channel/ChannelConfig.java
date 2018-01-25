@@ -8,7 +8,6 @@ import java.util.HashSet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import iteratableinput.IteratableSignalSourceStream;
 
 /**
  * Wrapper class for informations about one channel.
@@ -23,7 +22,7 @@ public class ChannelConfig {
 	private Collection<String> outputDevices;
 	private HashMap<String, File> inputWaveFiles;
 	private HashMap<String, File> outputWaveFiles;
-	private HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources;
+	private Collection<String> signalSources;
 
 	private HashSet<ChannelDeviceUpdateListener> listeners = new HashSet<>();
 
@@ -45,7 +44,7 @@ public class ChannelConfig {
 	 */
 	public ChannelConfig(@Nonnull String name, @Nullable Collection<String> inputDevices,
 			@Nullable Collection<String> outputDevices, HashMap<String, File> inputWaveFiles,
-			HashMap<String, File> outputWaveFiles, HashMap<IteratableSignalSourceStream, HashMap<String, Double>> signalSources) {
+			HashMap<String, File> outputWaveFiles, Collection<String> signalSources) {
 		this.name = name;
 		if (inputDevices != null) {
 			this.inputDevices = inputDevices;
@@ -70,7 +69,7 @@ public class ChannelConfig {
 		if (!signalSources.isEmpty()) {
 			this.signalSources = signalSources;
 		} else {
-			this.signalSources = new HashMap<>();
+			this.signalSources = new HashSet<String>();
 		}
 	}
 
@@ -129,7 +128,7 @@ public class ChannelConfig {
 	 * 
 	 * @return A {@link HashSet} of {@link String}s.
 	 */
-	public HashMap<IteratableSignalSourceStream, HashMap<String, Double>> getSignalSources() {
+	public Collection<String> getSignalSources() {
 		return signalSources;
 	}
 
