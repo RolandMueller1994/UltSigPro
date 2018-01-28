@@ -1429,6 +1429,8 @@ public class PluginConnection {
 	public void dragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check, USPPoint secondEnd,
 			 boolean fromDivider) {
 
+		double raster = configGroup.getRaster();
+		
 		LinkedList<USPPoint> keep = null;
 
 		if (startPoint.equals(check.getLast())) {
@@ -1483,7 +1485,7 @@ public class PluginConnection {
 					// Vertical connected
 					if (leftToRight) {
 						if (secondEnd.getX() - x <= MIN_LINE_LENGTH) {
-							check.get(1).setX(check.get(1).getX() + configGroup.getRaster());
+							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
 							if(!fromDivider) {
 								startPoint.setX(x);	
 								startPoint.setY(y);
@@ -1519,7 +1521,7 @@ public class PluginConnection {
 						}
 					} else {
 						if (x - secondEnd.getX() <= MIN_LINE_LENGTH) {
-							check.get(1).setX(check.get(1).getX() - configGroup.getRaster());
+							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
 							if(!fromDivider) {
 								startPoint.setX(x);	
 								startPoint.setY(y);
@@ -1561,7 +1563,7 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
 							check.get(1).setY(y);
 	
 							addTwoPoints(startPoint, check, 1, true);
@@ -1571,9 +1573,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
 							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
+							check.get(2).setX(Math.ceil((x + raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1587,7 +1589,7 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
 							check.get(1).setY(y);
 	
 							addTwoPoints(startPoint, check, 1, true);
@@ -1597,9 +1599,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
 							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
+							check.get(2).setX(Math.floor((x - raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1615,9 +1617,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() + MIN_LINE_LENGTH);
+							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
 							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() + MIN_LINE_LENGTH);
+							check.get(2).setX(Math.ceil((x + raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1631,9 +1633,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setX(check.get(1).getX() - MIN_LINE_LENGTH);
+							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
 							check.get(1).setY(y);
-							check.get(2).setX(check.get(2).getX() - MIN_LINE_LENGTH);
+							check.get(2).setX(Math.floor((x - raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1663,7 +1665,7 @@ public class PluginConnection {
 					// Vertical connected
 					if (bottomUp) {
 						if (secondEnd.getY() - y <= MIN_LINE_LENGTH) {
-							check.get(1).setY(check.get(1).getY() + configGroup.getRaster());
+							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
 							if(!fromDivider) {
 								startPoint.setX(x);	
 								startPoint.setY(y);
@@ -1699,7 +1701,7 @@ public class PluginConnection {
 						}
 					} else {
 						if (y - secondEnd.getY() <= MIN_LINE_LENGTH) {
-							check.get(1).setY(check.get(1).getY() - configGroup.getRaster());
+							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
 							if(!fromDivider) {
 								startPoint.setX(x);	
 								startPoint.setY(y);
@@ -1741,7 +1743,7 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() + MIN_LINE_LENGTH);
+							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
 							check.get(1).setX(x);
 	
 							addTwoPoints(startPoint, check, 1, true);
@@ -1751,9 +1753,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() + MIN_LINE_LENGTH);
+							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
 							check.get(1).setX(x);
-							check.get(2).setY(check.get(2).getY() + MIN_LINE_LENGTH);
+							check.get(2).setY(Math.ceil((y + raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1767,7 +1769,7 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() - MIN_LINE_LENGTH);
+							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
 							check.get(1).setX(x);
 	
 							addTwoPoints(startPoint, check, 1, false);
@@ -1777,9 +1779,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() - MIN_LINE_LENGTH);
+							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
 							check.get(1).setX(x);
-							check.get(2).setY(check.get(2).getY() - MIN_LINE_LENGTH);
+							check.get(2).setY(Math.floor((y - raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1795,9 +1797,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() + MIN_LINE_LENGTH);
+							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
 							check.get(1).setX(x);
-							check.get(2).setY(check.get(2).getY() + MIN_LINE_LENGTH);
+							check.get(2).setY(Math.ceil((y + raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
@@ -1811,9 +1813,9 @@ public class PluginConnection {
 								startPoint.setX(x);	
 								startPoint.setY(y);
 							}
-							check.get(1).setY(check.get(1).getY() - MIN_LINE_LENGTH);
+							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
 							check.get(1).setX(x);
-							check.get(2).setY(check.get(2).getY() - MIN_LINE_LENGTH);
+							check.get(2).setY(Math.floor((y - raster)/raster)*raster);
 						} else {
 							if(!fromDivider) {
 								startPoint.setX(x);	
