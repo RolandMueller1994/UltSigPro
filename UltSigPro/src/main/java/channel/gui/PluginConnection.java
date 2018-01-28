@@ -1161,23 +1161,7 @@ public class PluginConnection {
 	 */
 	public void endPluginConnection(@Nonnull ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
 
-		if (drawingHorizontal && yCoord != drawingPoints.getFirst().getY()) {
-			double startX = drawingPoints.getLast().getX();
-			double startY = drawingPoints.getLast().getY();
-
-			double middleX = (xCoord - startX) / 2;
-			double raster = configGroup.getRaster();
-
-			middleX += startX;
-			middleX = Math.round(middleX / raster) * raster;
-
-			drawingPoints.add(new USPPoint(middleX, startY));
-			drawingPoints.add(new USPPoint(middleX, yCoord));
-		} else if (yCoord != drawingPoints.getFirst().getY()) {
-			drawingPoints.add(new USPPoint(drawingPoints.getLast().getX(), yCoord));
-		}
-
-		drawingPoints.add(new USPPoint(xCoord, yCoord));
+		drawingPoints.add(drawingPoint);
 		points.add(drawingPoints);
 
 		if (endpoint instanceof Output) {
@@ -1187,6 +1171,8 @@ public class PluginConnection {
 			outputs.put((Input) endpoint, drawingPoints.getLast());
 		}
 
+		dragNDrop(endpoint, xCoord, yCoord);
+		
 		endpoint.addConnection(this);
 
 		drawingPoint = null;

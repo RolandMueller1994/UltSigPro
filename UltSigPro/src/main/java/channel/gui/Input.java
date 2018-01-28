@@ -138,6 +138,10 @@ public class Input extends Pane implements ConnectionLineEndpointInterface {
 								}
 							}
 						}
+						
+						if(!configGroup.getWorkCon().isDrawingHorizontal()) {
+							return;
+						}
 					}
 					
 					if(!recursivity) {						
