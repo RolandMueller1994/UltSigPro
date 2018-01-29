@@ -2,7 +2,9 @@ package channel.gui;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
@@ -11,13 +13,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import channel.PluginInput;
-import channel.PluginOutput;
-import channel.gui.PluginConnection.ConnectionLine;
+import com.sun.javafx.geom.Line2D;
+
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import plugins.sigproplugins.SigproPlugin;
@@ -33,15 +34,35 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class PluginConnection {
 
-	private HashSet<ConnectionLine> lines = new HashSet<>();
-	private HashSet<LineDivider> dividers = new HashSet<>();
+	private static final double LINE_OFFSET = 2;
+	private static final double DIVIDER_DIAMETER = 10;
 
-	private ConnectionLine actLine = null;
-	private boolean actHorizontal = true;
-
-	private boolean hovered = false;
+	private static final double MIN_LINE_LENGTH = 10;
 
 	private PluginConfigGroup configGroup;
+
+	private HashSet<LinkedList<USPPoint>> points = new HashSet<>();
+	private LinkedList<USPPoint> drawingPoints = new LinkedList<>();
+	private USPPoint drawingPoint;
+	private HashSet<USPPoint> dividerPoints = new HashSet<>();
+
+	private HashMap<HashSet<USPLine>, LinkedList<USPPoint>> lines = new HashMap<>();
+	private HashSet<USPDivider> dividers = new HashSet<>();
+
+	private HashSet<USPLine> deletionLines;
+	private LinkedList<USPPoint> deletionPoints;
+
+	private LinkedList<USPPoint> coordinatesPoints;
+	private USPPoint firstCoordinatesPoint;
+	private USPPoint secondCoordinatesPoint;
+	private USPPoint dividerCoordinatesPoint;
+	private boolean coordinatesHorizontal;
+
+	private Output input;
+	private USPPoint inputPoint;
+	private HashMap<Input, USPPoint> outputs = new HashMap<>();
+
+	private boolean drawingHorizontal;
 
 	/**
 	 * Creates a new connection which starts at a
@@ -61,45 +82,724 @@ public class PluginConnection {
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup, @Nonnull ConnectionLineEndpointInterface endpoint,
 			double startX, double startY) {
 		this.configGroup = configGroup;
-		actLine = new ConnectionLine(configGroup, this, endpoint, startX, startY, true);
 
-		addLine(actLine);
+		drawingPoints = new LinkedList<>();
+		drawingPoint = new USPPoint(startX, startY);
+		drawingPoints.add(new USPPoint(startX, startY));
+		drawingHorizontal = true;
 
-		configGroup.getChildren().add(actLine);
+		if (endpoint instanceof Output) {
+			input = (Output) endpoint;
+			inputPoint = drawingPoints.get(0);
+		} else {
+			outputs.put((Input) endpoint, drawingPoints.get(0));
+		}
+
+		endpoint.addConnection(this);
+
+		redraw();
+	}
+
+	public USPPoint getDrawingPoint() {
+		return drawingPoint;
+	}
+
+	public void escapeLineDrawing() {
+		drawingPoint = null;
+
+		if (drawingPoints != null) {
+			if (drawingPoints.getFirst().equals(inputPoint)) {
+				inputPoint = null;
+				input.removeConnection(this);
+			} else {
+				Input remove = null;
+				for (Input output : outputs.keySet()) {
+					if (drawingPoints.getFirst().equals(outputs.get(output))) {
+						remove = output;
+						output.removeConnection(this);
+						break;
+					}
+				}
+
+				if (remove != null) {
+					outputs.remove(remove);
+				}
+			}
+
+			drawingPoints.clear();
+			drawingPoints = null;
+		}
+
+		redraw();
 	}
 
 	public PluginConnection(@Nonnull PluginConfigGroup configGroup) {
 		this.configGroup = configGroup;
 	}
 
+	private void redraw() {
+
+		for (HashSet<USPLine> part : lines.keySet()) {
+			for (USPLine line : part) {
+				line.clear();
+			}
+			configGroup.getChildren().removeAll(part);
+		}
+
+		for (USPDivider divider : dividers) {
+			divider.clear();
+		}
+		configGroup.getChildren().removeAll(dividers);
+
+		lines.clear();
+		dividers.clear();
+
+		if (drawingPoints != null) {
+			USPPoint last = null;
+			HashSet<USPLine> part = new HashSet<>();
+			for (USPPoint point : drawingPoints) {
+				if (last != null) {
+					USPLine line = new USPLine(last, point, this, configGroup, isLineHor(last, point));
+					configGroup.getChildren().add(line);
+					line.setStyle(USPLineStyle.DRAWING_LINE);
+
+					part.add(line);
+				}
+				last = point;
+			}
+
+			USPLine line = new USPLine(last, drawingPoint, this, configGroup, isLineHor(last, drawingPoint));
+			configGroup.getChildren().add(line);
+			line.setStyle(USPLineStyle.DRAWING_LINE);
+
+			part.add(line);
+			lines.put(part, drawingPoints);
+		}
+
+		for (LinkedList<USPPoint> pointList : points) {
+			USPPoint last = null;
+			HashSet<USPLine> part = new HashSet<>();
+			for (USPPoint point : pointList) {
+				if (last != null) {
+					USPLine line = new USPLine(last, point, this, configGroup, isLineHor(last, point));
+					configGroup.getChildren().add(line);
+					line.setStyle(USPLineStyle.NORMAL_LINE);
+
+					part.add(line);
+				}
+				last = point;
+			}
+
+			lines.put(part, pointList);
+		}
+
+		for (USPPoint divider : dividerPoints) {
+			dividers.add(new USPDivider(divider, this, configGroup));
+		}
+
+		/*
+		 * for(HashSet<USPLine> part : lines.keySet()) {
+		 * configGroup.getChildren().addAll(part); }
+		 */
+
+		configGroup.getChildren().addAll(dividers);
+	}
+
+	private boolean isLineHor(USPPoint start, USPPoint end) {
+
+		if (start.getX() == end.getX()) {
+			return false;
+		}
+		return true;
+	}
+
 	public void removeCurrentSelection() {
-		for (ConnectionLine line : lines) {
-			line.removeHoverForDeletion();
+		try {
+			if (deletionLines != null) {
+				for (USPLine deletionLine : deletionLines) {
+					deletionLine.setStyle(USPLineStyle.NORMAL_LINE);
+				}
+			}			
+		} catch (NullPointerException ex) {
+			redraw();
+		} finally {
+			deletionLines = null;
+			deletionPoints = null;
+		}
+
+	}
+
+	private USPLineOrientation getOrientationForPoints(USPPoint end, USPPoint beforeEnd) {
+		if (end.getX() == beforeEnd.getX()) {
+			if (end.getY() > beforeEnd.getY()) {
+				return USPLineOrientation.BOTTOM_UP;
+			} else {
+				return USPLineOrientation.TOP_DOWN;
+			}
+		} else {
+			if (end.getX() > beforeEnd.getX()) {
+				return USPLineOrientation.LEFT_TO_RIGHT;
+			} else {
+				return USPLineOrientation.RIGHT_TO_LEFT;
+			}
 		}
 	}
 
-	public boolean checkIfCoordinatesOnLine(double screenX, double screenY) {
-		for (ConnectionLine line : lines) {
-			if (line.areCoordinatesOnLine(screenX, screenY)) {
+	public boolean checkIfCoordinatesOnLine(double x, double y) {
+		return checkIfCoordinatesOnLine(new USPPoint(x, y));
+	}
+
+	public boolean checkIfCoordinatesOnLine(USPPoint drawingPoint) {
+
+		// Point2D localPoint = configGroup.screenToLocal(screenX, screenY);
+		// double x = localPoint.getX();
+		// double y = localPoint.getY();
+
+		dividerCoordinatesPoint = null;
+
+		double x = drawingPoint.getX();
+		double y = drawingPoint.getY();
+
+		for (USPPoint dividerPoint : dividerPoints) {
+
+			double dividerX = dividerPoint.getX();
+			double dividerY = dividerPoint.getY();
+
+			if (x > dividerX - DIVIDER_DIAMETER / 2 && x < dividerX + DIVIDER_DIAMETER / 2
+					&& y > dividerY - DIVIDER_DIAMETER / 2 && y < dividerY + DIVIDER_DIAMETER / 2) {
+
+				if (configGroup.getWorkCon() == null) {
+					dividerCoordinatesPoint = dividerPoint;
+					return true;
+				}
+
+				USPLineOrientation orientation = configGroup.getWorkCon().getDrawingOrientation();
+
+				for (LinkedList<USPPoint> part : points) {
+					if (dividerPoint.equals(part.getFirst())) {
+						if (orientation == getOrientationForPoints(part.getFirst(), part.get(1))) {
+							return false;
+						}
+					} else if (dividerPoint.equals(part.getLast())) {
+						if (orientation == getOrientationForPoints(part.getLast(), part.get(part.size() - 2))) {
+							return false;
+						}
+					}
+				}
+
+				dividerCoordinatesPoint = dividerPoint;
 				return true;
 			}
+
 		}
+
+		for (LinkedList<USPPoint> pointList : points) {
+			USPPoint last = null;
+
+			for (USPPoint point : pointList) {
+
+				if (last != null) {
+
+					if (point.getX() == last.getX()) {
+						// Vertical line
+						if (checkIfCoordOnLineVert(point, last, x, y)) {
+							coordinatesPoints = pointList;
+							firstCoordinatesPoint = last;
+							secondCoordinatesPoint = point;
+							coordinatesHorizontal = false;
+							return true;
+						} else {
+							coordinatesPoints = null;
+						}
+
+					} else {
+						// Horizontal line
+						if (checkIfCoordOnLineHor(point, last, x, y)) {
+							coordinatesPoints = pointList;
+							firstCoordinatesPoint = last;
+							secondCoordinatesPoint = point;
+							coordinatesHorizontal = true;
+							return true;
+						} else {
+							coordinatesPoints = null;
+						}
+
+					}
+				}
+
+				last = point;
+			}
+		}
+
 		return false;
+	}
+
+	public void dragLine(double x, double y) {
+
+		double raster = configGroup.getRaster();
+		y = Math.round(y / raster) * raster;
+		x = Math.round(x / raster) * raster;
+
+		boolean redraw = false;
+
+		if (dividerCoordinatesPoint != null) {
+
+			HashSet<LinkedList<USPPoint>> checkLists = new HashSet<>();
+
+			for (LinkedList<USPPoint> checkList : points) {
+				if (dividerCoordinatesPoint.equals(checkList.getFirst())
+						|| dividerCoordinatesPoint.equals(checkList.getLast())) {
+					checkLists.add(checkList);
+				}
+			}
+
+			for (LinkedList<USPPoint> check : checkLists) {
+
+				USPPoint secondEnd = null;
+				boolean leftToRight = false;
+
+				if (dividerCoordinatesPoint.equals(check.getFirst())) {
+					secondEnd = check.getLast();
+				} else {
+					secondEnd = check.getFirst();
+				}
+
+				leftToRight = secondEnd.getX() > dividerCoordinatesPoint.getX();
+
+				if (!checkDragNDropInt(dividerCoordinatesPoint, x, y, check, secondEnd, leftToRight)) {
+					return;
+				}
+			}
+
+			double savedX = dividerCoordinatesPoint.getX();
+			double savedY = dividerCoordinatesPoint.getY();
+
+			for (LinkedList<USPPoint> check : checkLists) {
+
+				USPPoint secondEnd = null;
+
+				if (dividerCoordinatesPoint.equals(check.getFirst())) {
+					secondEnd = check.getLast();
+				} else {
+					secondEnd = check.getFirst();
+				}
+
+				dragNDropInt(dividerCoordinatesPoint, x, y, check, secondEnd, false);
+				dividerCoordinatesPoint.setCoordinates(savedX, savedY);
+			}
+
+			dividerCoordinatesPoint.setCoordinates(x, y);
+		} else if (coordinatesPoints != null) {
+
+			if (coordinatesHorizontal && y != firstCoordinatesPoint.getY()) {
+				USPPoint left = null;
+				USPPoint right = null;
+
+				if (firstCoordinatesPoint.getX() > secondCoordinatesPoint.getX()) {
+					left = secondCoordinatesPoint;
+					right = firstCoordinatesPoint;
+				} else {
+					right = secondCoordinatesPoint;
+					left = firstCoordinatesPoint;
+				}
+
+				boolean toShort = false;
+				boolean rightSet = false;
+				boolean leftSet = false;
+
+				if (right.getX() - left.getX() < 3 * MIN_LINE_LENGTH) {
+					toShort = true;
+				}
+
+				if (left.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
+					double divideX = left.getX() + MIN_LINE_LENGTH;
+					divideX = Math.ceil(divideX / raster) * raster;
+
+					coordinatesPoints.add(1, new USPPoint(divideX, left.getY()));
+					coordinatesPoints.add(2, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if (left.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
+					double divideX = left.getX() + MIN_LINE_LENGTH;
+					divideX = Math.ceil(divideX / raster) * raster;
+
+					int index = coordinatesPoints.size();
+					index -= 1;
+
+					coordinatesPoints.add(index, new USPPoint(divideX, left.getY()));
+					coordinatesPoints.add(index, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else if (left.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getX() == coordinatesPoints.getFirst().getX()
+						&& (coordinatesPoints.get(1).getY() > coordinatesPoints.getFirst().getY()
+								? y - coordinatesPoints.getFirst().getY() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					double divideX = coordinatesPoints.getFirst().getX() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(divideX, coordinatesPoints.get(1).getY()));
+					coordinatesPoints.add(3, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (left.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast()
+								.getX()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getY() > coordinatesPoints.getLast()
+								.getY() ? y - coordinatesPoints.getLast().getY() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					int index = coordinatesPoints.size();
+
+					double divideX = coordinatesPoints.getLast().getX() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(divideX, coordinatesPoints.get(index - 2).getY()));
+					coordinatesPoints.add(index - 2, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (left.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
+				} else {
+					leftSet = true;
+				}
+
+				if (right.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
+					double divideX = right.getX() - MIN_LINE_LENGTH;
+					divideX = Math.floor(divideX / raster) * raster;
+
+					coordinatesPoints.add(1, new USPPoint(divideX, right.getY()));
+					coordinatesPoints.add(2, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if (right.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
+					double divideX = right.getX() - MIN_LINE_LENGTH;
+					divideX = Math.floor(divideX / raster) * raster;
+
+					int index = coordinatesPoints.size();
+					index -= 1;
+
+					coordinatesPoints.add(index, new USPPoint(divideX, right.getY()));
+					coordinatesPoints.add(index, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else if (right.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getX() == coordinatesPoints.getFirst().getX()
+						&& (coordinatesPoints.get(1).getY() > coordinatesPoints.getFirst().getY()
+								? y - coordinatesPoints.getFirst().getY() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					double divideX = coordinatesPoints.getFirst().getX() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(divideX, coordinatesPoints.get(1).getY()));
+					coordinatesPoints.add(3, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (right.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast()
+								.getX()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getY() > coordinatesPoints.getLast()
+								.getY() ? y - coordinatesPoints.getLast().getY() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					int index = coordinatesPoints.size();
+
+					double divideX = coordinatesPoints.getLast().getX() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(divideX, coordinatesPoints.get(index - 2).getY()));
+					coordinatesPoints.add(index - 2, new USPPoint(divideX, y));
+					redraw = true;
+
+					if (right.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
+				} else {
+					rightSet = true;
+				}
+
+				if (rightSet) {
+					right.setY(y);
+				}
+
+				if (leftSet) {
+					left.setY(y);
+				}
+			} else if (!coordinatesHorizontal && x != firstCoordinatesPoint.getX()) {
+				USPPoint lower = null;
+				USPPoint upper = null;
+
+				if (firstCoordinatesPoint.getY() > secondCoordinatesPoint.getY()) {
+					lower = secondCoordinatesPoint;
+					upper = firstCoordinatesPoint;
+				} else {
+					upper = secondCoordinatesPoint;
+					lower = firstCoordinatesPoint;
+				}
+
+				boolean toShort = false;
+				boolean lowerSet = false;
+				boolean upperSet = false;
+
+				if (upper.getY() - lower.getY() < 3 * MIN_LINE_LENGTH) {
+					toShort = true;
+				}
+
+				if (lower.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
+					double divideY = lower.getY() + MIN_LINE_LENGTH;
+					divideY = Math.ceil(divideY / raster) * raster;
+
+					coordinatesPoints.add(1, new USPPoint(lower.getX(), divideY));
+					coordinatesPoints.add(2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if (lower.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
+					double divideY = lower.getY() + MIN_LINE_LENGTH;
+					divideY = Math.ceil(divideY / raster) * raster;
+
+					int index = coordinatesPoints.size();
+					index -= 1;
+
+					coordinatesPoints.add(index, new USPPoint(lower.getX(), divideY));
+					coordinatesPoints.add(index, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else if (lower.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
+						&& (coordinatesPoints.get(1).getX() > coordinatesPoints.getFirst().getX()
+								? x - coordinatesPoints.getFirst().getX() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					double divideY = coordinatesPoints.getFirst().getY() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
+					coordinatesPoints.add(3, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (lower.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast()
+								.getY()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getX() > coordinatesPoints.getLast()
+								.getX() ? x - coordinatesPoints.getLast().getX() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					int index = coordinatesPoints.size();
+
+					double divideY = coordinatesPoints.getLast().getY() + MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(coordinatesPoints.get(index - 2).getX(), divideY));
+					coordinatesPoints.add(index - 2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (lower.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
+				} else {
+					lowerSet = true;
+				}
+
+				if (upper.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
+					double divideY = upper.getY() - MIN_LINE_LENGTH;
+					divideY = Math.floor(divideY / raster) * raster;
+
+					coordinatesPoints.add(1, new USPPoint(upper.getX(), divideY));
+					coordinatesPoints.add(2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(2);
+					}
+				} else if (upper.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
+					double divideY = upper.getY() - MIN_LINE_LENGTH;
+					divideY = Math.floor(divideY / raster) * raster;
+
+					int index = coordinatesPoints.size();
+					index -= 1;
+
+					coordinatesPoints.add(index, new USPPoint(upper.getX(), divideY));
+					coordinatesPoints.add(index, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index);
+					}
+				} else if (upper.equals(coordinatesPoints.get(1))
+						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
+						&& (coordinatesPoints.get(1).getX() > coordinatesPoints.getFirst().getX()
+								? x - coordinatesPoints.getFirst().getX() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					double divideY = coordinatesPoints.getFirst().getY() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
+					coordinatesPoints.add(3, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(3);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(3);
+					}
+				} else if (upper.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast()
+								.getY()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getX() > coordinatesPoints.getLast()
+								.getX() ? x - coordinatesPoints.getLast().getX() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
+					int index = coordinatesPoints.size();
+
+					double divideY = coordinatesPoints.getLast().getY() - MIN_LINE_LENGTH;
+
+					coordinatesPoints.add(index - 2, new USPPoint(coordinatesPoints.get(index - 2).getX(), divideY));
+					coordinatesPoints.add(index - 2, new USPPoint(x, divideY));
+					redraw = true;
+
+					if (upper.equals(firstCoordinatesPoint)) {
+						firstCoordinatesPoint = coordinatesPoints.get(index - 2);
+					} else {
+						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
+					}
+				} else {
+					upperSet = true;
+				}
+
+				if (lowerSet) {
+					lower.setX(x);
+				}
+
+				if (upperSet) {
+					upper.setX(x);
+				}
+			}
+		}
+
+		if (redraw) {
+			redraw();
+		}
+
 	}
 
 	public double getMaxX() {
 		boolean first = true;
 		double maxX = 0;
 
-		for (ConnectionLine line : lines) {
-			double max = line.getStartX() > line.getEndX() ? line.getStartX() : line.getEndX();
-
-			if (first) {
-				maxX = max;
-				first = false;
-			} else if (max > maxX) {
-				maxX = max;
+		for (LinkedList<USPPoint> pointList : points) {
+			for (USPPoint point : pointList) {
+				if (first) {
+					maxX = point.getX();
+					first = false;
+				} else {
+					maxX = point.getX() > maxX ? point.getX() : maxX;
+				}
 			}
+		}
+
+		if (drawingPoints != null) {
+			for (USPPoint point : drawingPoints) {
+				if (first) {
+					maxX = point.getX();
+					first = false;
+				} else {
+					maxX = point.getX() > maxX ? point.getX() : maxX;
+				}
+			}
+
+			maxX = drawingPoint.getX() > maxX ? drawingPoint.getX() : maxX;
 		}
 
 		return maxX;
@@ -109,15 +809,28 @@ public class PluginConnection {
 		boolean first = true;
 		double maxY = 0;
 
-		for (ConnectionLine line : lines) {
-			double max = line.getStartY() > line.getEndY() ? line.getStartY() : line.getEndY();
-
-			if (first) {
-				maxY = max;
-				first = false;
-			} else if (max > maxY) {
-				maxY = max;
+		for (LinkedList<USPPoint> pointList : points) {
+			for (USPPoint point : pointList) {
+				if (first) {
+					maxY = point.getY();
+					first = false;
+				} else {
+					maxY = point.getY() > maxY ? point.getY() : maxY;
+				}
 			}
+		}
+
+		if (drawingPoints != null) {
+			for (USPPoint point : drawingPoints) {
+				if (first) {
+					maxY = point.getY();
+					first = false;
+				} else {
+					maxY = point.getX() > maxY ? point.getY() : maxY;
+				}
+			}
+
+			maxY = drawingPoint.getY() > maxY ? drawingPoint.getY() : maxY;
 		}
 
 		return maxY;
@@ -127,15 +840,28 @@ public class PluginConnection {
 		boolean first = true;
 		double minX = 0;
 
-		for (ConnectionLine line : lines) {
-			double min = line.getStartX() < line.getEndX() ? line.getStartX() : line.getEndX();
-
-			if (first) {
-				minX = min;
-				first = false;
-			} else if (min > minX) {
-				minX = min;
+		for (LinkedList<USPPoint> pointList : points) {
+			for (USPPoint point : pointList) {
+				if (first) {
+					minX = point.getX();
+					first = false;
+				} else {
+					minX = point.getX() < minX ? point.getX() : minX;
+				}
 			}
+		}
+
+		if (drawingPoints != null) {
+			for (USPPoint point : drawingPoints) {
+				if (first) {
+					minX = point.getX();
+					first = false;
+				} else {
+					minX = point.getX() < minX ? point.getX() : minX;
+				}
+			}
+
+			minX = drawingPoint.getX() < minX ? drawingPoint.getX() : minX;
 		}
 
 		return minX;
@@ -145,18 +871,39 @@ public class PluginConnection {
 		boolean first = true;
 		double minY = 0;
 
-		for (ConnectionLine line : lines) {
-			double min = line.getStartY() < line.getEndY() ? line.getStartY() : line.getEndY();
-
-			if (first) {
-				minY = min;
-				first = false;
-			} else if (min > minY) {
-				minY = min;
+		for (LinkedList<USPPoint> pointList : points) {
+			for (USPPoint point : pointList) {
+				if (first) {
+					minY = point.getY();
+					first = false;
+				} else {
+					minY = point.getY() < minY ? point.getY() : minY;
+				}
 			}
 		}
 
+		if (drawingPoints != null) {
+			for (USPPoint point : drawingPoints) {
+				if (first) {
+					minY = point.getY();
+					first = false;
+				} else {
+					minY = point.getY() < minY ? point.getY() : minY;
+				}
+			}
+
+			minY = drawingPoint.getY() < minY ? drawingPoint.getY() : minY;
+		}
+
 		return minY;
+	}
+
+	public USPLineOrientation getDrawingOrientation() {
+
+		if (drawingPoint != null) {
+			return getOrientationForPoints(drawingPoint, drawingPoints.getLast());
+		}
+		return null;
 	}
 
 	boolean checkRekusivity(HashSet<ConnectionLineEndpointInterface> endpoints, boolean forward) {
@@ -175,7 +922,7 @@ public class PluginConnection {
 				}
 
 				for (Output output : nextOutputs) {
-					if (output.getLine() != null && output.getLine().parent.checkRekusivity(endpoints, forward)) {
+					if (output.getConnection() != null && output.getConnection().checkRekusivity(endpoints, forward)) {
 						return true;
 					}
 				}
@@ -194,7 +941,7 @@ public class PluginConnection {
 				}
 
 				for (Input input : nextInputs) {
-					if (input.getLine() != null && input.getLine().parent.checkRekusivity(endpoints, forward)) {
+					if (input.getConnection() != null && input.getConnection().checkRekusivity(endpoints, forward)) {
 						return true;
 					}
 				}
@@ -205,219 +952,563 @@ public class PluginConnection {
 	}
 
 	public void collectConnectionLineInfos(Document doc, Element element) {
-
-		Element lineCount = doc.createElement("lineCount");
-		lineCount.appendChild(doc.createTextNode(new Integer(lines.size()).toString()));
-		element.appendChild(lineCount);
-
-		Element dividerCount = doc.createElement("dividerCount");
-		dividerCount.appendChild(doc.createTextNode(new Integer(dividers.size()).toString()));
-		element.appendChild(dividerCount);
-
-		int count = 0;
-		for (ConnectionLine line : lines) {
-			line.setNumber(count);
-			count++;
+		
+		if(dividerPoints.size() != 0) {
+			Element dividerList = doc.createElement("dividerPoints");
+			
+			for(USPPoint dividerPoint : dividerPoints) {
+				Element dividerElement = doc.createElement("divider");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(dividerPoint.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(dividerPoint.getY()).toString()));
+				
+				dividerElement.appendChild(xCoord);
+				dividerElement.appendChild(yCoord);
+				dividerList.appendChild(dividerElement);
+			}
+			
+			element.appendChild(dividerList);
 		}
-
-		count = 0;
-		for (LineDivider divider : dividers) {
-			divider.setNumber(count);
+		
+		if(input != null) {
+			Element inputElement = doc.createElement("input");
+			
+			Element inputPointElement = doc.createElement("point");
+			Element xCoord = doc.createElement("xCoord");
+			Element yCoord = doc.createElement("yCoord");
+			xCoord.appendChild(doc.createTextNode(new Double(inputPoint.getX()).toString()));
+			yCoord.appendChild(doc.createTextNode(new Double(inputPoint.getY()).toString()));
+			inputPointElement.appendChild(xCoord);
+			inputPointElement.appendChild(yCoord);
+			inputElement.appendChild(inputPointElement);
+			
+			Element inputPlugin = doc.createElement("plugin");
+			Element inputNumber = doc.createElement("number");
+			inputNumber.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
+			Element inputName = doc.createElement("name");
+			inputName.appendChild(doc.createTextNode(input.getName()));
+			inputPlugin.appendChild(inputNumber);
+			inputPlugin.appendChild(inputName);
+			inputElement.appendChild(inputPlugin);
+			
+			element.appendChild(inputElement);
 		}
-
-		for (ConnectionLine line : lines) {
-			line.collectedLineInfo(doc, element);
+		
+		if(outputs.size() != 0) {
+			Element outputsElement = doc.createElement("outputs");
+			
+			for(Input output : outputs.keySet()) {
+				Element outputElement = doc.createElement("output");
+				
+				USPPoint outputPoint = outputs.get(output);
+				
+				Element outputPointElement = doc.createElement("point");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(outputPoint.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(outputPoint.getY()).toString()));
+				outputPointElement.appendChild(xCoord);
+				outputPointElement.appendChild(yCoord);
+				outputElement.appendChild(outputPointElement);
+				
+				Element outputPlugin = doc.createElement("plugin");
+				Element outputNumber = doc.createElement("number");
+				outputNumber.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
+				Element inputName = doc.createElement("name");
+				inputName.appendChild(doc.createTextNode(output.getName()));
+				outputPlugin.appendChild(outputNumber);
+				outputPlugin.appendChild(inputName);
+				outputElement.appendChild(outputPlugin);
+				
+				outputsElement.appendChild(outputElement);
+			}
+			
+			element.appendChild(outputsElement);
 		}
-
-		for (LineDivider divider : dividers) {
-			divider.collectedDividerInfo(doc, element);
+		
+		for(LinkedList<USPPoint> part : points) {
+			Element partElement = doc.createElement("part");
+			
+			for(USPPoint point : part) {
+				Element pointElement = doc.createElement("point");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(point.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(point.getY()).toString()));
+				pointElement.appendChild(xCoord);
+				pointElement.appendChild(yCoord);
+				partElement.appendChild(pointElement);
+			}
+			
+			element.appendChild(partElement);
 		}
 	}
 
 	public void setConnectionLinesConfig(NodeList nodeList) {
+		
+		for(int i=0; i < nodeList.getLength(); i++) {
+			Node connection = nodeList.item(i);
+			
+			if(connection.getNodeType() == Node.ELEMENT_NODE) {
+				Element connectionEntry = (Element) connection;
+				String tagName = connectionEntry.getTagName();
+				
+				switch (tagName) {
+				case "dividerPoints":
+					dividerPoints = new HashSet<>();
+					
+					NodeList dividerNodes = connectionEntry.getChildNodes();
+					
+					for(int a=0; a < dividerNodes.getLength(); a++) {
+						Node dividerEntry = dividerNodes.item(a);
+						if(dividerEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element dividerElement = (Element) dividerEntry;
+							
+							if(dividerElement.getTagName().equals("divider")) {
+								NodeList coordinatesNodes = dividerElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < coordinatesNodes.getLength(); b++) {
+									Node coordinate = coordinatesNodes.item(b);
+									
+									if(coordinate.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) coordinate;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								dividerPoints.add(new USPPoint(xCoord, yCoord));
+							}
+						}
+					}
+					break;
+					
+				case "input":
+					NodeList inputNodes = connectionEntry.getChildNodes();
+					
+					for(int a=0; a < inputNodes.getLength(); a++) {
+						Node inputEntry = inputNodes.item(a);
+						if(inputEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element inputElement = (Element) inputEntry;
+							
+							if(inputElement.getTagName().equals("point")) {
+								NodeList pointNodes = inputElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < pointNodes.getLength(); b++) {
+									Node point = pointNodes.item(b);
+									
+									if(point.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) point;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								inputPoint = new USPPoint(xCoord, yCoord);
+							} else if(inputElement.getTagName().equals("plugin")) {
+								String name = null;
+								int number = 0;
+								
+								NodeList pluginNodes = inputElement.getChildNodes();
+								
+								for(int b=0; b<pluginNodes.getLength(); b++) {
+									Node pluginEntry = pluginNodes.item(b);
+									
+									if(pluginEntry.getNodeType() == Node.ELEMENT_NODE) {
+										Element pluginElement = (Element) pluginEntry;
+										
+										if(pluginElement.getTagName().equals("name")) {
+											name = pluginElement.getTextContent();
+										} else if(pluginElement.getTagName().equals("number")) {
+											number = new Integer(pluginElement.getTextContent());
+										}
+									}
+								}
+								
+								HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+								
+								for(SigproPlugin plugin : plugins) {
+									if(plugin.getNumber() == number) {
+										HashSet<Output> outputs = plugin.getOutputs();
+										
+										for(Output output : outputs) {
+											if(output.getName().equals(name)) {
+												output.addConnection(this);
+												input = output;
+												break;
+											}
+										}
+										break;
+									}
+								}
+							}
+						}
+					}
+					break;
+					
+				case "outputs":
+					NodeList outputsNodes = connectionEntry.getChildNodes();
+					
+					for(int c=0; c<outputsNodes.getLength(); c++) {
+						Node outputsNode = outputsNodes.item(c);
+						
+						if(outputsNode.getNodeType() == Node.ELEMENT_NODE) {
+							Element outputsElement = (Element) outputsNode;
+							
+							NodeList outputNodes = outputsElement.getChildNodes();
+							
+							double xCoord = 0;
+							double yCoord = 0;
+							String name = null;
+							int number = 0;
+							for(int a=0; a < outputNodes.getLength(); a++) {
+								Node outputEntry = outputNodes.item(a);
+								if(outputEntry.getNodeType() == Node.ELEMENT_NODE) {
+									Element outputElement = (Element) outputEntry;
+									
+									if(outputElement.getTagName().equals("point")) {
+										NodeList pointNodes = outputElement.getChildNodes();
+										
+										for(int b=0; b < pointNodes.getLength(); b++) {
+											Node point = pointNodes.item(b);
+											
+											if(point.getNodeType() == Node.ELEMENT_NODE) {
+												Element coordinateElement = (Element) point;
+												
+												if(coordinateElement.getTagName().equals("xCoord")) {
+													xCoord = new Double(coordinateElement.getTextContent());
+												} else if(coordinateElement.getTagName().equals("yCoord")) {
+													yCoord = new Double(coordinateElement.getTextContent());
+												}
+											}
+										}
+									} else if(outputElement.getTagName().equals("plugin")) {
+										
+										NodeList pluginNodes = outputElement.getChildNodes();
+										
+										for(int b=0; b<pluginNodes.getLength(); b++) {
+											Node pluginEntry = pluginNodes.item(b);
+											
+											if(pluginEntry.getNodeType() == Node.ELEMENT_NODE) {
+												Element pluginElement = (Element) pluginEntry;
+												
+												if(pluginElement.getTagName().equals("name")) {
+													name = pluginElement.getTextContent();
+												} else if(pluginElement.getTagName().equals("number")) {
+													number = new Integer(pluginElement.getTextContent());
+												}
+											}
+										}
+									}
+								}
+							}
+							
 
-		int lineCount;
-		int dividerCount;
-		LinkedList<ConnectionLine> newLines = new LinkedList<>();
-		LinkedList<LineDivider> newDividers = new LinkedList<>();
-
-		for (int i = 0; i < nodeList.getLength(); i++) {
-			Node conNode = nodeList.item(i);
-
-			if (conNode.getNodeType() == Node.ELEMENT_NODE) {
-				Element conElement = (Element) conNode;
-				String tagName = conElement.getTagName();
-
-				if (tagName.equals("lineCount")) {
-					lineCount = new Integer(conElement.getTextContent()).intValue();
-				} else if (tagName.equals("dividerCount")) {
-					dividerCount = new Integer(conElement.getTextContent()).intValue();
-				} else if (tagName.equals("connectionLine")) {
-					NodeList conLineNodes = conElement.getChildNodes();
-					ConnectionLine conLine = new ConnectionLine(configGroup, this, conLineNodes);
-					newLines.add(conLine);
-				} else if (tagName.equals("divider")) {
-					NodeList dividerNodes = conElement.getChildNodes();
-					LineDivider divider = new LineDivider(configGroup, this, dividerNodes);
-					newDividers.add(divider);
+							HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+							
+							for(SigproPlugin plugin : plugins) {
+								if(plugin.getNumber() == number) {
+									HashSet<Input> inputs = plugin.getInputs();
+									
+									for(Input input : inputs) {
+										if(input.getName().equals(name)) {
+											input.addConnection(this);
+											outputs.put(input, new USPPoint(xCoord, yCoord));
+											break;
+										}
+									}
+									break;
+								}
+							}
+						}
+					}
+					
+					break;
+					
+				case "part":
+					NodeList partNodes = connectionEntry.getChildNodes();
+					LinkedList<USPPoint> part = new LinkedList<>();
+					
+					for(int a=0; a < partNodes.getLength(); a++) {
+						Node partEntry = partNodes.item(a);
+						if(partEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element partElement = (Element) partEntry;
+							
+							if(partElement.getTagName().equals("point")) {
+								NodeList pointNodes = partElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < pointNodes.getLength(); b++) {
+									Node point = pointNodes.item(b);
+									
+									if(point.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) point;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								part.add(new USPPoint(xCoord, yCoord));
+							} 
+						}
+					}
+					
+					if(part.getFirst().equalCoordinates(inputPoint)) {
+						part.removeFirst();
+						part.add(0, inputPoint);
+					} else {
+						for(USPPoint point : outputs.values()) {
+							if(part.getFirst().equalCoordinates(point)) {
+								part.removeFirst();
+								part.add(0, point);
+								break;
+							}
+						}
+					}
+					
+					for(USPPoint point : dividerPoints) {
+						if(point.equalCoordinates(part.getFirst())) {
+							part.removeFirst();
+							part.add(0, point);
+							continue;
+						}
+						
+						if(point.equalCoordinates(part.getLast())) {
+							part.removeLast();
+							part.add(point);
+							continue;
+						}
+					}
+					
+					points.add(part);
+					break;
 				}
 			}
 		}
+		
+		drawingPoints = null;
+		redraw();
+		
+	}
 
-		HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+	public boolean unifyConnections(PluginConnection other) {
 
-		for (ConnectionLine line : newLines) {
-			line.finalizeXMLConfig(plugins, newLines, newDividers);
-			addLine(line);
-			configGroup.getChildren().add(line);
+		if (other.hasInput() && hasInput()) {
+			return false;
 		}
 
-		for (LineDivider divider : newDividers) {
-			divider.finalizeXMLConfig(plugins, newLines, newDividers);
-			addDevider(divider);
+		if (dividerCoordinatesPoint != null) {
+
+			if (other.input != null) {
+				input = other.input;
+				inputPoint = other.inputPoint;
+				input.addConnection(this);
+			}
+
+			outputs.putAll(other.outputs);
+
+			for (Input input : other.outputs.keySet()) {
+				input.addConnection(this);
+			}
+
+			LinkedList<USPPoint> otherPoints = other.drawingPoints;
+			otherPoints.add(dividerCoordinatesPoint);
+
+			points.add(otherPoints);
+
+			other.finalizeOnDivider();
+			configGroup.removeConnection(other);
+			redraw();
+			configGroup.finalizeDrawing();
+
+			dividerCoordinatesPoint = null;
+			return true;
+		}
+
+		double x = other.drawingPoint.getX();
+		double y = other.drawingPoint.getY();
+
+		LinkedList<USPPoint> prePoints = null;
+		LinkedList<USPPoint> postPoints = null;
+		LinkedList<USPPoint> otherPoints = null;
+		LinkedList<USPPoint> removeList = null;
+
+		USPPoint dividerPoint = null;
+
+		boolean unified = false;
+		boolean unifyHor = false;
+
+		if (coordinatesPoints != null) {
+			LinkedList<USPPoint> pointList = coordinatesPoints;
+
+			USPPoint last = null;
+
+			prePoints = new LinkedList<>();
+			postPoints = new LinkedList<>();
+
+			for (USPPoint point : pointList) {
+
+				if (last != null && !unified) {
+
+					if (point.getX() == last.getX()) {
+						// Vertical line
+						if (checkIfCoordOnLineVert(point, last, x, y)) {
+							unified = true;
+							dividerPoint = new USPPoint(point.getX(), other.drawingPoint.getY());
+							otherPoints = other.drawingPoints;
+							removeList = pointList;
+							unifyHor = false;
+						}
+
+					} else {
+						// Horizontal line
+						if (checkIfCoordOnLineHor(point, last, x, y)) {
+							unified = true;
+							dividerPoint = new USPPoint(other.drawingPoint.getX(), point.getY());
+							otherPoints = other.drawingPoints;
+							removeList = pointList;
+							unifyHor = true;
+						}
+
+					}
+				}
+
+				if (!unified) {
+					prePoints.add(point);
+				} else {
+					postPoints.offerFirst(point);
+				}
+
+				last = point;
+			}
+		}
+
+		if (unified && (unifyHor ^ other.drawingHorizontal)) {
+
+			if (other.input != null) {
+				input = other.input;
+				inputPoint = other.inputPoint;
+				input.addConnection(this);
+			}
+
+			outputs.putAll(other.outputs);
+
+			for (Input input : other.outputs.keySet()) {
+				input.addConnection(this);
+			}
+
+			dividerPoints.add(dividerPoint);
+			prePoints.add(dividerPoint);
+			postPoints.add(dividerPoint);
+			otherPoints.add(dividerPoint);
+
+			// This is necessary due to remove doesn't work here.
+			HashSet<LinkedList<USPPoint>> cachedList = new HashSet<>();
+			for (LinkedList<USPPoint> list : points) {
+				if (list.hashCode() != removeList.hashCode()) {
+					cachedList.add(list);
+				}
+			}
+			points = cachedList;
+
+			points.add(prePoints);
+			points.add(postPoints);
+			points.add(otherPoints);
+			other.finalizeOnDivider();
+			configGroup.removeConnection(other);
+			redraw();
+			configGroup.finalizeDrawing();
+			return true;
+		}
+		return false;
+	}
+
+	private void finalizeOnDivider() {
+
+		for (HashSet<USPLine> part : lines.keySet()) {
+			for (USPLine line : part) {
+				line.clear();
+			}
+
+			configGroup.getChildren().removeAll(part);
 		}
 	}
 
-	private void unifyConnectionsDevider() {
-		
-		System.out.println("Unify called");
+	private boolean checkIfCoordOnLineVert(USPPoint p1, USPPoint p2, double x, double y) {
 
-		HashSet<ConnectionLine> removeLines = new HashSet<>();
+		USPPoint upper;
+		USPPoint lower;
 
-		for (ConnectionLine line : lines) {
+		if (Math.abs(p1.getY() - p2.getY()) < LINE_OFFSET * 2) {
+			return false;
+		}
 
-			if (!removeLines.contains(line)) {
-				if (line.firstLine != null && line.horizontal == line.firstLine.horizontal) {
-					removeLines.add(line.firstLine);
+		if (p1.getY() > p2.getY()) {
+			upper = p1;
+			lower = p2;
+		} else {
+			upper = p2;
+			lower = p1;
+		}
 
-					if (line.equals(line.firstLine.firstLine)) {
-						// We are the first line of the line to delete
-						line.setStartX(line.firstLine.getEndX());
-						line.setStartY(line.firstLine.getEndY());
-						// Now we are at the right coordinates
-
-						if (line.firstLine.secondLine != null) {
-							// There's another line
-							ConnectionLine nextLine = line.firstLine.secondLine;
-							if (line.firstLine.equals(nextLine.firstLine)) {
-								// We are the firstLine of the nextLine
-								nextLine.firstLine = line;
-							} else {
-								// We are the secondLIne of the nextLine
-								nextLine.secondLine = line;
-							}
-
-							// Our first line will be nextLine
-							line.firstLine = nextLine;
-						} else {
-							// There has to be a endpoint at our firstLine ->
-							// this will be our endpoint
-							line.firstEnd = line.firstLine.secondEnd;
-							line.firstEnd.replaceLine(line.firstLine, line);
-							line.firstLine = null;
-						}
-
-						line.updateDragPane();
-					} else if (line.equals(line.firstLine.secondLine)) {
-						// We are the second line of the line to delete
-						line.setStartX(line.firstLine.getStartX());
-						line.setStartY(line.firstLine.getStartY());
-						// Now we are at the right coordinates
-
-						if (line.firstLine.firstLine != null) {
-							// There's another line
-							ConnectionLine nextLine = line.firstLine.firstLine;
-							if (line.firstLine.equals(nextLine.firstLine)) {
-								// We are the firstLine of the nextLine
-								nextLine.firstLine = line;
-							} else {
-								// We are the secondLine of the nextLine
-								nextLine.secondLine = line;
-							}
-
-							// Our first line will be nextLine
-							line.firstLine = nextLine;
-						} else {
-
-							line.firstEnd = line.firstLine.firstEnd;
-							line.firstEnd.replaceLine(line.firstLine, line);
-							line.firstLine = null;
-						}
-
-						line.updateDragPane();
-					}
-				} else if (line.secondLine != null && line.horizontal == line.secondLine.horizontal) {
-					removeLines.add(line.secondLine);
-
-					if (line.equals(line.secondLine.firstLine)) {
-						// We are the first line of the line to delete
-						line.setEndX(line.secondLine.getEndX());
-						line.setEndY(line.secondLine.getEndY());
-						// Now we are at the right coordinates
-
-						if (line.secondLine.secondLine != null) {
-							// There's another line
-							ConnectionLine nextLine = line.secondLine.secondLine;
-							if (line.secondLine.equals(nextLine.firstLine)) {
-								// We are the firstLine of the nextLine
-								nextLine.firstLine = line;
-							} else {
-								// We are the secondLine of the firstLine
-								nextLine.secondLine = line;
-							}
-
-							// Our first line will be nextLine
-							line.secondLine = nextLine;
-						} else {
-							// There has to be a endpoint at our secondLine ->
-							// this will be our endpoint
-							line.secondEnd = line.secondLine.secondEnd;
-							line.secondEnd.replaceLine(line.secondLine, line);
-							line.secondLine = null;
-						}
-
-						// There has to be a endpoint at our firstLine -> this
-						// will be our endpoint
-						line.updateDragPane();
-					} else if (line.equals(line.secondLine.secondLine)) {
-						// We are the second line of the line to delete
-						line.setEndX(line.secondLine.getStartX());
-						line.setEndY(line.secondLine.getStartY());
-						// Now we are at the right coordinates
-
-						if (line.secondLine.firstLine != null) {
-							// There's another line
-							ConnectionLine nextLine = line.secondLine.firstLine;
-							if (line.secondLine.equals(nextLine.firstLine)) {
-								// We are the firstLine of the nextLine
-								nextLine.firstLine = line;
-							} else {
-								// We are the secondLine of the nextLine
-								nextLine.secondLine = line;
-							}
-
-							// Our second line will be nextLine
-							line.secondLine = nextLine;
-						} else {
-							// There has to be a endpoint at our secondLine ->
-							// this will be our endpoint
-							line.secondEnd = line.secondLine.firstEnd;
-							line.secondEnd.replaceLine(line.secondLine, line);
-							line.secondLine = null;
-						}
-
-						line.updateDragPane();
-					}
-				}
+		if ((p1.getX() - LINE_OFFSET) < x && (p1.getX() + LINE_OFFSET) > x) {
+			// Matching x
+			if ((upper.getY() - LINE_OFFSET) > y && (lower.getY() + LINE_OFFSET) < y) {
+				// Matching y
+				return true;
+			} else {
+				return false;
 			}
+		} else {
+			return false;
+		}
+	}
+
+	private boolean checkIfCoordOnLineHor(USPPoint p1, USPPoint p2, double x, double y) {
+		USPPoint left;
+		USPPoint right;
+
+		if (Math.abs(p1.getX() - p2.getX()) < LINE_OFFSET * 2) {
+			return false;
 		}
 
-		for (ConnectionLine delete : removeLines) {
-			lines.remove(delete);
-			configGroup.getChildren().remove(delete);
-			configGroup.getChildren().remove(delete.dragPane);
+		if (p1.getX() > p2.getX()) {
+			right = p1;
+			left = p2;
+		} else {
+			right = p2;
+			left = p1;
 		}
 
+		if ((p1.getY() - LINE_OFFSET) < y && (p1.getY() + LINE_OFFSET) > y) {
+			// Matching y
+			if ((right.getX() - LINE_OFFSET) > x && (left.getX() + LINE_OFFSET) < x) {
+				// Matching x
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -431,41 +1522,24 @@ public class PluginConnection {
 	 *            The y-coordinate where the orientation should be changed.
 	 */
 	public void changeOrientation(double x, double y) {
-		// Change the current orientation flag and finalize the current line.
-		actHorizontal = !actHorizontal;
-		actLine.setCoordinatesLine(actLine, x, y);
+		double raster = configGroup.getRaster();
 
-		// Create new lines
-		if (actHorizontal) {
-			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, actLine.getEndX(), y,
-					actHorizontal);
-			actLine.setCoordinatesLine(newLine, x, y);
-			actLine = newLine;
-			addLine(newLine);
+		System.out.println("change called");
+
+		if (drawingHorizontal) {
+			y = drawingPoints.getLast().getY();
+			x = Math.round(x / raster) * raster;
 		} else {
-			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, x, actLine.getEndY(),
-					actHorizontal);
-			actLine.setCoordinatesLine(newLine, x, y);
-			actLine = newLine;
-			addLine(newLine);
+			x = drawingPoints.getLast().getX();
+			y = Math.round(y / raster) * raster;
 		}
 
-		configGroup.getChildren().add(actLine);
-	}
+		drawingPoint = new USPPoint(x, y);
+		drawingPoints.add(drawingPoint);
+		drawingPoint = new USPPoint(x, y);
 
-	/**
-	 * Return the current line which is used for drawing and hasn't been
-	 * finalized.
-	 * 
-	 * @return The current {@link ConnectionLine}
-	 */
-	public ConnectionLine getActLine() {
-		return actLine;
-	}
-
-	private void addLine(ConnectionLine line) {
-		lines.add(line);
-		line.registerMaxCoordinatesUpdateListener(configGroup);
+		redraw();
+		drawingHorizontal = !drawingHorizontal;
 	}
 
 	/**
@@ -475,17 +1549,7 @@ public class PluginConnection {
 	 */
 	public boolean hasInput() {
 
-		for (ConnectionLine actLine : lines) {
-			if (actLine.getFirstEnd() != null && actLine.getFirstEnd() instanceof Output) {
-				return true;
-			}
-
-			if (actLine.getSecondEnd() != null && actLine.getSecondEnd() instanceof Output) {
-				return true;
-			}
-		}
-
-		return false;
+		return input != null;
 	}
 
 	/**
@@ -495,19 +1559,11 @@ public class PluginConnection {
 	 */
 	public HashSet<Input> getInputs() {
 
-		HashSet<Input> inputs = new HashSet<>();
+		HashSet<Input> retInputs = new HashSet<>();
 
-		for (ConnectionLine line : lines) {
-			if (line.firstEnd != null && line.firstEnd instanceof Input) {
-				inputs.add((Input) line.firstEnd);
-			}
+		retInputs.addAll(outputs.keySet());
 
-			if (line.secondEnd != null && line.secondEnd instanceof Input) {
-				inputs.add((Input) line.secondEnd);
-			}
-		}
-
-		return inputs;
+		return retInputs;
 	}
 
 	/**
@@ -517,23 +1573,13 @@ public class PluginConnection {
 	 */
 	public HashSet<Output> getOutputs() {
 
-		HashSet<Output> outputs = new HashSet<>();
+		HashSet<Output> retOutputs = new HashSet<>();
 
-		for (ConnectionLine line : lines) {
-			if (line.firstEnd != null && line.firstEnd instanceof Output) {
-				outputs.add((Output) line.firstEnd);
-			}
-
-			if (line.secondEnd != null && line.secondEnd instanceof Output) {
-				outputs.add((Output) line.secondEnd);
-			}
+		if (input != null) {
+			retOutputs.add(input);
 		}
 
-		return outputs;
-	}
-
-	private void addDevider(LineDivider divider) {
-		dividers.add(divider);
+		return retOutputs;
 	}
 
 	/**
@@ -549,9 +1595,25 @@ public class PluginConnection {
 	 *            The y-coordinate at which the connection should end.
 	 */
 	public void endPluginConnection(@Nonnull ConnectionLineEndpointInterface endpoint, double xCoord, double yCoord) {
-		addLine(actLine);
-		actLine.setCoordinatesFinal(endpoint, xCoord, yCoord);
-		actLine = null;
+
+		drawingPoints.add(drawingPoint);
+		points.add(drawingPoints);
+
+		if (endpoint instanceof Output) {
+			input = (Output) endpoint;
+			inputPoint = drawingPoints.getLast();
+		} else {
+			outputs.put((Input) endpoint, drawingPoints.getLast());
+		}
+
+		dragNDrop(endpoint, xCoord, yCoord);
+
+		endpoint.addConnection(this);
+
+		drawingPoint = null;
+		drawingPoints = null;
+
+		redraw();
 	}
 
 	/**
@@ -564,7 +1626,32 @@ public class PluginConnection {
 	 *            The new y-coordinate.
 	 */
 	public void drawLine(double xCoord, double yCoord) {
-		actLine.setCoordinates(xCoord, yCoord);
+
+		double raster = configGroup.getRaster();
+
+		if (drawingHorizontal) {
+			yCoord = drawingPoints.getLast().getY();
+			xCoord = Math.round(xCoord / raster) * raster;
+
+			if (drawingPoints.size() == 1) {
+				if (input != null) {
+					// Only drawing to right
+					if (xCoord - MIN_LINE_LENGTH < drawingPoints.getFirst().getX()) {
+						xCoord = drawingPoint.getX();
+					}
+				} else {
+					// Only drawing to left
+					if (xCoord + MIN_LINE_LENGTH > drawingPoints.getFirst().getX()) {
+						xCoord = drawingPoint.getX();
+					}
+				}
+			}
+		} else {
+			xCoord = drawingPoints.getLast().getX();
+			yCoord = Math.round(yCoord / raster) * raster;
+		}
+
+		drawingPoint.setCoordinates(xCoord, yCoord);
 	}
 
 	/**
@@ -578,1551 +1665,1173 @@ public class PluginConnection {
 	 */
 	public void devideActLine(double x, double y) {
 
+	}
+
+	private USPPoint getStartPoint(ConnectionLineEndpointInterface endpoint) {
+
+		USPPoint startPoint = null;
+
+		if (endpoint.equals(input)) {
+			startPoint = inputPoint;
+		} else {
+			for (Input output : outputs.keySet()) {
+				if (endpoint.equals(output)) {
+					startPoint = outputs.get(output);
+					break;
+				}
+			}
+		}
+
+		return startPoint;
+	}
+
+	private LinkedList<USPPoint> getCheckList(USPPoint startPoint) {
+
+		LinkedList<USPPoint> check = null;
+
+		for (LinkedList<USPPoint> subPoints : points) {
+			if (subPoints.getFirst().equals(startPoint)) {
+				check = subPoints;
+				break;
+			} else if (subPoints.getLast().equals(startPoint)) {
+				check = subPoints;
+				break;
+			}
+		}
+
+		return check;
+	}
+
+	private USPPoint getSecondEnd(USPPoint startPoint, LinkedList<USPPoint> list) {
+
+		USPPoint secondEnd = null;
+
+		if (list.getFirst().equals(startPoint)) {
+			secondEnd = list.getLast();
+		} else if (list.getLast().equals(startPoint)) {
+			secondEnd = list.getFirst();
+		}
+
+		return secondEnd;
+	}
+
+	private void addTwoPoints(USPPoint start, LinkedList<USPPoint> list, int index, boolean hor) {
+
+		boolean forward;
+
+		if (start.equals(list.getFirst())) {
+			forward = true;
+		} else {
+			forward = false;
+		}
+
+		USPPoint first = null;
+		USPPoint second = null;
+
+		if (forward) {
+			first = list.get(index);
+			second = list.get(index + 1);
+		} else {
+			first = list.get(list.size() - index);
+			second = list.get(list.size() - index - 1);
+		}
+
+		double x1, y1, x2, y2;
+
+		if (hor) {
+			y1 = (first.getY() - second.getY()) / 2 + second.getY();
+			y2 = y1;
+			x1 = first.getX();
+			x2 = second.getX();
+		} else {
+			x1 = (first.getX() - second.getX()) / 2 + second.getX();
+			x2 = x1;
+			y1 = first.getY();
+			y2 = second.getY();
+		}
+
 		double raster = configGroup.getRaster();
 
-		if (actHorizontal) {
-			double stepX = actLine.getStartX() + (x - actLine.getStartX()) / 2;
-			double stepY = actLine.getStartY();
+		x1 = Math.round(x1 / raster) * raster;
+		y1 = Math.round(y1 / raster) * raster;
+		x2 = Math.round(x2 / raster) * raster;
+		y2 = Math.round(y2 / raster) * raster;
 
-			stepX = Math.round(stepX / raster) * raster;
-
-			actLine.setEndX(stepX);
-
-			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, stepX, stepY, false);
-			actLine.setCoordinatesLine(newLine, stepX, stepY);
-			configGroup.getChildren().add(newLine);
-			addLine(newLine);
-
-			actLine = new ConnectionLine(configGroup, this, newLine, stepX, y, true);
-			actLine.setCoordinates(x, y);
-			configGroup.getChildren().add(actLine);
-			addLine(actLine);
-			newLine.setCoordinatesLine(actLine, stepX, y);
+		if (forward) {
+			list.add(index + 1, new USPPoint(x1, y1));
+			list.add(index + 2, new USPPoint(x2, y2));
 		} else {
-			ConnectionLine newLine = new ConnectionLine(configGroup, this, actLine, actLine.getEndX(), y, true);
-			actLine.setCoordinatesLine(newLine, x, y);
-
-			newLine.setCoordinates(x, y);
-			actLine = newLine;
-			configGroup.getChildren().add(actLine);
-			addLine(actLine);
+			list.add(index, new USPPoint(x2, y2));
+			list.add(index, new USPPoint(x1, y1));
 		}
 	}
 
-	class ConnectionLine extends Line implements MaxCoordinatesInterface {
+	private boolean checkDragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check,
+			USPPoint secondEnd, boolean leftToRight) {
 
-		private static final double minLength = 10;
+		if (startPoint.equals(check.getLast())) {
+			LinkedList<USPPoint> invert = new LinkedList<>();
 
-		private ConnectionLineEndpointInterface firstEnd;
-		private ConnectionLineEndpointInterface secondEnd;
-
-		private ConnectionLine firstLine;
-		private ConnectionLine secondLine;
-
-		private Pane dragPane;
-
-		private boolean horizontal;
-		private boolean hoveredForDeletion = false;
-
-		private NodeList xmlConfig;
-
-		private PluginConnection parent;
-
-		private int number;
-
-		private PluginConfigGroup parentPane;
-
-		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent,
-				ConnectionLineEndpointInterface firstEnd, double x, double y, boolean horizontal) {
-			this.parent = parent;
-			this.firstEnd = firstEnd;
-			this.horizontal = horizontal;
-			this.parentPane = parentPane;
-			setStartX(x);
-			setStartY(y);
-			setEndX(x);
-			setEndY(y);
-		}
-
-		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine line, double x,
-				double y, boolean horizontal) {
-			this.parent = parent;
-			this.firstLine = line;
-			this.horizontal = horizontal;
-			this.parentPane = parentPane;
-			setStartX(x);
-			setStartY(y);
-			setEndX(x);
-			setEndY(y);
-		}
-
-		public ConnectionLine(PluginConfigGroup parentPane, PluginConnection parent, NodeList xmlConfig) {
-			this.parent = parent;
-			this.parentPane = parentPane;
-			this.xmlConfig = xmlConfig;
-
-			for (int i = 0; i < xmlConfig.getLength(); i++) {
-				Node xmlNode = xmlConfig.item(i);
-				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element xmlElement = (Element) xmlNode;
-					String tagName = xmlElement.getTagName();
-
-					if (tagName.equals("number")) {
-						number = new Integer(xmlElement.getTextContent()).intValue();
-					} else if (tagName.equals("horizontal")) {
-						String textContent = xmlElement.getTextContent();
-
-						if (textContent.equals("true")) {
-							horizontal = true;
-						} else {
-							horizontal = false;
-						}
-					} else if (tagName.equals("startCoords")) {
-						NodeList coordsNodes = xmlElement.getChildNodes();
-
-						for (int j = 0; j < coordsNodes.getLength(); j++) {
-							Node coordNode = coordsNodes.item(j);
-							if (coordNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element coordElement = (Element) coordNode;
-								String coordTag = coordElement.getTagName();
-
-								if (coordTag.equals("startX")) {
-									setStartX(new Double(coordElement.getTextContent()));
-								} else if (coordTag.equals("startY")) {
-									setStartY(new Double(coordElement.getTextContent()));
-								}
-							}
-						}
-					} else if (tagName.equals("endCoords")) {
-						NodeList coordsNodes = xmlElement.getChildNodes();
-
-						for (int j = 0; j < coordsNodes.getLength(); j++) {
-							Node coordNode = coordsNodes.item(j);
-							if (coordNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element coordElement = (Element) coordNode;
-								String coordTag = coordElement.getTagName();
-
-								if (coordTag.equals("endX")) {
-									setEndX(new Double(coordElement.getTextContent()));
-								} else if (coordTag.equals("endY")) {
-									setEndY(new Double(coordElement.getTextContent()));
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines,
-				LinkedList<LineDivider> dividers) {
-
-			for (int i = 0; i < xmlConfig.getLength(); i++) {
-				Node configNode = xmlConfig.item(i);
-
-				if (configNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element configElement = (Element) configNode;
-					String tagName = configElement.getTagName();
-
-					if (tagName.equals("firstLine")) {
-						int firstLineNumber = new Integer(configElement.getTextContent());
-
-						for (ConnectionLine line : lines) {
-							if (line.getNumber() == firstLineNumber) {
-								firstLine = line;
-								break;
-							}
-						}
-					} else if (tagName.equals("secondLine")) {
-						int secondLineNumber = new Integer(configElement.getTextContent());
-
-						for (ConnectionLine line : lines) {
-							if (line.getNumber() == secondLineNumber) {
-								secondLine = line;
-								break;
-							}
-						}
-					} else if (tagName.equals("firstEnd")) {
-						NodeList firstEndNodes = configElement.getChildNodes();
-
-						for (int j = 0; j < firstEndNodes.getLength(); j++) {
-							Node firstEndNode = firstEndNodes.item(j);
-
-							if (firstEndNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element firstEndElement = (Element) firstEndNode;
-								String firstEndTagName = firstEndElement.getTagName();
-
-								if (firstEndTagName.equals("divider")) {
-									NodeList dividerNodes = firstEndElement.getChildNodes();
-
-									for (int a = 0; a < dividerNodes.getLength(); a++) {
-										Node dividerNode = dividerNodes.item(a);
-
-										if (dividerNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element dividerElement = (Element) dividerNode;
-											String dividerTag = dividerElement.getTagName();
-											if (dividerTag.equals("dividerNumber")) {
-												int dividerNumber = new Integer(dividerElement.getTextContent());
-
-												for (LineDivider divider : dividers) {
-													if (divider.getNumber() == dividerNumber) {
-														firstEnd = divider;
-														break;
-													}
-												}
-												break;
-											}
-										}
-									}
-									break;
-								} else if (firstEndTagName.equals("pluginInput")) {
-									NodeList inputNodes = firstEndElement.getChildNodes();
-									String inputName = null;
-									int inputPluginNumber = 0;
-									for (int a = 0; a < inputNodes.getLength(); a++) {
-										Node inputNode = inputNodes.item(a);
-
-										if (inputNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element inputElement = (Element) inputNode;
-											String inputTag = inputElement.getTagName();
-											if (inputTag.equals("inputName")) {
-												inputName = inputElement.getTextContent();
-											} else if (inputTag.equals("pluginNumber")) {
-												inputPluginNumber = new Integer(inputElement.getTextContent());
-											}
-										}
-									}
-
-									for (SigproPlugin plugin : plugins) {
-										if (plugin.getNumber() == inputPluginNumber) {
-											HashSet<Input> inputs = plugin.getInputs();
-
-											for (Input input : inputs) {
-												if (input.getName().equals(inputName)) {
-													firstEnd = input;
-													input.addLine(this);
-												}
-											}
-										}
-									}
-
-									break;
-								} else if (firstEndTagName.equals("pluginOutput")) {
-									NodeList outputNodes = firstEndElement.getChildNodes();
-									String outputName = null;
-									int outputPluginNumber = 0;
-									for (int a = 0; a < outputNodes.getLength(); a++) {
-										Node outputNode = outputNodes.item(a);
-
-										if (outputNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element outputElement = (Element) outputNode;
-											String outputTag = outputElement.getTagName();
-											if (outputTag.equals("outputName")) {
-												outputName = outputElement.getTextContent();
-											} else if (outputTag.equals("pluginNumber")) {
-												outputPluginNumber = new Integer(outputElement.getTextContent());
-											}
-										}
-									}
-
-									for (SigproPlugin plugin : plugins) {
-										if (plugin.getNumber() == outputPluginNumber) {
-											HashSet<Output> outputs = plugin.getOutputs();
-
-											for (Output output : outputs) {
-												if (output.getName().equals(outputName)) {
-													firstEnd = output;
-													output.addLine(this);
-												}
-											}
-										}
-									}
-
-									break;
-								}
-							}
-						}
-					} else if (tagName.equals("secondEnd")) {
-						NodeList secondEndNodes = configElement.getChildNodes();
-
-						for (int j = 0; j < secondEndNodes.getLength(); j++) {
-							Node secondEndNode = secondEndNodes.item(j);
-
-							if (secondEndNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element secondEndElement = (Element) secondEndNode;
-								String secondEndTagName = secondEndElement.getTagName();
-
-								if (secondEndTagName.equals("divider")) {
-									NodeList dividerNodes = secondEndElement.getChildNodes();
-
-									for (int a = 0; a < dividerNodes.getLength(); a++) {
-										Node dividerNode = dividerNodes.item(a);
-
-										if (dividerNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element dividerElement = (Element) dividerNode;
-											String dividerTag = dividerElement.getTagName();
-											if (dividerTag.equals("dividerNumber")) {
-												int dividerNumber = new Integer(dividerElement.getTextContent());
-
-												for (LineDivider divider : dividers) {
-													if (divider.getNumber() == dividerNumber) {
-														secondEnd = divider;
-														break;
-													}
-												}
-												break;
-											}
-										}
-									}
-									break;
-								} else if (secondEndTagName.equals("pluginInput")) {
-									NodeList inputNodes = secondEndElement.getChildNodes();
-									String inputName = null;
-									int inputPluginNumber = 0;
-									for (int a = 0; a < inputNodes.getLength(); a++) {
-										Node inputNode = inputNodes.item(a);
-
-										if (inputNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element inputElement = (Element) inputNode;
-											String inputTag = inputElement.getTagName();
-											if (inputTag.equals("inputName")) {
-												inputName = inputElement.getTextContent();
-											} else if (inputTag.equals("pluginNumber")) {
-												inputPluginNumber = new Integer(inputElement.getTextContent());
-											}
-										}
-									}
-
-									for (SigproPlugin plugin : plugins) {
-										if (plugin.getNumber() == inputPluginNumber) {
-											HashSet<Input> inputs = plugin.getInputs();
-
-											for (Input input : inputs) {
-												if (input.getName().equals(inputName)) {
-													secondEnd = input;
-													input.addLine(this);
-												}
-											}
-										}
-									}
-
-									break;
-								} else if (secondEndTagName.equals("pluginOutput")) {
-									NodeList outputNodes = secondEndElement.getChildNodes();
-									String outputName = null;
-									int outputPluginNumber = 0;
-									for (int a = 0; a < outputNodes.getLength(); a++) {
-										Node outputNode = outputNodes.item(a);
-
-										if (outputNode.getNodeType() == Node.ELEMENT_NODE) {
-											Element outputElement = (Element) outputNode;
-											String outputTag = outputElement.getTagName();
-											if (outputTag.equals("outputName")) {
-												outputName = outputElement.getTextContent();
-											} else if (outputTag.equals("pluginNumber")) {
-												outputPluginNumber = new Integer(outputElement.getTextContent());
-											}
-										}
-									}
-
-									for (SigproPlugin plugin : plugins) {
-										if (plugin.getNumber() == outputPluginNumber) {
-											HashSet<Output> outputs = plugin.getOutputs();
-
-											for (Output output : outputs) {
-												if (output.getName().equals(outputName)) {
-													secondEnd = output;
-													output.addLine(this);
-												}
-											}
-										}
-									}
-
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		public void collectedLineInfo(Document doc, Element element) {
-			Element line = doc.createElement("connectionLine");
-
-			Element numberElement = doc.createElement("number");
-			numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
-			line.appendChild(numberElement);
-
-			Element horizontalElement = doc.createElement("horizontal");
-			horizontalElement.appendChild(doc.createTextNode(new Boolean(horizontal).toString()));
-			line.appendChild(horizontalElement);
-
-			Element startCoords = doc.createElement("startCoords");
-			Element startX = doc.createElement("startX");
-			startX.appendChild(doc.createTextNode(new Double(getStartX()).toString()));
-			Element startY = doc.createElement("startY");
-			startY.appendChild(doc.createTextNode(new Double(getStartY()).toString()));
-
-			startCoords.appendChild(startX);
-			startCoords.appendChild(startY);
-			line.appendChild(startCoords);
-
-			Element endCoords = doc.createElement("endCoords");
-			Element endX = doc.createElement("endX");
-			endX.appendChild(doc.createTextNode(new Double(getEndX()).toString()));
-			Element endY = doc.createElement("endY");
-			endY.appendChild(doc.createTextNode(new Double(getEndY()).toString()));
-
-			endCoords.appendChild(endX);
-			endCoords.appendChild(endY);
-			line.appendChild(endCoords);
-
-			if (firstLine != null) {
-				Element firstLineElement = doc.createElement("firstLine");
-				firstLineElement.appendChild(doc.createTextNode(new Integer(firstLine.getNumber()).toString()));
-				line.appendChild(firstLineElement);
-			} else if (firstEnd != null) {
-				Element firstEndElement = doc.createElement("firstEnd");
-				if (firstEnd instanceof LineDivider) {
-					Element dividerElement = doc.createElement("divider");
-					Element dividerNumberElement = doc.createElement("dividerNumber");
-					dividerNumberElement.appendChild(
-							doc.createTextNode(new Integer(((LineDivider) firstEnd).getNumber()).toString()));
-					dividerElement.appendChild(dividerNumberElement);
-					firstEndElement.appendChild(dividerElement);
-				} else if (firstEnd instanceof Input) {
-					Input input = (Input) firstEnd;
-					Element inputElement = doc.createElement("pluginInput");
-					Element pluginNumberElement = doc.createElement("pluginNumber");
-					pluginNumberElement
-							.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
-					Element inputNameElement = doc.createElement("inputName");
-					inputNameElement.appendChild(doc.createTextNode(input.getName()));
-					inputElement.appendChild(inputNameElement);
-					inputElement.appendChild(pluginNumberElement);
-					firstEndElement.appendChild(inputElement);
-				} else if (firstEnd instanceof Output) {
-					Output output = (Output) firstEnd;
-					Element outputElement = doc.createElement("pluginOutput");
-					Element pluginNumberElement = doc.createElement("pluginNumber");
-					pluginNumberElement
-							.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
-					Element outputNameElement = doc.createElement("outputName");
-					outputNameElement.appendChild(doc.createTextNode(output.getName()));
-					outputElement.appendChild(outputNameElement);
-					outputElement.appendChild(pluginNumberElement);
-					firstEndElement.appendChild(outputElement);
-				}
-				line.appendChild(firstEndElement);
+			for (USPPoint point : check) {
+				invert.offerFirst(point);
 			}
 
-			if (secondLine != null) {
-				Element secondLineElement = doc.createElement("secondLine");
-				secondLineElement.appendChild(doc.createTextNode(new Integer(secondLine.getNumber()).toString()));
-				line.appendChild(secondLineElement);
-			} else if (secondEnd != null) {
-				Element secondEndElement = doc.createElement("secondEnd");
-				if (secondEnd instanceof LineDivider) {
-					Element dividerElement = doc.createElement("divider");
-					Element dividerNumberElement = doc.createElement("dividerNumber");
-					dividerNumberElement.appendChild(
-							doc.createTextNode(new Integer(((LineDivider) secondEnd).getNumber()).toString()));
-					dividerElement.appendChild(dividerNumberElement);
-					secondEndElement.appendChild(dividerElement);
-				} else if (secondEnd instanceof Input) {
-					Input input = (Input) secondEnd;
-					Element inputElement = doc.createElement("pluginInput");
-					Element pluginNumberElement = doc.createElement("pluginNumber");
-					pluginNumberElement
-							.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
-					Element inputNameElement = doc.createElement("inputName");
-					inputNameElement.appendChild(doc.createTextNode(input.getName()));
-					inputElement.appendChild(inputNameElement);
-					inputElement.appendChild(pluginNumberElement);
-					secondEndElement.appendChild(inputElement);
-				} else if (secondEnd instanceof Output) {
-					Output output = (Output) secondEnd;
-					Element outputElement = doc.createElement("pluginOutput");
-					Element pluginNumberElement = doc.createElement("pluginNumber");
-					pluginNumberElement
-							.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
-					Element outputNameElement = doc.createElement("outputName");
-					outputNameElement.appendChild(doc.createTextNode(output.getName()));
-					outputElement.appendChild(outputNameElement);
-					outputElement.appendChild(pluginNumberElement);
-					secondEndElement.appendChild(outputElement);
-				}
-				line.appendChild(secondEndElement);
-			}
-
-			element.appendChild(line);
+			check = invert;
 		}
 
-		public void setNumber(int number) {
-			this.number = number;
-		}
-
-		public int getNumber() {
-			return number;
-		}
-
-		public PluginConnection getParentConnection() {
-			return parent;
-		}
-
-		public ConnectionLineEndpointInterface getFirstEnd() {
-			return firstEnd;
-		}
-
-		public ConnectionLineEndpointInterface getSecondEnd() {
-			return secondEnd;
-		}
-
-		public boolean isHorizontal() {
-			return horizontal;
-		}
-
-		public void delete() {
-			parentPane.removeDeletionLine();
-
-			parent.lines.remove(this);
-			if (lines.size() == 0) {
-				parentPane.deletePluginConnection(parent);
-			}
-			parent = null;
-
-			parentPane.getChildren().remove(dragPane);
-			dragPane = null;
-			parentPane.getChildren().remove(this);
-			parentPane = null;
-
-			if (firstEnd != null) {
-				firstEnd.removeLine(this);
-				firstEnd = null;
-			}
-			if (secondEnd != null) {
-				secondEnd.removeLine(this);
-				secondEnd = null;
-			}
-			if (firstLine != null) {
-				firstLine.removeLine(this);
-				firstLine.delete();
-				firstLine = null;
-			}
-			if (secondLine != null) {
-				secondLine.removeLine(this);
-				secondLine.delete();
-				secondLine = null;
-			}
-		}
-
-		public void removeLine(ConnectionLine line) {
-			if (firstLine != null && firstLine.equals(line)) {
-				firstLine = null;
-			} else if (secondLine != null && secondLine.equals(line)) {
-				secondLine = null;
-			}
-		}
-
-		/**
-		 * Just for drawing a line.
-		 * 
-		 * @param x
-		 *            the x coordinate
-		 * @param y
-		 *            the y coordinate
-		 */
-		public void setCoordinates(double x, double y) {
-			if (horizontal) {
-				if (x > getStartX() + 3) {
-					setEndX(x - 3);
-				} else if (x < getStartX() - 3) {
-					setEndX(x + 3);
-				} else {
-					setEndX(getStartX());
-				}
-			} else {
-				setEndX(getStartX());
-			}
-
-			if (!horizontal) {
-				if (y > getStartY() + 3) {
-					setEndY(y - 3);
-				} else if (y < getStartY() - 3) {
-					setEndY(y + 3);
-				} else {
-					setEndY(getEndY());
-				}
-			} else {
-				setEndY(getStartY());
-			}
-		}
-
-		public void updateCoordinates(ConnectionLine line, double x, double y) {
-			if (line.equals(firstLine)) {
-				if (horizontal) {
-					setStartX(x);
-				} else {
-					setStartY(y);
-				}
-			} else if (line.equals(secondLine)) {
-				if (horizontal) {
-					setEndX(x);
-				} else {
-					setEndY(y);
-				}
-			}
-
-			updateDragPane();
-		}
-
-		/**
-		 * Update a connections coordinates from an endpoint.
-		 * 
-		 * @param endpoint
-		 *            the endpoint as end this line
-		 * @param x
-		 *            the x coordinate
-		 * @param y
-		 *            the y coordinate
-		 */
-		public void updateCoordinates(ConnectionLineEndpointInterface endpoint, double x, double y) {
-
-			if (firstEnd != null && endpoint.equals(firstEnd)) {
-				if (secondEnd != null) {
-					if (!(y == getStartY())) {
-						double length = getEndX() - getStartX();
-
-						ConnectionLine newLine = new ConnectionLine(parentPane, parent, secondEnd, getEndX(),
-								getStartY(), true);
-						ConnectionLine vertLine = new ConnectionLine(parentPane, parent, newLine,
-								getStartX() + length / 2, getEndY(), false);
-						newLine.setCoordinatesLine(vertLine, getStartX() + length / 2, getEndY());
-						vertLine.setCoordinatesLine(this, getStartX() + length / 2, y);
-
-						parent.configGroup.getChildren().addAll(newLine, vertLine);
-						addLine(newLine);
-						addLine(vertLine);
-
-						secondEnd.replaceLine(this, newLine);
-
-						secondLine = vertLine;
-						secondEnd = null;
-						setEndX(getStartX() + length / 2);
-					}
-				} else {
-				}
-
-				if (secondLine != null) {
-					secondLine.updateCoordinates(this, x, y);
-				}
-
-				if (horizontal) {
-					setStartX(x);
-					setStartY(y);
-					setEndY(y);
-				} else {
-					setStartY(y);
-					setStartX(x);
-					setEndX(x);
-				}
-			} else if (secondEnd != null && endpoint.equals(secondEnd)) {
-				if (firstEnd != null) {
-					if (!(y == getStartY())) {
-						double length = getEndX() - getStartX();
-
-						ConnectionLine newLine = new ConnectionLine(parentPane, parent, firstEnd, getStartX(),
-								getStartY(), true);
-						ConnectionLine vertLine = new ConnectionLine(parentPane, parent, newLine,
-								getStartX() + length / 2, getEndY(), false);
-						newLine.setCoordinatesLine(vertLine, getStartX() + length / 2, getEndY());
-						vertLine.setCoordinatesLine(this, getStartX() + length / 2, y);
-
-						parent.configGroup.getChildren().addAll(newLine, vertLine);
-						addLine(newLine);
-						addLine(vertLine);
-
-						firstEnd.replaceLine(this, newLine);
-
-						firstLine = vertLine;
-						firstEnd = null;
-						setStartX(getStartX() + length / 2);
-					}
-				}
-
-				if (firstLine != null) {
-					firstLine.updateCoordinates(this, x, y);
-				}
-
-				if (horizontal) {
-					setEndX(x);
-					setEndY(y);
-					setStartY(y);
-				} else {
-					setEndY(y);
-					setEndX(x);
-					setStartX(x);
-				}
-			}
-
-			updateDragPane();
-		}
-
-		/**
-		 * End a connection at an endpoint
-		 * 
-		 * @param secondEnd
-		 *            the endpoint to end the line at
-		 * @param x
-		 *            the x coordinate
-		 * @param y
-		 *            the y coordinate
-		 */
-		public void setCoordinatesFinal(ConnectionLineEndpointInterface secondEnd, double x, double y) {
-			this.secondEnd = secondEnd;
-
-			updateCoordinates(secondEnd, x, y);
-			updateDragPane();
-		}
-
-		public boolean checkCoordinates(double x, double y) {
-			if (horizontal) {
-				if (y == getEndY()) {
-					return true;
-				} else {
-					if (firstEnd != null) {
+		if (check.size() == 2) {
+			if (check.getLast().getY() == y) {
+				if (!leftToRight) {
+					if (x - secondEnd.getX() < 2 * MIN_LINE_LENGTH) {
 						return false;
-					} else if (firstLine != null) {
-						return firstLine.checkCoordinates(x, y);
 					}
-					return true;
-				}
-			} else {
-				return true;
-			}
-		}
-
-		/**
-		 * End a connection at another connection line
-		 * 
-		 * @param line
-		 *            the line to end
-		 * @param x
-		 *            the x coordinate
-		 * @param y
-		 *            the y coordinate
-		 */
-		public void setCoordinatesLine(ConnectionLine line, double x, double y) {
-			secondLine = line;
-			if (horizontal) {
-				setEndX(x);
-				setEndY(getEndY());
-			} else {
-				setEndY(y);
-				setEndX(getEndX());
-			}
-
-			updateDragPane();
-		}
-
-		public void setParent(PluginConnection parent) {
-			this.parent = parent;
-		}
-
-		@Override
-		public double getMaxX() {
-
-			return getStartX() > getEndX() ? getStartX() : getEndX();
-		}
-
-		@Override
-		public double getMaxY() {
-
-			return getStartY() > getEndY() ? getStartY() : getEndY();
-		}
-
-		@Override
-		public void registerMaxCoordinatesUpdateListener(PluginConfigGroup coordinatesListener) {
-
-			this.parentPane = parentPane;
-		}
-
-		public boolean isUpDown() {
-
-			return getEndY() > getStartY();
-		}
-
-		public boolean isLeftRight() {
-
-			return getEndX() > getStartX();
-		}
-
-		private void updateCoordinatesInternal(double x, double y) {
-			if (firstEnd == null && secondEnd == null) {
-				double localX = parentPane.screenToLocal(x, y).getX();
-				double localY = parentPane.screenToLocal(x, y).getY();
-
-				double raster = configGroup.getRaster();
-
-				localX = Math.round(localX / raster) * raster;
-				localY = Math.round(localY / raster) * raster;
-
-				if (horizontal) {
-					setStartY(localY);
-					setEndY(localY);
 				} else {
-					setStartX(localX);
-					setEndX(localX);
+					if (secondEnd.getX() - x < 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
 				}
+			}
+		} else if (check.size() == 3) {
+			if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+				if (leftToRight) {
+					// left to right
+					if (check.get(1).getX() - x <= 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				} else {
+					// right to left
+					if (x - check.get(1).getX() <= 2 * MIN_LINE_LENGTH) {
+						return false;
+					}
+				}
+			}
+		} else if (check.size() == 4) {
+			if (Math.abs(check.getLast().getY() - y) <= MIN_LINE_LENGTH) {
+				if (leftToRight) {
+					// left to right
+					if (check.getLast().getX() > check.get(2).getX()) {
+						if (check.getLast().getX() - x < 3 * MIN_LINE_LENGTH) {
+							return false;
+						}
+					}
+				} else {
+					// right to left
+					if (check.getLast().getX() < check.get(2).getX()) {
+						if (x - check.getLast().getX() < 3 * MIN_LINE_LENGTH) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
 
-				if (firstLine != null) {
-					firstLine.updateCoordinates(this, localX, localY);
-				}
-				if (secondLine != null) {
-					secondLine.updateCoordinates(this, localX, localY);
-				}
+	public boolean checkDragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
 
-				if (firstLine == secondLine || firstLine == null || secondLine == null) {
-					System.out.println("Wrong config");
-				}
+		USPPoint startPoint = getStartPoint(endpoint);
 
-				updateDragPane();
+		if (startPoint != null) {
+
+			LinkedList<USPPoint> check = getCheckList(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint, check);
+
+			if (check != null) {
+
+				boolean leftToRight = endpoint instanceof Output;
+
+				return checkDragNDropInt(startPoint, x, y, check, secondEnd, leftToRight);
 			}
 		}
 
-		private boolean areCoordinatesOnLine(double screenX, double screenY) {
+		return true;
+	}
 
-			return dragPane.contains(dragPane.screenToLocal(screenX, screenY).getX(),
-					dragPane.screenToLocal(screenX, screenY).getY());
+	public void dragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check, USPPoint secondEnd,
+			boolean fromDivider) {
+
+		double raster = configGroup.getRaster();
+
+		LinkedList<USPPoint> keep = null;
+
+		if (startPoint.equals(check.getLast())) {
+			keep = check;
+			check = new LinkedList<USPPoint>();
+
+			for (USPPoint point : keep) {
+				check.offerFirst(point);
+			}
 		}
 
-		private void updateDragPane() {
+		boolean horizontal = false;
+		boolean leftToRight = false;
+		boolean bottomUp = false;
 
-			if (dragPane == null) {
-				dragPane = new Pane();
-				parentPane.getChildren().add(dragPane);
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						updateCoordinatesInternal(event.getScreenX(), event.getScreenY());
-					}
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						if (parentPane.getWorkCon() != null && !parentPane.getWorkCon().equals(parent)
-								&& parentPane.getWorkCon().getActLine().isHorizontal() != horizontal
-								&& !(parent.hasInput() && parentPane.getWorkCon().hasInput())) {
-
-							HashSet<ConnectionLineEndpointInterface> endpoints = new HashSet<>();
-							if (!parentPane.getWorkCon().hasInput()) {
-								HashSet<Input> inputs = parentPane.getWorkCon().getInputs();
-
-								for (Input input : inputs) {
-									endpoints.add(input);
-								}
-							} else {
-								HashSet<Output> outputs = parentPane.getWorkCon().getOutputs();
-
-								for (Output output : outputs) {
-									endpoints.add(output);
-								}
-							}
-
-							if (!checkRekusivity(endpoints, !parentPane.getWorkCon().hasInput())) {
-								parentPane.setLineHovered(true);
-								setStyle("-fx-stroke: -usp-light-blue");
-								hovered = true;
-							}
-
-						}
-					}
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-						if (!hoveredForDeletion) {
-							parentPane.setLineHovered(false);
-							hovered = false;
-							setStyle("-fx-stroke: black");
-						}
-					}
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						if (!addLineDevider(event.getScreenX(), event.getScreenY())) {
-							if (hoveredForDeletion) {
-								setHoveredForDeletion(null, false);
-							} else {
-								parentPane.removeCurrentSelection();
-								setHoveredForDeletion(null, true);
-							}
-						}
-					}
-
-				});
+		if (check.get(1).getY() == check.getFirst().getY()) {
+			horizontal = true;
+			if (check.get(1).getX() > check.getFirst().getX()) {
+				leftToRight = true;
+			} else {
+				leftToRight = false;
 			}
+		} else {
+			horizontal = false;
+			if (check.get(1).getY() > check.getFirst().getY()) {
+				bottomUp = true;
+			} else {
+				bottomUp = false;
+			}
+		}
 
-			double layoutX = getStartX() < getEndX() ? getStartX() : getEndX();
-			double layoutY = getStartY() < getEndY() ? getStartY() : getEndY();
-			double width = horizontal ? Math.abs(getStartX() - getEndX()) - 6 : 6;
-			double height = !horizontal ? Math.abs(getStartY() - getEndY()) - 6 : 6;
+		boolean redraw = false;
+
+		if (check != null) {
 
 			if (horizontal) {
-				dragPane.setLayoutX(layoutX + 3);
-				dragPane.setLayoutY(layoutY - 3);
+				if (check.size() == 2) {
+					// Horizontal line
+					if (startPoint.getY() == y) {
+						if (!fromDivider) {
+							startPoint.setX(x);
+						}
+					} else {
+						if (!fromDivider) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+						}
+						addTwoPoints(startPoint, check, 0, false);
+						redraw = true;
+					}
+				} else if (check.size() == 3) {
+					// Vertical connected
+					if (leftToRight) {
+						if (secondEnd.getX() - x <= MIN_LINE_LENGTH) {
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+
+							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if (secondEnd.getX() - x > MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						} else {
+
+						}
+					} else {
+						if (x - secondEnd.getX() <= MIN_LINE_LENGTH) {
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+
+							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, false);
+							redraw = true;
+						} else if (x - secondEnd.getX() > MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						} else {
+
+						}
+					}
+				} else if (check.size() == 4) {
+					if (leftToRight) {
+						if (secondEnd.getX() - x < 3 * MIN_LINE_LENGTH && secondEnd.getX() - check.get(2).getX() > 0) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
+							check.get(1).setY(y);
+
+							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
+							check.get(1).setY(y);
+							check.get(2).setX(Math.ceil((x + raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						}
+					} else {
+						if (x - secondEnd.getX() < 3 * MIN_LINE_LENGTH && check.get(2).getX() - secondEnd.getX() > 0) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
+							check.get(1).setY(y);
+
+							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
+							check.get(1).setY(y);
+							check.get(2).setX(Math.floor((x - raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						}
+					}
+				} else {
+					if (leftToRight) {
+						if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
+							check.get(1).setY(y);
+							check.get(2).setX(Math.ceil((x + raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						}
+					} else {
+						if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
+							check.get(1).setY(y);
+							check.get(2).setX(Math.floor((x - raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(y);
+						}
+					}
+				}
 			} else {
-				dragPane.setLayoutX(layoutX - 3);
-				dragPane.setLayoutY(layoutY + 3);
-			}
 
-			dragPane.setPrefSize(width, height);
-		}
-
-		public void setHoveredForDeletion(ConnectionLine caller, boolean hoverDel) {
-
-			if (parentPane.getWorkCon() == null) {
-				if (caller == null) {
-					if (!hoveredForDeletion) {
-						parentPane.setDeletionLine(this);
+				if (check.size() == 2) {
+					// Vertical line
+					if (startPoint.getX() == x) {
+						if (!fromDivider) {
+							startPoint.setY(y);
+						}
 					} else {
-						parentPane.removeDeletionLine();
+						if (!fromDivider) {
+							startPoint.setX(x);
+							startPoint.setY(y);
+						}
+						addTwoPoints(startPoint, check, 0, true);
+						redraw = true;
 					}
-				}
+				} else if (check.size() == 3) {
+					// Vertical connected
+					if (bottomUp) {
+						if (secondEnd.getY() - y <= MIN_LINE_LENGTH) {
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
 
-				if (firstLine != null && !firstLine.equals(caller)) {
-					firstLine.setHoveredForDeletion(this, hoverDel);
-				}
-				if (secondLine != null && !secondLine.equals(caller)) {
-					secondLine.setHoveredForDeletion(this, hoverDel);
-				}
+							addTwoPoints(startPoint, check, 1, false);
+							redraw = true;
+						} else if (secondEnd.getX() > check.get(1).getX() && secondEnd.getX() - x < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
 
-				if (hoverDel) {
-					setStyle("-fx-stroke: -usp-light-blue");
-					hoveredForDeletion = true;
+							addTwoPoints(startPoint, check, 0, true);
+							redraw = true;
+						} else if (secondEnd.getX() < check.get(1).getX() && y - secondEnd.getX() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, true);
+							redraw = true;
+						} else if (secondEnd.getY() - y > MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						} else {
+
+						}
+					} else {
+						if (y - secondEnd.getY() <= MIN_LINE_LENGTH) {
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+
+							addTwoPoints(startPoint, check, 1, false);
+							redraw = true;
+						} else if (secondEnd.getX() > check.get(1).getX() && secondEnd.getX() - x < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, true);
+							redraw = true;
+						} else if (secondEnd.getX() < check.get(1).getX() && x - secondEnd.getX() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+
+							addTwoPoints(startPoint, check, 0, true);
+							redraw = true;
+						} else if (y - secondEnd.getY() > MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						} else {
+
+						}
+					}
+				} else if (check.size() == 4) {
+					if (bottomUp) {
+						if (secondEnd.getY() - y < 3 * MIN_LINE_LENGTH && secondEnd.getY() - check.get(2).getY() > 0) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
+							check.get(1).setX(x);
+
+							addTwoPoints(startPoint, check, 1, true);
+							redraw = true;
+						} else if (check.get(1).getY() - y < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
+							check.get(1).setX(x);
+							check.get(2).setY(Math.ceil((y + raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						}
+					} else {
+						if (y - secondEnd.getY() < 3 * MIN_LINE_LENGTH && check.get(2).getY() - secondEnd.getY() > 0) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
+							check.get(1).setX(x);
+
+							addTwoPoints(startPoint, check, 1, false);
+							redraw = true;
+						} else if (y - check.get(1).getY() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
+							check.get(1).setX(x);
+							check.get(2).setY(Math.floor((y - raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						}
+					}
 				} else {
-					setStyle("-fx-stroke: black");
-					hoveredForDeletion = false;
+					if (bottomUp) {
+						if (check.get(1).getY() - y < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
+							check.get(1).setX(x);
+							check.get(2).setY(Math.ceil((y + raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						}
+					} else {
+						if (y - check.get(1).getY() < MIN_LINE_LENGTH) {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
+							check.get(1).setX(x);
+							check.get(2).setY(Math.floor((y - raster) / raster) * raster);
+						} else {
+							if (!fromDivider) {
+								startPoint.setX(x);
+								startPoint.setY(y);
+							}
+							check.get(1).setX(x);
+						}
+					}
 				}
 			}
 		}
 
-		public void removeHoverForDeletion() {
-			setStroke(Color.BLACK);
-			hoveredForDeletion = false;
+		if (keep != null) {
+			keep.clear();
+
+			for (USPPoint point : check) {
+				keep.offerFirst(point);
+			}
 		}
 
-		private boolean addLineDevider(double x, double y) {
-
-			double localX = screenToLocal(x, y).getX();
-			double localY = screenToLocal(x, y).getY();
-
-			double raster = parentPane.getRaster();
-
-			localX = Math.round(localX / raster) * raster;
-			localY = Math.round(localY / raster) * raster;
-
-			if (hovered) {
-				if (horizontal) {
-					ConnectionLine leftLine;
-					ConnectionLine rightLine;
-					ConnectionLine verticalLine;
-					LineDivider divider = new LineDivider(parentPane, parent, null, null, null, null, localX,
-							getStartY());
-					addDevider(divider);
-
-					if (getEndX() > getStartX()) {
-						// Left to right
-						rightLine = new ConnectionLine(parentPane, parent, divider, localX, getEndY(), horizontal);
-						if (secondLine != null) {
-							rightLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
-							if (this.equals(secondLine.firstLine)) {
-								secondLine.firstLine = rightLine;
-							} else {
-								secondLine.secondLine = rightLine;
-							}
-						} else {
-							rightLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
-							secondEnd.addLine(rightLine);
-						}
-						leftLine = this;
-						setEndX(localX);
-						secondLine = null;
-						secondEnd = divider;
-
-						parentPane.getChildren().add(rightLine);
-					} else {
-						// Right to left
-						leftLine = new ConnectionLine(parentPane, parent, divider, localX, getEndY(), horizontal);
-						if (secondLine != null) {
-							leftLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
-							if (this.equals(secondLine.firstLine)) {
-								secondLine.firstLine = leftLine;
-							} else {
-								secondLine.secondLine = leftLine;
-							}
-						} else {
-							leftLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
-							secondEnd.addLine(leftLine);
-						}
-						rightLine = this;
-						setEndX(localX);
-						secondLine = null;
-						secondEnd = divider;
-
-						parentPane.getChildren().add(leftLine);
-					}
-
-					verticalLine = parentPane.getWorkCon().getActLine();
-					verticalLine.setCoordinatesFinal(divider, localX, getEndY());
-
-					if (verticalLine.isUpDown()) {
-						divider.addLineWithPos(LineDividerPosition.NORTH, verticalLine);
-					} else {
-						divider.addLineWithPos(LineDividerPosition.SOUTH, verticalLine);
-					}
-
-					divider.addLineWithPos(LineDividerPosition.WEST, leftLine);
-					divider.addLineWithPos(LineDividerPosition.EAST, rightLine);
-
-					addLine(leftLine);
-					addLine(rightLine);
-					addLine(verticalLine);
-
-					for (ConnectionLine workLine : parentPane.getWorkCon().lines) {
-						addLine(workLine);
-						workLine.parent = parent;
-					}
-
-					parentPane.finalizeDrawing();
-				} else {
-					ConnectionLine upperLine;
-					ConnectionLine lowerLine;
-					ConnectionLine horizontalLine;
-					LineDivider divider = new LineDivider(parentPane, parent, null, null, null, null, getStartX(),
-							localY);
-					addDevider(divider);
-
-					if (getEndY() > getStartY()) {
-						// Top to bottom
-						lowerLine = new ConnectionLine(parentPane, parent, divider, getEndX(), localY, horizontal);
-						if (secondLine != null) {
-							lowerLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
-							if (this.equals(secondLine.firstLine)) {
-								secondLine.firstLine = lowerLine;
-							} else {
-								secondLine.secondLine = lowerLine;
-							}
-						} else {
-							lowerLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
-							secondEnd.addLine(lowerLine);
-						}
-						upperLine = this;
-						setEndY(localY);
-						secondLine = null;
-						secondEnd = divider;
-
-						parentPane.getChildren().add(lowerLine);
-					} else {
-						// Bottom to top
-						upperLine = new ConnectionLine(parentPane, parent, divider, getEndX(), localY, horizontal);
-						if (secondLine != null) {
-							upperLine.setCoordinatesLine(secondLine, getEndX(), getEndY());
-							if (this.equals(secondLine.firstLine)) {
-								secondLine.firstLine = upperLine;
-							} else {
-								secondLine.secondLine = upperLine;
-							}
-						} else {
-							upperLine.setCoordinatesFinal(secondEnd, getEndX(), getEndY());
-							secondEnd.addLine(upperLine);
-						}
-						lowerLine = this;
-						setEndY(localY);
-						secondLine = null;
-						secondEnd = divider;
-
-						parentPane.getChildren().add(upperLine);
-					}
-
-					horizontalLine = parentPane.getWorkCon().getActLine();
-					horizontalLine.setCoordinatesFinal(divider, getEndX(), localY);
-
-					if (parentPane.getWorkCon().getActLine().isLeftRight()) {
-						divider.addLineWithPos(LineDividerPosition.WEST, horizontalLine);
-					} else {
-						divider.addLineWithPos(LineDividerPosition.EAST, horizontalLine);
-					}
-
-					divider.addLineWithPos(LineDividerPosition.NORTH, upperLine);
-					divider.addLineWithPos(LineDividerPosition.SOUTH, lowerLine);
-
-					addLine(upperLine);
-					addLine(lowerLine);
-					addLine(horizontalLine);
-
-					for (ConnectionLine workLine : parentPane.getWorkCon().lines) {
-						addLine(workLine);
-						workLine.parent = parent;
-					}
-
-					parentPane.finalizeDrawing();
-				}
-				return true;
-			}
-			return false;
+		if (redraw) {
+			redraw();
 		}
 
 	}
 
-	class LineDivider extends Circle implements ConnectionLineEndpointInterface {
+	public void dragNDrop(ConnectionLineEndpointInterface endpoint, double x, double y) {
 
-		private HashMap<LineDividerPosition, ConnectionLine> connectionLines = new HashMap<>();
+		USPPoint startPoint = getStartPoint(endpoint);
 
-		private static final double DIAMETER = 10;
+		boolean leftToRight;
 
-		private PluginConnection parent;
-		private PluginConfigGroup parentPane;
-		private NodeList xmlConfig;
-
-		private boolean hovered = false;
-
-		private Pane dragPane;
-
-		private int number;
-
-		public LineDivider(PluginConfigGroup parentPane, PluginConnection parent, ConnectionLine north,
-				ConnectionLine east, ConnectionLine south, ConnectionLine west, double x, double y) {
-			this.parentPane = parentPane;
-			this.parent = parent;
-			addConnectionInternally(north, LineDividerPosition.NORTH);
-			addConnectionInternally(east, LineDividerPosition.EAST);
-			addConnectionInternally(south, LineDividerPosition.SOUTH);
-			addConnectionInternally(west, LineDividerPosition.WEST);
-
-			setCenterX(x);
-			setCenterY(y);
-			setRadius(DIAMETER / 2);
-
-			parentPane.getChildren().addAll(this);
-
-			updateDragPane();
+		if (endpoint instanceof Input) {
+			leftToRight = false;
+		} else {
+			leftToRight = true;
 		}
 
-		public LineDivider(PluginConfigGroup parentPane, PluginConnection parent, NodeList xmlConfig) {
-			this.parentPane = parentPane;
-			this.parent = parent;
-			this.xmlConfig = xmlConfig;
+		if (startPoint != null) {
 
-			for (int i = 0; i < xmlConfig.getLength(); i++) {
-				Node xmlNode = xmlConfig.item(i);
-				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element xmlElement = (Element) xmlNode;
-					String tagName = xmlElement.getTagName();
+			LinkedList<USPPoint> check = getCheckList(startPoint);
+			USPPoint secondEnd = getSecondEnd(startPoint, check);
 
-					if (tagName.equals("number")) {
-						number = new Integer(xmlElement.getTextContent()).intValue();
-					} else if (tagName.equals("xCoord")) {
-						setCenterX(new Double(xmlElement.getTextContent()));
-					} else if (tagName.equals("yCoord")) {
-						setCenterY(new Double(xmlElement.getTextContent()));
-					}
-				}
+			dragNDropInt(startPoint, x, y, check, secondEnd, false);
+		}
+	}
+
+	public void setHoveredForDeletion(USPLine line) {
+
+		configGroup.removeCurrentSelection();
+
+		for (HashSet<USPLine> part : lines.keySet()) {
+			if (part.contains(line)) {
+				deletionLines = part;
+				deletionPoints = lines.get(part);
+				break;
 			}
-
-			setRadius(DIAMETER / 2);
-
-			parentPane.getChildren().addAll(this);
-
-			updateDragPane();
 		}
 
-		public void finalizeXMLConfig(HashSet<SigproPlugin> plugins, LinkedList<ConnectionLine> lines,
-				LinkedList<LineDivider> dividers) {
+		for (USPLine deletionLine : deletionLines) {
 
-			for (int a = 0; a < xmlConfig.getLength(); a++) {
-				Node xmlNode = xmlConfig.item(a);
+			deletionLine.setStyle(USPLineStyle.HOVERED_FOR_DELETION);
+		}
 
-				if (xmlNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element xmlElement = (Element) xmlNode;
-					String tagName = xmlElement.getTagName();
+	}
 
-					if (tagName.equals("lines")) {
-						NodeList lineNodes = xmlElement.getChildNodes();
+	public void deleteSelection() {
 
-						for (int b = 0; b < lineNodes.getLength(); b++) {
-							Node lineNode = lineNodes.item(b);
+		if (deletionPoints != null) {
 
-							if (lineNode.getNodeType() == Node.ELEMENT_NODE) {
-								Element lineElement = (Element) lineNode;
-								String lineTag = lineElement.getTagName();
-
-								LineDividerPosition pos = null;
-								int lineNumber = 0;
-
-								if (lineTag.equals("north")) {
-									pos = LineDividerPosition.NORTH;
-									lineNumber = new Integer(lineElement.getTextContent());
-								} else if (lineTag.equals("south")) {
-									pos = LineDividerPosition.SOUTH;
-									lineNumber = new Integer(lineElement.getTextContent());
-								} else if (lineTag.equals("east")) {
-									pos = LineDividerPosition.EAST;
-									lineNumber = new Integer(lineElement.getTextContent());
-								} else if (lineTag.equals("west")) {
-									pos = LineDividerPosition.WEST;
-									lineNumber = new Integer(lineElement.getTextContent());
-								}
-
-								ConnectionLine line = null;
-
-								for (ConnectionLine curLine : lines) {
-									if (curLine.getNumber() == lineNumber) {
-										line = curLine;
-										break;
-									}
-								}
-								addLineWithPos(pos, line);
-							}
-
-						}
-
+			if (deletionPoints.getFirst().equals(inputPoint)) {
+				input.removeConnection(this);
+				input = null;
+				inputPoint = null;
+			} else {
+				for (Input out : outputs.keySet()) {
+					if (outputs.get(out).equals(deletionPoints.getFirst())) {
+						out.removeConnection(this);
+						outputs.remove(out);
 						break;
 					}
 				}
 			}
-		}
 
-		public void setNumber(int number) {
-			this.number = number;
-		}
-
-		public int getNumber() {
-			return number;
-		}
-
-		public void collectedDividerInfo(Document doc, Element element) {
-			Element dividerElement = doc.createElement("divider");
-			Element numberElement = doc.createElement("number");
-			numberElement.appendChild(doc.createTextNode(new Integer(number).toString()));
-			Element xCoord = doc.createElement("xCoord");
-			xCoord.appendChild(doc.createTextNode(new Double(getCenterX()).toString()));
-			Element yCoord = doc.createElement("yCoord");
-			yCoord.appendChild(doc.createTextNode(new Double(getCenterY()).toString()));
-
-			Element lines = doc.createElement("lines");
-			collectLineInfo(doc, lines, LineDividerPosition.EAST);
-			collectLineInfo(doc, lines, LineDividerPosition.NORTH);
-			collectLineInfo(doc, lines, LineDividerPosition.SOUTH);
-			collectLineInfo(doc, lines, LineDividerPosition.WEST);
-
-			dividerElement.appendChild(numberElement);
-			dividerElement.appendChild(xCoord);
-			dividerElement.appendChild(yCoord);
-			dividerElement.appendChild(lines);
-			element.appendChild(dividerElement);
-		}
-
-		private void collectLineInfo(Document doc, Element element, LineDividerPosition pos) {
-			if (connectionLines.containsKey(pos)) {
-				String posStr = pos.toString();
-				Element lineElement = doc.createElement(posStr);
-				lineElement
-						.appendChild(doc.createTextNode(new Integer(connectionLines.get(pos).getNumber()).toString()));
-				element.appendChild(lineElement);
-			}
-		}
-
-		private void updateCoordinatesInternal(double screenX, double screenY) {
-			double localX = parentPane.screenToLocal(screenX, screenY).getX();
-			double localY = parentPane.screenToLocal(screenX, screenY).getY();
-
-			double raster = parentPane.getRaster();
-
-			localX = Math.round(localX / raster) * raster;
-			localY = Math.round(localY / raster) * raster;
-
-			setCenterX(localX);
-			setCenterY(localY);
-
-			updateDragPane();
-
-			for (ConnectionLine line : connectionLines.values()) {
-				line.updateCoordinates(this, localX, localY);
-			}
-		}
-
-		private void updateDragPane() {
-			if (dragPane == null) {
-				dragPane = new Pane();
-				parentPane.getChildren().add(dragPane);
-				dragPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						updateCoordinatesInternal(event.getScreenX(), event.getScreenY());
-					}
-
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						if (parentPane.getWorkCon() != null) {
-
-							ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
-
-							if (workingLine != null) {
-								if (workingLine.isHorizontal()) {
-									if (workingLine.isLeftRight()
-											&& connectionLines.containsKey(LineDividerPosition.WEST)) {
-										return;
-									} else if (!workingLine.isLeftRight()
-											&& connectionLines.containsKey(LineDividerPosition.EAST)) {
-										return;
-									}
-								} else {
-									if (workingLine.isUpDown()
-											&& connectionLines.containsKey(LineDividerPosition.NORTH)) {
-										return;
-									} else if (!workingLine.isUpDown()
-											&& connectionLines.containsKey(LineDividerPosition.SOUTH)) {
-										return;
-									}
-								}
-
-								HashSet<ConnectionLineEndpointInterface> endpoints = new HashSet<>();
-								if (!parentPane.getWorkCon().hasInput()) {
-									HashSet<Input> inputs = parentPane.getWorkCon().getInputs();
-
-									for (Input input : inputs) {
-										endpoints.add(input);
-									}
-								} else {
-									HashSet<Output> outputs = parentPane.getWorkCon().getOutputs();
-
-									for (Output output : outputs) {
-										endpoints.add(output);
-									}
-								}
-
-								if (!checkRekusivity(endpoints, !parentPane.getWorkCon().hasInput())
-										&& !(parent.hasInput() && parentPane.getWorkCon().hasInput())) {
-									hovered = true;
-									parentPane.setLineHovered(true);
-									setFill(Color.RED);
-								}
-							}
-						}
-					}
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_EXITED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-						hovered = false;
-						parentPane.setLineHovered(false);
-						setFill(Color.BLACK);
-					}
-				});
-
-				dragPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-
-					@Override
-					public void handle(MouseEvent event) {
-
-						addExternalLine();
-
-					}
-
-				});
-			}
-
-			dragPane.setPrefSize(DIAMETER, DIAMETER);
-			dragPane.setLayoutX(getCenterX() - DIAMETER / 2);
-			dragPane.setLayoutY(getCenterY() - DIAMETER / 2);
-		}
-
-		private void addExternalLine() {
-			if (hovered) {
-				ConnectionLine workingLine = parentPane.getWorkCon().getActLine();
-
-				if (!workingLine.isHorizontal()) {
-					if (workingLine.isUpDown()) {
-						connectionLines.put(LineDividerPosition.NORTH, workingLine);
-					} else {
-						connectionLines.put(LineDividerPosition.SOUTH, workingLine);
-					}
-				} else {
-					if (workingLine.isLeftRight()) {
-						connectionLines.put(LineDividerPosition.WEST, workingLine);
-					} else {
-						connectionLines.put(LineDividerPosition.EAST, workingLine);
+			if (deletionPoints.getLast().equals(inputPoint)) {
+				input.removeConnection(this);
+				input = null;
+				inputPoint = null;
+			} else {
+				for (Input out : outputs.keySet()) {
+					if (outputs.get(out).equals(deletionPoints.getLast())) {
+						out.removeConnection(this);
+						outputs.remove(out);
+						break;
 					}
 				}
-
-				workingLine.setCoordinatesFinal(this, getCenterX(), getCenterY());
-
-				for (ConnectionLine workLine : parentPane.getWorkCon().lines) {
-					addLine(workLine);
-					workLine.parent = parent;
-				}
-
-				for (LineDivider divider : parentPane.getWorkCon().dividers) {
-					addDevider(divider);
-					divider.parent = parent;
-				}
-
-				parentPane.finalizeDrawing();
 			}
-		}
 
-		public void setParent(PluginConnection parent) {
-			this.parent = parent;
-		}
+			HashSet<LinkedList<USPPoint>> cached = new HashSet<>();
 
-		private void addConnectionInternally(ConnectionLine line, LineDividerPosition position) {
-			if (line != null) {
-				connectionLines.put(position, line);
-			}
-		}
-
-		private void removeConnection(ConnectionLine line) {
-			LineDividerPosition removePos = null;
-
-			for (LineDividerPosition pos : connectionLines.keySet()) {
-				if (connectionLines.get(pos).equals(line)) {
-					removePos = pos;
-					break;
+			for (LinkedList<USPPoint> list : points) {
+				if (list.hashCode() != deletionPoints.hashCode()) {
+					cached.add(list);
 				}
 			}
 
-			if (removePos != null) {
-				connectionLines.remove(removePos);
-			}
-		}
+			points = cached;
+			deletionPoints = null;
+			deletionLines = null;
+			clearPoints();
+			redraw();
 
-		@Override
-		public boolean setCoordinates(ConnectionLine line, double x, double y) {
-			// Can't move this object from outside -> so we return false
-			return false;
-		}
-
-		@Override
-		public void addLine(ConnectionLine line) {
-
-			// Nothing to do, won't be called.
-		}
-
-		public void addLineWithPos(LineDividerPosition pos, ConnectionLine line) {
-
-			connectionLines.put(pos, line);
-			line.updateCoordinates(this, getCenterX(), getCenterY());
-		}
-
-		@Override
-		public void removeLine(ConnectionLine line) {
-
-			LineDividerPosition deletePos = null;
-
-			for (LineDividerPosition pos : connectionLines.keySet()) {
-				if (connectionLines.get(pos).equals(line)) {
-					deletePos = pos;
-				}
-			}
-
-			if (deletePos != null) {
-				connectionLines.remove(deletePos);
-			}
-
-			if (connectionLines.size() == 2) {
-				// Unify to lines
-				ConnectionLine firstLine = null;
-				ConnectionLine secondLine = null;
-				boolean first = true;
-
-				for (ConnectionLine curLine : connectionLines.values()) {
-					if (first) {
-						firstLine = curLine;
-						first = false;
-					} else {
-						secondLine = curLine;
-					}
-
-				}
-
-				if (firstLine != null && secondLine != null) {
-					if (this.equals(firstLine.firstEnd)) {
-						firstLine.firstLine = secondLine;
-						firstLine.firstEnd = null;
-					} else {
-						firstLine.secondLine = secondLine;
-						firstLine.secondEnd = null;
-					}
-
-					if (this.equals(secondLine.firstEnd)) {
-						secondLine.firstLine = firstLine;
-						secondLine.firstEnd = null;
-					} else {
-						secondLine.secondLine = firstLine;
-						secondLine.secondEnd = null;
-					}
-				}
-
-				parentPane.getChildren().remove(this);
-				parentPane.getChildren().remove(dragPane);
-
-				parent.dividers.remove(this);
-				parent.unifyConnectionsDevider();
-
-				parentPane = null;
-				parent = null;
-			}
-		}
-
-		@Override
-		public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
-
-			for (LineDividerPosition pos : connectionLines.keySet()) {
-				if (connectionLines.get(pos).equals(origin)) {
-					connectionLines.replace(pos, replace);
-					break;
-				}
+			if (points.isEmpty()) {
+				configGroup.deletePluginConnection(this);
 			}
 		}
 	}
 
-	private enum LineDividerPosition {
-		NORTH, EAST, SOUTH, WEST;
+	public void deleteFromEndpoint(ConnectionLineEndpointInterface endpoint) {
 
-		public String toString() {
-			if (this.equals(EAST)) {
-				return "east";
-			} else if (this.equals(WEST)) {
-				return "west";
-			} else if (this.equals(SOUTH)) {
-				return "south";
-			} else {
-				return "north";
+		USPPoint point = null;
+
+		if (endpoint instanceof Input) {
+			for (Input output : outputs.keySet()) {
+				if (endpoint.equals(output)) {
+					point = outputs.get(output);
+				}
+			}
+		} else {
+			if (endpoint.equals(input)) {
+				point = inputPoint;
 			}
 		}
+
+		if (point != null) {
+
+			for (Entry<HashSet<USPLine>, LinkedList<USPPoint>> entry : lines.entrySet()) {
+				LinkedList<USPPoint> pointList = entry.getValue();
+
+				if (point.equals(pointList.getFirst()) || point.equals(pointList.getLast())) {
+					deletionLines = entry.getKey();
+					deletionPoints = entry.getValue();
+					break;
+				}
+			}
+
+			deleteSelection();
+		}
+	}
+
+	public boolean clearPoints() {
+
+		boolean redraw = false;
+
+		HashSet<USPPoint> removePoints = new HashSet<>();
+
+		for (USPPoint point : dividerPoints) {
+			HashSet<LinkedList<USPPoint>> connectedLists = new HashSet<>();
+
+			for (LinkedList<USPPoint> list : points) {
+				if (point.equals(list.getFirst()) || point.equals(list.getLast())) {
+					connectedLists.add(list);
+				}
+			}
+
+			if (connectedLists.size() == 2) {
+				LinkedList<USPPoint> firstList = null;
+				LinkedList<USPPoint> secondList = null;
+
+				removePoints.add(point);
+
+				boolean first = true;
+
+				for (LinkedList<USPPoint> list : connectedLists) {
+					if (first) {
+						firstList = list;
+						first = false;
+					} else {
+						secondList = list;
+					}
+				}
+
+				HashSet<LinkedList<USPPoint>> cached = new HashSet<>();
+
+				for (LinkedList<USPPoint> list : points) {
+					if (list.hashCode() != firstList.hashCode() && list.hashCode() != secondList.hashCode()) {
+						cached.add(list);
+					}
+				}
+
+				points = cached;
+
+				if (!(firstList.getFirst().equals(inputPoint) || outputs.containsValue(firstList.getFirst()))) {
+					LinkedList<USPPoint> tmp = firstList;
+					firstList = secondList;
+					secondList = tmp;
+				}
+
+				if (point.equals(firstList.getFirst())) {
+					LinkedList<USPPoint> tmp = new LinkedList<>();
+
+					Iterator<USPPoint> revIter = firstList.descendingIterator();
+
+					while (revIter.hasNext()) {
+						tmp.add(revIter.next());
+					}
+
+					firstList = tmp;
+				}
+
+				if (point.equals(secondList.getLast())) {
+					LinkedList<USPPoint> tmp = new LinkedList<>();
+
+					Iterator<USPPoint> revIter = secondList.descendingIterator();
+
+					while (revIter.hasNext()) {
+						tmp.add(revIter.next());
+					}
+
+					secondList = tmp;
+				}
+
+				firstList.removeLast();
+
+				if (firstList.getLast().getX() == secondList.get(1).getX()
+						|| firstList.getLast().getY() == secondList.get(1).getY()) {
+					secondList.removeFirst();
+				}
+
+				firstList.addAll(secondList);
+				points.add(firstList);
+			}
+		}
+
+		dividerPoints.removeAll(removePoints);
+
+		for (LinkedList<USPPoint> list : points) {
+
+			HashSet<USPPoint> removeList = new HashSet<>();
+			USPPoint last = null;
+
+			for (USPPoint point : list) {
+
+				if (last != null) {
+					if (point.equalCoordinates(last)) {
+						boolean skip = false;
+
+						if (list.indexOf(point) == list.size() - 2) {
+							if (list.size() - 4 >= 0 && list.getLast().getY() < point.getY()
+									&& list.get(list.size() - 4).getY() < point.getY()) {
+								skip = true;
+							}
+
+							if (list.size() - 4 >= 0 && list.getLast().getY() > point.getY()
+									&& list.get(list.size() - 4).getY() > point.getY()) {
+								skip = true;
+							}
+						}
+
+						if (list.indexOf(point) == 2) {
+							if (list.size() > 3 && list.getFirst().getX() < point.getX()
+									&& list.get(3).getX() < list.getFirst().getX()) {
+								skip = true;
+							}
+
+							if (list.size() > 3 && list.getFirst().getX() > point.getX()
+									&& list.get(3).getX() > list.getFirst().getX()) {
+								skip = true;
+							}
+						}
+
+						if (!skip) {
+							if (!removeList.contains(last)) {
+								removeList.add(last);
+								removeList.add(point);
+							}
+						}
+					}
+				}
+				last = point;
+			}
+
+			if (removeList.size() != 0) {
+
+				list.removeAll(removeList);
+				redraw = true;
+			}
+		}
+
+		if (redraw) {
+			redraw();
+		}
+
+		return redraw;
+	}
+
+	public boolean isDrawingHorizontal() {
+		return drawingHorizontal;
+	}
+
+	private class USPPoint {
+
+		private HashSet<USPLine> updateLines = new HashSet<>();
+		private HashSet<USPDivider> updateDividers = new HashSet<>();
+
+		private double x;
+		private double y;
+
+		public USPPoint(double x, double y) {
+
+			this.x = x;
+			this.y = y;
+		}
+
+		public void clearUpdateLines() {
+			updateLines.clear();
+		}
+
+		public void addUpdateLine(USPLine line) {
+			updateLines.add(line);
+		}
+
+		public void clearUpdateDividers() {
+			updateDividers.clear();
+		}
+
+		public void addUpdateDivider(USPDivider divider) {
+			updateDividers.add(divider);
+		}
+
+		public void setCoordinates(double x, double y) {
+			this.x = x;
+			this.y = y;
+
+			for (USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
+			}
+
+			for (USPDivider divider : updateDividers) {
+				divider.updateFromUSPPoint(this);
+			}
+		}
+
+		public double getX() {
+			return x;
+		}
+
+		public double getY() {
+			return y;
+		}
+
+		public void setX(double x) {
+			this.x = x;
+
+			for (USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
+			}
+		}
+
+		public void setY(double y) {
+			this.y = y;
+
+			for (USPLine line : updateLines) {
+				line.updateFromUSPPoint(this);
+			}
+		}
+
+		public boolean equalCoordinates(USPPoint other) {
+			if (x == other.getX() && y == other.getY()) {
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public class USPDivider extends Circle {
+
+		private USPPoint center;
+
+		private PluginConfigGroup configGroup;
+		private PluginConnection parentCon;
+
+		public USPDivider(USPPoint center, PluginConnection parentCon, PluginConfigGroup configGroup) {
+			super(center.getX(), center.getY(), DIVIDER_DIAMETER / 2);
+			this.configGroup = configGroup;
+			this.parentCon = parentCon;
+			this.center = center;
+			center.addUpdateDivider(this);
+		}
+
+		public void updateFromUSPPoint(USPPoint p) {
+			if (p.equals(center)) {
+				setCenterX(p.getX());
+				setCenterY(p.getY());
+			}
+		}
+
+		public void clear() {
+
+			center = null;
+			configGroup = null;
+		}
+	}
+
+	public class USPLine extends Line {
+
+		private USPPoint start;
+		private USPPoint end;
+		private MouseEventPane mouseEventPane;
+		private boolean hor;
+
+		private USPLineStyle style;
+
+		private PluginConfigGroup configGroup;
+		private PluginConnection parentCon;
+
+		public USPLine(USPPoint start, USPPoint end, PluginConnection parentCon, PluginConfigGroup configGroup,
+				boolean hor) {
+			super(start.getX(), start.getY(), end.getX(), end.getY());
+			this.start = start;
+			this.end = end;
+			this.parentCon = parentCon;
+			this.configGroup = configGroup;
+			this.hor = hor;
+			end.addUpdateLine(this);
+			start.addUpdateLine(this);
+		}
+
+		public void updateFromUSPPoint(USPPoint p) {
+			if (p.equals(start)) {
+				setStartX(start.getX());
+				setStartY(start.getY());
+			} else if (p.equals(end)) {
+				setEndX(end.getX());
+				setEndY(end.getY());
+			}
+
+			if (mouseEventPane != null) {
+				mouseEventPane.update();
+			}
+		}
+
+		public void setStyle(USPLineStyle style) {
+
+			switch (style) {
+			case NORMAL_LINE:
+				setStrokeWidth(1);
+				setStyle("-fx-stroke: -usp-black");
+				if (mouseEventPane == null) {
+					mouseEventPane = new MouseEventPane(this);
+					configGroup.getChildren().add(mouseEventPane);
+				}
+				break;
+			case DRAWING_LINE:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				if (mouseEventPane != null) {
+					configGroup.getChildren().remove(mouseEventPane);
+				}
+				mouseEventPane = null;
+				break;
+			case HOVERED_LINE:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				break;
+			case HOVERED_FOR_DELETION:
+				setStrokeWidth(3);
+				setStyle("-fx-stroke: -usp-light-blue");
+				break;
+			}
+
+			this.style = style;
+		}
+
+		public void clear() {
+			if (mouseEventPane != null) {
+				configGroup.getChildren().remove(mouseEventPane);
+				mouseEventPane = null;
+			}
+
+			start = null;
+			end = null;
+			configGroup = null;
+		}
+
+		private class MouseEventPane extends Pane {
+
+			private USPLine parent;
+
+			public MouseEventPane(USPLine parent) {
+				this.parent = parent;
+				update();
+
+				setOnMouseEntered(new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+
+						if (parent.style != USPLineStyle.HOVERED_FOR_DELETION) {
+							if (parent.configGroup.getWorkCon() != null) {
+								USPPoint drawingPoint = parent.configGroup.getWorkCon().drawingPoint;
+								Point2D screen = parent.configGroup.localToScreen(drawingPoint.getX(),
+										drawingPoint.getY());
+
+								Point2D local = screenToLocal(screen);
+
+								if (local.getX() < getWidth() && local.getY() < getHeight() && local.getX() > 0
+										&& local.getY() > 0) {
+									parent.setStyle(USPLineStyle.HOVERED_LINE);
+								}
+								return;
+							}
+
+							parent.setStyle(USPLineStyle.HOVERED_LINE);
+						}
+					}
+
+				});
+
+				setOnMouseExited(new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+
+						if (parent.style != USPLineStyle.HOVERED_FOR_DELETION) {
+							parent.setStyle(USPLineStyle.NORMAL_LINE);
+						}
+					}
+
+				});
+
+				setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+					@Override
+					public void handle(MouseEvent event) {
+
+						if (parent.style == USPLineStyle.HOVERED_FOR_DELETION) {
+							parent.parentCon.removeCurrentSelection();
+							event.consume();
+						} else if (parent.configGroup.getWorkCon() == null) {
+							parent.parentCon.setHoveredForDeletion(parent);
+							event.consume();
+						}
+					}
+
+				});
+			}
+
+			public void update() {
+				if (parent.end != null && parent.start != null) {
+					if (parent.hor) {
+						USPPoint right = null;
+						USPPoint left = null;
+
+						if (parent.end.getX() > parent.start.getX()) {
+							right = parent.end;
+							left = parent.start;
+						} else {
+							right = parent.start;
+							left = parent.end;
+						}
+
+						double length = right.getX() - left.getX();
+						setPrefSize(length - 2 * LINE_OFFSET, 2 * LINE_OFFSET);
+						setLayoutX(left.getX() + LINE_OFFSET);
+						setLayoutY(left.getY() - LINE_OFFSET);
+					} else {
+						USPPoint upper = null;
+						USPPoint lower = null;
+
+						if (parent.end.getY() > parent.start.getY()) {
+							upper = parent.end;
+							lower = parent.start;
+						} else {
+							upper = parent.start;
+							lower = parent.end;
+						}
+
+						double length = upper.getY() - lower.getY();
+						setPrefSize(2 * LINE_OFFSET, length - 2 * LINE_OFFSET);
+						setLayoutX(lower.getX() - LINE_OFFSET);
+						setLayoutY(lower.getY() + LINE_OFFSET);
+					}
+				}
+			}
+		}
+
+	}
+
+	public enum USPLineStyle {
+		DRAWING_LINE, NORMAL_LINE, HOVERED_LINE, HOVERED_FOR_DELETION
+	}
+
+	private enum USPLineOrientation {
+		LEFT_TO_RIGHT, RIGHT_TO_LEFT, BOTTOM_UP, TOP_DOWN
 	}
 
 }

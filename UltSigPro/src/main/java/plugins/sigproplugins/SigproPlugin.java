@@ -122,6 +122,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				public void handle(MouseEvent event) {
 
 					dragged = false;
+					coordinatesListener.clearPoints();
 				}
 
 			});
@@ -190,6 +191,18 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			yPosition = 0;
 		}
 
+		for(Input input : inputs) {
+			if(!input.checkUpdatePosition(xPosition, yPosition)) {
+				return;
+			}
+		}
+		
+		for(Output output : outputs) {
+			if(!output.checkUpdatePosition(xPosition, yPosition)) {
+				return;
+			}
+		}
+		
 		gui.setLayoutX(xPosition);
 		gui.setLayoutY(yPosition);
 

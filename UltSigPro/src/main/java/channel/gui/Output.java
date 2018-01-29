@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import com.sun.javafx.tk.FontLoader;
 import com.sun.javafx.tk.Toolkit;
 
-import channel.gui.PluginConnection.ConnectionLine;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -41,7 +41,7 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	
 	private Output thisOutput;
 	
-	private ConnectionLine conLine;
+	private PluginConnection con;
 	
 	private boolean hovered = false;
 
@@ -104,8 +104,8 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 
 			@Override
 			public void handle(MouseEvent event) {
-
-				if(conLine == null && (configGroup.getWorkCon() == null || !configGroup.getWorkCon().hasInput())) {
+				
+				if(con == null && (configGroup.getWorkCon() == null || !configGroup.getWorkCon().hasInput())) {
 					
 					boolean recursivity = false;
 					
@@ -129,13 +129,17 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 							}
 							
 							for(Input input : inputs) {
-								if(input.getLine() != null) {
-									if(input.getLine().getParentConnection().checkRekusivity(endpoints, true)) {
+								if(input.getConnection() != null) {
+									if(input.getConnection().checkRekusivity(endpoints, true)) {
 										recursivity = true;
 										break;
 									}
 								}
 							}
+						}
+						
+						if(!configGroup.getWorkCon().isDrawingHorizontal()) {
+							return;
 						}
 					}
 					
@@ -185,39 +189,59 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 		return plugin;
 	}
 	
-	public ConnectionLine getLine() {
-		return conLine;
+	public PluginConnection getConnection() {
+		return con;
 	}
 	
 	public static double getHeightOfOutput() {
 		return height;
 	}
+	
+	private Point2D calculatePositionFromParent(double parentX, double parentY) {
+		
+		double xPosition = parentX + parentWidth;
+		double yPosition = parentY + parentHeight/2 + position * outputOffset - number/2 * outputOffset - yOffset;
+		
+		return new Point2D(xPosition, yPosition);
+	}
 
 	public void updatePosition(double parentX, double parentY) {
 
-		double xPosition = parentX + parentWidth;
+		Point2D calculated = calculatePositionFromParent(parentX, parentY);
+		
+		double xPosition = calculated.getX();
 		setLayoutX(xPosition);
 		conPosX = xPosition + 17;
 
-		double yPosition = parentY + parentHeight/2 + position * outputOffset - number/2 * outputOffset - yOffset;
+		double yPosition = calculated.getY();
 		setLayoutY(yPosition);
 		conPosY = yPosition + yOffset;
 		
-		if(conLine != null) {			
-			conLine.updateCoordinates(this, conPosX, conPosY);
+		if(con != null) {
+			con.dragNDrop(this, conPosX, conPosY);
 		}
+	}
+	
+	public boolean checkUpdatePosition(double parentX, double parentY) {
+		
+		if(con != null) {
+			Point2D calculated = calculatePositionFromParent(parentX, parentY);
+			return con.checkDragNDrop(this, calculated.getX() + 17, calculated.getY() + yOffset);
+		}
+		
+		return true;
 	}
 
 	@Override
-	public boolean setCoordinates(ConnectionLine line, double x, double y) {
+	public boolean setCoordinates(PluginConnection line, double x, double y) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public void addLine(ConnectionLine conLine) {
-		
-		this.conLine = conLine;
+	public void addConnection(PluginConnection con) {
+		 
+		this.con = con;
 	}
 	
 	public boolean isHovered() {
@@ -225,27 +249,28 @@ public class Output extends Pane implements ConnectionLineEndpointInterface {
 	}
 
 	@Override
-	public void removeLine(ConnectionLine line) {
+	public void removeConnection(PluginConnection con) {
 		
-		if(conLine.equals(line)) {
-			conLine = null;
+		if(con.equals(this.con)) {
+			this.con = null;
 		}
 		
 	}
 	
 	@Override
-	public void replaceLine(ConnectionLine origin, ConnectionLine replace) {
+	public void replaceConnection(PluginConnection origin, PluginConnection replace) {
 		
-		if(conLine.equals(origin)) {
-			conLine = replace;
+		if(con.equals(origin)) {
+			this.con = replace;
 		}
 		
 	}
 	
 	public void delete() {
 		configGroup.getChildren().remove(this);
-		if(conLine != null) {
-			conLine.delete();
+		
+		if(con != null) {
+			con.deleteFromEndpoint(this);
 		}
 	}
 }

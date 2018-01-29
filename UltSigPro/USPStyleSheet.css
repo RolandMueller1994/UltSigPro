@@ -7,6 +7,8 @@
 	-usp-font-color: #FFFFFF;
 	-effect-highlight: dropshadow(three-pass-box, -usp-light-blue, 5, 0.05, 0, 1);
 	-effect-highlight-light: dropshadow(three-pass-box, -usp-light-blue2, 5, 0.05, 0, 1);
+	-usp-black: #000000;
+	-usp-font-color: #FFFFFF
 }
 
 .root {

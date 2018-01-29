@@ -24,8 +24,6 @@ import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
 import channel.PluginInput;
 import channel.PluginOutput;
-import channel.gui.PluginConnection.ConnectionLine;
-import channel.gui.PluginConnection.LineDivider;
 import channel.gui.SignalFlowConfigException.SignalFlowErrorCode;
 import gui.USPGui;
 import i18n.LanguageResourceHandler;
@@ -82,7 +80,7 @@ public class PluginConfigGroup extends Pane {
 	private PluginConnection workCon = null;
 	private HashSet<PluginConnection> allConnections = new HashSet<>();
 
-	private ConnectionLine deletionLine;
+	//private ConnectionLine deletionLine;
 
 	private boolean lineHovered = false;
 
@@ -93,6 +91,10 @@ public class PluginConfigGroup extends Pane {
 	private double startDragY;
 
 	private boolean dragged = false;
+	private boolean coordinatesOnLine = false;
+	
+	private PluginConnection coordinatesCon;
+	
 	private double scrollValue = 20;
 	
 	/**
@@ -237,6 +239,18 @@ public class PluginConfigGroup extends Pane {
 
 		});
 		
+		addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				
+				if(workCon == null && coordinatesCon != null) {
+					coordinatesCon.clearPoints();
+				}
+			}
+			
+		});
+		
 		addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
 
 			@Override
@@ -244,6 +258,27 @@ public class PluginConfigGroup extends Pane {
 				
 				startDragX = event.getScreenX();
 				startDragY = event.getScreenY();
+				
+				coordinatesOnLine = false;
+				coordinatesCon = null;
+				
+				if(workCon != null) {
+					for(PluginConnection con : allConnections) {
+						if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
+							coordinatesOnLine = true;
+							coordinatesCon = con;
+							break;
+						}
+					}					
+				} else {
+					for(PluginConnection con : allConnections) {
+						if(con.checkIfCoordinatesOnLine(event.getX(), event.getY())) {
+							coordinatesOnLine = true;
+							coordinatesCon = con;
+							break;
+						}
+					}
+				}
 				
 			}
 			
@@ -269,6 +304,10 @@ public class PluginConfigGroup extends Pane {
 					
 					startDragX = endDragX;
 					startDragY = endDragY;
+				} else if(event.isPrimaryButtonDown()) {
+					if(coordinatesCon != null) {
+						coordinatesCon.dragLine(event.getX(), event.getY());						
+					}
 				}
 				
 			}
@@ -292,20 +331,22 @@ public class PluginConfigGroup extends Pane {
 						break;
 					}
 				}
-				
-				boolean coordinatesOnLine = false;
-				
-				for(PluginConnection con : allConnections) {
-					if(con.checkIfCoordinatesOnLine(event.getScreenX(), event.getScreenY())) {
-						coordinatesOnLine = true;
-						break;
-					}
-				}
 
 				if (!hovered && !lineHovered) {
 					if (event.getButton().equals(MouseButton.SECONDARY) && workCon == null
 							&& !contextMenu.isShowing()) {
 						showContextMenu(event.getScreenX(), event.getScreenY());
+						boolean coordinatesOnLine = false;
+						
+						if(workCon != null) {
+							for(PluginConnection con : allConnections) {
+								if(con.checkIfCoordinatesOnLine(workCon.getDrawingPoint())) {
+									coordinatesOnLine = true;
+									coordinatesCon = con;
+									break;
+								}
+							}					
+						}
 
 						Point2D point = screenToLocal(event.getScreenX(), event.getScreenY());
 
@@ -314,14 +355,23 @@ public class PluginConfigGroup extends Pane {
 					} else if (workCon == null && contextMenu.isShowing()) {
 						contextMenu.hide();
 					} else if (event.getButton().equals(MouseButton.PRIMARY) && workCon != null) {
-						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
-								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
+						if(!coordinatesOnLine) {
+							workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
+									sceneToLocal(event.getSceneX(), event.getSceneY()).getY());							
+						}
 					}
 				}
 				
 				if(hovered || !coordinatesOnLine) {
 					for(PluginConnection con : allConnections) {
 						con.removeCurrentSelection();
+					}
+				}
+				
+				if(coordinatesOnLine && workCon != null) {
+					if(!coordinatesCon.unifyConnections(workCon)) {
+						workCon.changeOrientation(sceneToLocal(event.getSceneX(), event.getSceneY()).getX(),
+								sceneToLocal(event.getSceneX(), event.getSceneY()).getY());
 					}
 				}
 			}
@@ -506,7 +556,7 @@ public class PluginConfigGroup extends Pane {
 		
 		boolean isConnection = false;
 		
-		for(SigproPlugin plugin : plugins) {
+/*		for(SigproPlugin plugin : plugins) {
 			if(!(plugin.equals(input)) && !(plugin.equals(output))) {
 				for(Input input : plugin.getInputs()) {
 					if(input.getLine() == null) {
@@ -521,7 +571,7 @@ public class PluginConfigGroup extends Pane {
 				}				
 			}
 		}
-		
+*/		
 		LinkedList<String> messages = new LinkedList<>();
 		LinkedList<SignalFlowErrorCode> errorCodes = new LinkedList<>();
 		
@@ -568,8 +618,8 @@ public class PluginConfigGroup extends Pane {
 	 * Cancel the drawing of the current {@link ConnectionLine}.
 	 */
 	public void escapeLineDrawing() {
-		if (workCon != null && workCon.getActLine() != null) {
-			workCon.getActLine().delete();
+		if (workCon != null) {
+			workCon.escapeLineDrawing();
 			workCon = null;
 		}
 	}
@@ -591,6 +641,10 @@ public class PluginConfigGroup extends Pane {
 	 */
 	public void finalizeDrawing() {
 		workCon = null;
+	}
+	
+	public void removeConnection(PluginConnection con) {
+		allConnections.remove(con);
 	}
 
 	private void drawLine(MouseEvent event) {
@@ -626,16 +680,17 @@ public class PluginConfigGroup extends Pane {
 
 		if (workCon == null) {
 			workCon = new PluginConnection(this, endpoint, xCoord, yCoord);
-			endpoint.addLine(workCon.getActLine());
+			// TODO endpoint.addLine(workCon.getActLine());
 		} else {
-			if (!workCon.getActLine().isHorizontal()) {
+			if (!workCon.isDrawingHorizontal()) {
 				workCon.changeOrientation(xCoord, yCoord);
 			}
 
-			if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
+			//TODO
+			/*if (!workCon.getActLine().checkCoordinates(xCoord, yCoord)) {
 				workCon.devideActLine(xCoord, yCoord);
-			}
-			endpoint.addLine(workCon.getActLine());
+			}*/
+			endpoint.addConnection(workCon);
 			workCon.endPluginConnection(endpoint, xCoord, yCoord);
 			allConnections.add(workCon);
 			workCon = null;
@@ -726,18 +781,28 @@ public class PluginConfigGroup extends Pane {
 		return workCon != null;
 	}
 
+	// TODO
+	/*
 	public void setDeletionLine(ConnectionLine deletionLine) {
 		this.deletionLine = deletionLine;
-	}
+	}*/
 
 	public void deleteLine() {
-		if (deletionLine != null) {
-			deletionLine.delete();
+		
+		for(PluginConnection con : allConnections) {
+			con.deleteSelection();
+		}
+		
+	}
+	
+	public void clearPoints() {
+		for(PluginConnection con : allConnections) {
+			con.clearPoints();
 		}
 	}
 
 	public void removeDeletionLine() {
-		deletionLine = null;
+		//deletionLine = null;
 	}
 
 	public void deletePlugin(SigproPlugin plugin) {
