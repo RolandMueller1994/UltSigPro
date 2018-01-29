@@ -144,7 +144,7 @@ public class PluginConnection {
 			configGroup.getChildren().removeAll(part);
 		}
 
-		for(USPDivider divider : dividers) {
+		for (USPDivider divider : dividers) {
 			divider.clear();
 		}
 		configGroup.getChildren().removeAll(dividers);
@@ -251,7 +251,7 @@ public class PluginConnection {
 		// double y = localPoint.getY();
 
 		dividerCoordinatesPoint = null;
-		
+
 		double x = drawingPoint.getX();
 		double y = drawingPoint.getY();
 
@@ -334,13 +334,13 @@ public class PluginConnection {
 		double raster = configGroup.getRaster();
 		y = Math.round(y / raster) * raster;
 		x = Math.round(x / raster) * raster;
-		
+
 		boolean redraw = false;
 
 		if (dividerCoordinatesPoint != null) {
-			
+
 			System.out.println("Drag divider");
-			
+
 			HashSet<LinkedList<USPPoint>> checkLists = new HashSet<>();
 
 			for (LinkedList<USPPoint> checkList : points) {
@@ -349,38 +349,38 @@ public class PluginConnection {
 					checkLists.add(checkList);
 				}
 			}
-			
-			for(LinkedList<USPPoint> check : checkLists) {
-				
+
+			for (LinkedList<USPPoint> check : checkLists) {
+
 				USPPoint secondEnd = null;
 				boolean leftToRight = false;
-				
-				if(dividerCoordinatesPoint.equals(check.getFirst())) {
+
+				if (dividerCoordinatesPoint.equals(check.getFirst())) {
 					secondEnd = check.getLast();
 				} else {
 					secondEnd = check.getFirst();
 				}
-				
+
 				leftToRight = secondEnd.getX() > dividerCoordinatesPoint.getX();
-				
-				if(!checkDragNDropInt(dividerCoordinatesPoint, x, y, check, secondEnd, leftToRight)) {
+
+				if (!checkDragNDropInt(dividerCoordinatesPoint, x, y, check, secondEnd, leftToRight)) {
 					return;
 				}
 			}
-			
+
 			double savedX = dividerCoordinatesPoint.getX();
 			double savedY = dividerCoordinatesPoint.getY();
-			
-			for(LinkedList<USPPoint> check : checkLists) {
-				
+
+			for (LinkedList<USPPoint> check : checkLists) {
+
 				USPPoint secondEnd = null;
-				
-				if(dividerCoordinatesPoint.equals(check.getFirst())) {
+
+				if (dividerCoordinatesPoint.equals(check.getFirst())) {
 					secondEnd = check.getLast();
 				} else {
 					secondEnd = check.getFirst();
 				}
-				
+
 				dragNDropInt(dividerCoordinatesPoint, x, y, check, secondEnd, false);
 				dividerCoordinatesPoint.setCoordinates(savedX, savedY);
 			}
@@ -400,11 +400,18 @@ public class PluginConnection {
 					left = firstCoordinatesPoint;
 				}
 
+				boolean toShort = false;
+				boolean rightSet = false;
+				boolean leftSet = false;
+
 				if (right.getX() - left.getX() < 3 * MIN_LINE_LENGTH) {
-					return;
+					toShort = true;
 				}
 
 				if (left.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
 					double divideX = left.getX() + MIN_LINE_LENGTH;
 					divideX = Math.ceil(divideX / raster) * raster;
 
@@ -418,6 +425,9 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(2);
 					}
 				} else if (left.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
 					double divideX = left.getX() + MIN_LINE_LENGTH;
 					divideX = Math.ceil(divideX / raster) * raster;
 
@@ -435,8 +445,12 @@ public class PluginConnection {
 					}
 				} else if (left.equals(coordinatesPoints.get(1))
 						&& coordinatesPoints.get(1).getX() == coordinatesPoints.getFirst().getX()
-						&& Math.abs(coordinatesPoints.getFirst().getY() - y) < MIN_LINE_LENGTH) {
-
+						&& (coordinatesPoints.get(1).getY() > coordinatesPoints.getFirst().getY()
+								? y - coordinatesPoints.getFirst().getY() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					double divideX = coordinatesPoints.getFirst().getX() + MIN_LINE_LENGTH;
 
 					coordinatesPoints.add(2, new USPPoint(divideX, coordinatesPoints.get(1).getY()));
@@ -448,10 +462,15 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(3);
 					}
-				} else if (left.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
-						.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast().getX()
-						&& Math.abs(coordinatesPoints.getLast().getY() - y) < MIN_LINE_LENGTH) {
-
+				} else if (left.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast()
+								.getX()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getY() > coordinatesPoints.getLast()
+								.getY() ? y - coordinatesPoints.getLast().getY() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					int index = coordinatesPoints.size();
 
 					double divideX = coordinatesPoints.getLast().getX() + MIN_LINE_LENGTH;
@@ -466,10 +485,13 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
 					}
 				} else {
-					left.setY(y);
+					leftSet = true;
 				}
 
 				if (right.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
 					double divideX = right.getX() - MIN_LINE_LENGTH;
 					divideX = Math.floor(divideX / raster) * raster;
 
@@ -483,6 +505,9 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(2);
 					}
 				} else if (right.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
 					double divideX = right.getX() - MIN_LINE_LENGTH;
 					divideX = Math.floor(divideX / raster) * raster;
 
@@ -500,8 +525,12 @@ public class PluginConnection {
 					}
 				} else if (right.equals(coordinatesPoints.get(1))
 						&& coordinatesPoints.get(1).getX() == coordinatesPoints.getFirst().getX()
-						&& Math.abs(coordinatesPoints.getFirst().getY() - y) < MIN_LINE_LENGTH) {
-
+						&& (coordinatesPoints.get(1).getY() > coordinatesPoints.getFirst().getY()
+								? y - coordinatesPoints.getFirst().getY() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					double divideX = coordinatesPoints.getFirst().getX() - MIN_LINE_LENGTH;
 
 					coordinatesPoints.add(2, new USPPoint(divideX, coordinatesPoints.get(1).getY()));
@@ -513,10 +542,15 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(3);
 					}
-				} else if (right.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
-						.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast().getX()
-						&& Math.abs(coordinatesPoints.getLast().getY() - y) < MIN_LINE_LENGTH) {
-
+				} else if (right.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getX() == coordinatesPoints.getLast()
+								.getX()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getY() > coordinatesPoints.getLast()
+								.getY() ? y - coordinatesPoints.getLast().getY() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getY() - y < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					int index = coordinatesPoints.size();
 
 					double divideX = coordinatesPoints.getLast().getX() - MIN_LINE_LENGTH;
@@ -531,9 +565,17 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
 					}
 				} else {
+					rightSet = true;
+				}
+
+				if (rightSet) {
 					right.setY(y);
 				}
-			} else if (x != firstCoordinatesPoint.getX()) {
+
+				if (leftSet) {
+					left.setY(y);
+				}
+			} else if (!coordinatesHorizontal && x != firstCoordinatesPoint.getX()) {
 				USPPoint lower = null;
 				USPPoint upper = null;
 
@@ -545,11 +587,18 @@ public class PluginConnection {
 					lower = firstCoordinatesPoint;
 				}
 
+				boolean toShort = false;
+				boolean lowerSet = false;
+				boolean upperSet = false;
+
 				if (upper.getY() - lower.getY() < 3 * MIN_LINE_LENGTH) {
-					return;
+					toShort = true;
 				}
 
 				if (lower.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
 					double divideY = lower.getY() + MIN_LINE_LENGTH;
 					divideY = Math.ceil(divideY / raster) * raster;
 
@@ -563,6 +612,9 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(2);
 					}
 				} else if (lower.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
 					double divideY = lower.getY() + MIN_LINE_LENGTH;
 					divideY = Math.ceil(divideY / raster) * raster;
 
@@ -580,8 +632,12 @@ public class PluginConnection {
 					}
 				} else if (lower.equals(coordinatesPoints.get(1))
 						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
-						&& Math.abs(coordinatesPoints.getFirst().getX() - x) < MIN_LINE_LENGTH) {
-
+						&& (coordinatesPoints.get(1).getX() > coordinatesPoints.getFirst().getX()
+								? x - coordinatesPoints.getFirst().getX() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					double divideY = coordinatesPoints.getFirst().getY() + MIN_LINE_LENGTH;
 
 					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
@@ -593,10 +649,15 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(3);
 					}
-				} else if (lower.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
-						.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast().getY()
-						&& Math.abs(coordinatesPoints.getLast().getX() - x) < MIN_LINE_LENGTH) {
-
+				} else if (lower.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast()
+								.getY()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getX() > coordinatesPoints.getLast()
+								.getX() ? x - coordinatesPoints.getLast().getX() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					int index = coordinatesPoints.size();
 
 					double divideY = coordinatesPoints.getLast().getY() + MIN_LINE_LENGTH;
@@ -611,10 +672,13 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
 					}
 				} else {
-					lower.setX(x);
+					lowerSet = true;
 				}
 
 				if (upper.equals(coordinatesPoints.getFirst())) {
+					if (toShort) {
+						return;
+					}
 					double divideY = upper.getY() - MIN_LINE_LENGTH;
 					divideY = Math.floor(divideY / raster) * raster;
 
@@ -628,6 +692,9 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(2);
 					}
 				} else if (upper.equals(coordinatesPoints.getLast())) {
+					if (toShort) {
+						return;
+					}
 					double divideY = upper.getY() - MIN_LINE_LENGTH;
 					divideY = Math.floor(divideY / raster) * raster;
 
@@ -645,8 +712,12 @@ public class PluginConnection {
 					}
 				} else if (upper.equals(coordinatesPoints.get(1))
 						&& coordinatesPoints.get(1).getY() == coordinatesPoints.getFirst().getY()
-						&& Math.abs(coordinatesPoints.getFirst().getX() - x) < MIN_LINE_LENGTH) {
-
+						&& (coordinatesPoints.get(1).getX() > coordinatesPoints.getFirst().getX()
+								? x - coordinatesPoints.getFirst().getX() < MIN_LINE_LENGTH
+								: coordinatesPoints.getFirst().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					double divideY = coordinatesPoints.getFirst().getY() - MIN_LINE_LENGTH;
 
 					coordinatesPoints.add(2, new USPPoint(coordinatesPoints.get(1).getX(), divideY));
@@ -658,10 +729,15 @@ public class PluginConnection {
 					} else {
 						secondCoordinatesPoint = coordinatesPoints.get(3);
 					}
-				} else if (upper.equals(coordinatesPoints.get(coordinatesPoints.size() - 2)) && coordinatesPoints
-						.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast().getY()
-						&& Math.abs(coordinatesPoints.getLast().getX() - x) < MIN_LINE_LENGTH) {
-
+				} else if (upper.equals(coordinatesPoints.get(coordinatesPoints.size() - 2))
+						&& coordinatesPoints.get(coordinatesPoints.size() - 2).getY() == coordinatesPoints.getLast()
+								.getY()
+						&& (coordinatesPoints.get(coordinatesPoints.size() - 2).getX() > coordinatesPoints.getLast()
+								.getX() ? x - coordinatesPoints.getLast().getX() < MIN_LINE_LENGTH
+										: coordinatesPoints.getLast().getX() - x < MIN_LINE_LENGTH)) {
+					if (toShort) {
+						return;
+					}
 					int index = coordinatesPoints.size();
 
 					double divideY = coordinatesPoints.getLast().getY() - MIN_LINE_LENGTH;
@@ -676,14 +752,20 @@ public class PluginConnection {
 						secondCoordinatesPoint = coordinatesPoints.get(index - 2);
 					}
 				} else {
+					upperSet = true;
+				}
+
+				if (lowerSet) {
+					lower.setX(x);
+				}
+
+				if (upperSet) {
 					upper.setX(x);
 				}
 			}
 		}
 
-		if (redraw)
-
-		{
+		if (redraw) {
 			redraw();
 		}
 
@@ -903,7 +985,7 @@ public class PluginConnection {
 			configGroup.removeConnection(other);
 			redraw();
 			configGroup.finalizeDrawing();
-			
+
 			dividerCoordinatesPoint = null;
 			return true;
 		}
@@ -1172,7 +1254,7 @@ public class PluginConnection {
 		}
 
 		dragNDrop(endpoint, xCoord, yCoord);
-		
+
 		endpoint.addConnection(this);
 
 		drawingPoint = null;
@@ -1413,10 +1495,10 @@ public class PluginConnection {
 	}
 
 	public void dragNDropInt(USPPoint startPoint, double x, double y, LinkedList<USPPoint> check, USPPoint secondEnd,
-			 boolean fromDivider) {
+			boolean fromDivider) {
 
 		double raster = configGroup.getRaster();
-		
+
 		LinkedList<USPPoint> keep = null;
 
 		if (startPoint.equals(check.getLast())) {
@@ -1427,41 +1509,41 @@ public class PluginConnection {
 				check.offerFirst(point);
 			}
 		}
-		
+
 		boolean horizontal = false;
 		boolean leftToRight = false;
 		boolean bottomUp = false;
-		
-		if(check.get(1).getY() == check.getFirst().getY()) {
+
+		if (check.get(1).getY() == check.getFirst().getY()) {
 			horizontal = true;
-			if(check.get(1).getX() > check.getFirst().getX()) {
+			if (check.get(1).getX() > check.getFirst().getX()) {
 				leftToRight = true;
 			} else {
 				leftToRight = false;
 			}
 		} else {
 			horizontal = false;
-			if(check.get(1).getY() > check.getFirst().getY()) {
+			if (check.get(1).getY() > check.getFirst().getY()) {
 				bottomUp = true;
 			} else {
 				bottomUp = false;
 			}
 		}
-		
+
 		boolean redraw = false;
 
 		if (check != null) {
-			
-			if(horizontal) {
+
+			if (horizontal) {
 				if (check.size() == 2) {
 					// Horizontal line
 					if (startPoint.getY() == y) {
-						if(!fromDivider) {
-							startPoint.setX(x);						
+						if (!fromDivider) {
+							startPoint.setX(x);
 						}
 					} else {
-						if(!fromDivider) {
-							startPoint.setX(x);	
+						if (!fromDivider) {
+							startPoint.setX(x);
 							startPoint.setY(y);
 						}
 						addTwoPoints(startPoint, check, 0, false);
@@ -1471,126 +1553,126 @@ public class PluginConnection {
 					// Vertical connected
 					if (leftToRight) {
 						if (secondEnd.getX() - x <= MIN_LINE_LENGTH) {
-							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
-	
+
 							addTwoPoints(startPoint, check, 1, true);
 							redraw = true;
 						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if (secondEnd.getX() - x > MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
 						} else {
-	
+
 						}
 					} else {
 						if (x - secondEnd.getX() <= MIN_LINE_LENGTH) {
-							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
-	
+
 							addTwoPoints(startPoint, check, 1, true);
 							redraw = true;
 						} else if (secondEnd.getY() > check.get(1).getY() && secondEnd.getY() - y < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if (secondEnd.getY() < check.get(1).getY() && y - secondEnd.getY() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, false);
 							redraw = true;
 						} else if (x - secondEnd.getX() > MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
 						} else {
-	
+
 						}
 					}
 				} else if (check.size() == 4) {
 					if (leftToRight) {
 						if (secondEnd.getX() - x < 3 * MIN_LINE_LENGTH && secondEnd.getX() - check.get(2).getX() > 0) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
 							check.get(1).setY(y);
-	
+
 							addTwoPoints(startPoint, check, 1, true);
 							redraw = true;
 						} else if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
 							check.get(1).setY(y);
-							check.get(2).setX(Math.ceil((x + raster)/raster)*raster);
+							check.get(2).setX(Math.ceil((x + raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
 						}
 					} else {
 						if (x - secondEnd.getX() < 3 * MIN_LINE_LENGTH && check.get(2).getX() - secondEnd.getX() > 0) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
 							check.get(1).setY(y);
-	
+
 							addTwoPoints(startPoint, check, 1, true);
 							redraw = true;
 						} else if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
 							check.get(1).setY(y);
-							check.get(2).setX(Math.floor((x - raster)/raster)*raster);
+							check.get(2).setX(Math.floor((x - raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
@@ -1599,32 +1681,32 @@ public class PluginConnection {
 				} else {
 					if (leftToRight) {
 						if (check.get(1).getX() - x < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.ceil((x + raster)/raster)*raster);
+							check.get(1).setX(Math.ceil((x + raster) / raster) * raster);
 							check.get(1).setY(y);
-							check.get(2).setX(Math.ceil((x + raster)/raster)*raster);
+							check.get(2).setX(Math.ceil((x + raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
 						}
 					} else {
 						if (x - check.get(1).getX() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setX(Math.floor((x - raster)/raster)*raster);
+							check.get(1).setX(Math.floor((x - raster) / raster) * raster);
 							check.get(1).setY(y);
-							check.get(2).setX(Math.floor((x - raster)/raster)*raster);
+							check.get(2).setX(Math.floor((x - raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setY(y);
@@ -1632,16 +1714,16 @@ public class PluginConnection {
 					}
 				}
 			} else {
-				
+
 				if (check.size() == 2) {
 					// Vertical line
 					if (startPoint.getX() == x) {
-						if(!fromDivider) {
-							startPoint.setY(y);						
+						if (!fromDivider) {
+							startPoint.setY(y);
 						}
 					} else {
-						if(!fromDivider) {
-							startPoint.setX(x);	
+						if (!fromDivider) {
+							startPoint.setX(x);
 							startPoint.setY(y);
 						}
 						addTwoPoints(startPoint, check, 0, true);
@@ -1651,126 +1733,126 @@ public class PluginConnection {
 					// Vertical connected
 					if (bottomUp) {
 						if (secondEnd.getY() - y <= MIN_LINE_LENGTH) {
-							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
-	
+
 							addTwoPoints(startPoint, check, 1, false);
 							redraw = true;
 						} else if (secondEnd.getX() > check.get(1).getX() && secondEnd.getX() - x < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, true);
 							redraw = true;
 						} else if (secondEnd.getX() < check.get(1).getX() && y - secondEnd.getX() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, true);
 							redraw = true;
 						} else if (secondEnd.getY() - y > MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
 						} else {
-	
+
 						}
 					} else {
 						if (y - secondEnd.getY() <= MIN_LINE_LENGTH) {
-							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
-	
+
 							addTwoPoints(startPoint, check, 1, false);
 							redraw = true;
 						} else if (secondEnd.getX() > check.get(1).getX() && secondEnd.getX() - x < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, true);
 							redraw = true;
 						} else if (secondEnd.getX() < check.get(1).getX() && x - secondEnd.getX() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-	
+
 							addTwoPoints(startPoint, check, 0, true);
 							redraw = true;
 						} else if (y - secondEnd.getY() > MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
 						} else {
-	
+
 						}
 					}
 				} else if (check.size() == 4) {
 					if (bottomUp) {
 						if (secondEnd.getY() - y < 3 * MIN_LINE_LENGTH && secondEnd.getY() - check.get(2).getY() > 0) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
 							check.get(1).setX(x);
-	
+
 							addTwoPoints(startPoint, check, 1, true);
 							redraw = true;
 						} else if (check.get(1).getY() - y < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
 							check.get(1).setX(x);
-							check.get(2).setY(Math.ceil((y + raster)/raster)*raster);
+							check.get(2).setY(Math.ceil((y + raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
 						}
 					} else {
 						if (y - secondEnd.getY() < 3 * MIN_LINE_LENGTH && check.get(2).getY() - secondEnd.getY() > 0) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
 							check.get(1).setX(x);
-	
+
 							addTwoPoints(startPoint, check, 1, false);
 							redraw = true;
 						} else if (y - check.get(1).getY() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
 							check.get(1).setX(x);
-							check.get(2).setY(Math.floor((y - raster)/raster)*raster);
+							check.get(2).setY(Math.floor((y - raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
@@ -1779,32 +1861,32 @@ public class PluginConnection {
 				} else {
 					if (bottomUp) {
 						if (check.get(1).getY() - y < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.ceil((y + raster)/raster)*raster);
+							check.get(1).setY(Math.ceil((y + raster) / raster) * raster);
 							check.get(1).setX(x);
-							check.get(2).setY(Math.ceil((y + raster)/raster)*raster);
+							check.get(2).setY(Math.ceil((y + raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
 						}
 					} else {
 						if (y - check.get(1).getY() < MIN_LINE_LENGTH) {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
-							check.get(1).setY(Math.floor((y - raster)/raster)*raster);
+							check.get(1).setY(Math.floor((y - raster) / raster) * raster);
 							check.get(1).setX(x);
-							check.get(2).setY(Math.floor((y - raster)/raster)*raster);
+							check.get(2).setY(Math.floor((y - raster) / raster) * raster);
 						} else {
-							if(!fromDivider) {
-								startPoint.setX(x);	
+							if (!fromDivider) {
+								startPoint.setX(x);
 								startPoint.setY(y);
 							}
 							check.get(1).setX(x);
@@ -2123,11 +2205,11 @@ public class PluginConnection {
 		public void addUpdateLine(USPLine line) {
 			updateLines.add(line);
 		}
-		
+
 		public void clearUpdateDividers() {
 			updateDividers.clear();
 		}
-		
+
 		public void addUpdateDivider(USPDivider divider) {
 			updateDividers.add(divider);
 		}
@@ -2139,8 +2221,8 @@ public class PluginConnection {
 			for (USPLine line : updateLines) {
 				line.updateFromUSPPoint(this);
 			}
-			
-			for(USPDivider divider : updateDividers) {
+
+			for (USPDivider divider : updateDividers) {
 				divider.updateFromUSPPoint(this);
 			}
 		}
@@ -2178,34 +2260,34 @@ public class PluginConnection {
 	}
 
 	public class USPDivider extends Circle {
-		
+
 		private USPPoint center;
-		
+
 		private PluginConfigGroup configGroup;
 		private PluginConnection parentCon;
-		
+
 		public USPDivider(USPPoint center, PluginConnection parentCon, PluginConfigGroup configGroup) {
-			super(center.getX(), center.getY(), DIVIDER_DIAMETER/2);
+			super(center.getX(), center.getY(), DIVIDER_DIAMETER / 2);
 			this.configGroup = configGroup;
 			this.parentCon = parentCon;
 			this.center = center;
 			center.addUpdateDivider(this);
 		}
-		
+
 		public void updateFromUSPPoint(USPPoint p) {
-			if(p.equals(center)) {
+			if (p.equals(center)) {
 				setCenterX(p.getX());
 				setCenterY(p.getY());
 			}
 		}
-		
+
 		public void clear() {
-			
+
 			center = null;
 			configGroup = null;
 		}
 	}
-	
+
 	public class USPLine extends Line {
 
 		private USPPoint start;
@@ -2351,38 +2433,40 @@ public class PluginConnection {
 			}
 
 			public void update() {
-				if (parent.hor) {
-					USPPoint right = null;
-					USPPoint left = null;
+				if (parent.end != null && parent.start != null) {
+					if (parent.hor) {
+						USPPoint right = null;
+						USPPoint left = null;
 
-					if (parent.end.getX() > parent.start.getX()) {
-						right = parent.end;
-						left = parent.start;
+						if (parent.end.getX() > parent.start.getX()) {
+							right = parent.end;
+							left = parent.start;
+						} else {
+							right = parent.start;
+							left = parent.end;
+						}
+
+						double length = right.getX() - left.getX();
+						setPrefSize(length - 2 * LINE_OFFSET, 2 * LINE_OFFSET);
+						setLayoutX(left.getX() + LINE_OFFSET);
+						setLayoutY(left.getY() - LINE_OFFSET);
 					} else {
-						right = parent.start;
-						left = parent.end;
+						USPPoint upper = null;
+						USPPoint lower = null;
+
+						if (parent.end.getY() > parent.start.getY()) {
+							upper = parent.end;
+							lower = parent.start;
+						} else {
+							upper = parent.start;
+							lower = parent.end;
+						}
+
+						double length = upper.getY() - lower.getY();
+						setPrefSize(2 * LINE_OFFSET, length - 2 * LINE_OFFSET);
+						setLayoutX(lower.getX() - LINE_OFFSET);
+						setLayoutY(lower.getY() + LINE_OFFSET);
 					}
-
-					double length = right.getX() - left.getX();
-					setPrefSize(length - 2 * LINE_OFFSET, 2 * LINE_OFFSET);
-					setLayoutX(left.getX() + LINE_OFFSET);
-					setLayoutY(left.getY() - LINE_OFFSET);
-				} else {
-					USPPoint upper = null;
-					USPPoint lower = null;
-
-					if (parent.end.getY() > parent.start.getY()) {
-						upper = parent.end;
-						lower = parent.start;
-					} else {
-						upper = parent.start;
-						lower = parent.end;
-					}
-
-					double length = upper.getY() - lower.getY();
-					setPrefSize(2 * LINE_OFFSET, length - 2 * LINE_OFFSET);
-					setLayoutX(lower.getX() - LINE_OFFSET);
-					setLayoutY(lower.getY() + LINE_OFFSET);
 				}
 			}
 		}
