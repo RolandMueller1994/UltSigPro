@@ -212,12 +212,15 @@ public class PluginConnection {
 	}
 
 	public void removeCurrentSelection() {
-
-		if (deletionLines != null) {
-			for (USPLine deletionLine : deletionLines) {
-				deletionLine.setStyle(USPLineStyle.NORMAL_LINE);
-			}
-
+		try {
+			if (deletionLines != null) {
+				for (USPLine deletionLine : deletionLines) {
+					deletionLine.setStyle(USPLineStyle.NORMAL_LINE);
+				}
+			}			
+		} catch (NullPointerException ex) {
+			redraw();
+		} finally {
 			deletionLines = null;
 			deletionPoints = null;
 		}
