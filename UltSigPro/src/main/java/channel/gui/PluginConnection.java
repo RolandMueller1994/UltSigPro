@@ -952,7 +952,97 @@ public class PluginConnection {
 	}
 
 	public void collectConnectionLineInfos(Document doc, Element element) {
-
+		
+		if(dividerPoints.size() != 0) {
+			Element dividerList = doc.createElement("dividerPoints");
+			
+			for(USPPoint dividerPoint : dividerPoints) {
+				Element dividerElement = doc.createElement("divider");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(dividerPoint.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(dividerPoint.getY()).toString()));
+				
+				dividerElement.appendChild(xCoord);
+				dividerElement.appendChild(yCoord);
+				dividerList.appendChild(dividerElement);
+			}
+			
+			element.appendChild(dividerList);
+		}
+		
+		if(input != null) {
+			Element inputElement = doc.createElement("input");
+			
+			Element inputPointElement = doc.createElement("point");
+			Element xCoord = doc.createElement("xCoord");
+			Element yCoord = doc.createElement("yCoord");
+			xCoord.appendChild(doc.createTextNode(new Double(inputPoint.getX()).toString()));
+			yCoord.appendChild(doc.createTextNode(new Double(inputPoint.getY()).toString()));
+			inputPointElement.appendChild(xCoord);
+			inputPointElement.appendChild(yCoord);
+			inputElement.appendChild(inputPointElement);
+			
+			Element inputPlugin = doc.createElement("plugin");
+			Element inputNumber = doc.createElement("number");
+			inputNumber.appendChild(doc.createTextNode(new Integer(input.getPlugin().getNumber()).toString()));
+			Element inputName = doc.createElement("name");
+			inputName.appendChild(doc.createTextNode(input.getName()));
+			inputPlugin.appendChild(inputNumber);
+			inputPlugin.appendChild(inputName);
+			inputElement.appendChild(inputPlugin);
+			
+			element.appendChild(inputElement);
+		}
+		
+		if(outputs.size() != 0) {
+			Element outputsElement = doc.createElement("outputs");
+			
+			for(Input output : outputs.keySet()) {
+				Element outputElement = doc.createElement("output");
+				
+				USPPoint outputPoint = outputs.get(output);
+				
+				Element outputPointElement = doc.createElement("point");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(outputPoint.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(outputPoint.getY()).toString()));
+				outputPointElement.appendChild(xCoord);
+				outputPointElement.appendChild(yCoord);
+				outputElement.appendChild(outputPointElement);
+				
+				Element outputPlugin = doc.createElement("plugin");
+				Element outputNumber = doc.createElement("number");
+				outputNumber.appendChild(doc.createTextNode(new Integer(output.getPlugin().getNumber()).toString()));
+				Element inputName = doc.createElement("name");
+				inputName.appendChild(doc.createTextNode(output.getName()));
+				outputPlugin.appendChild(outputNumber);
+				outputPlugin.appendChild(inputName);
+				outputElement.appendChild(outputPlugin);
+				
+				outputsElement.appendChild(outputElement);
+			}
+			
+			element.appendChild(outputsElement);
+		}
+		
+		for(LinkedList<USPPoint> part : points) {
+			Element partElement = doc.createElement("part");
+			
+			for(USPPoint point : part) {
+				Element pointElement = doc.createElement("point");
+				Element xCoord = doc.createElement("xCoord");
+				Element yCoord = doc.createElement("yCoord");
+				xCoord.appendChild(doc.createTextNode(new Double(point.getX()).toString()));
+				yCoord.appendChild(doc.createTextNode(new Double(point.getY()).toString()));
+				pointElement.appendChild(xCoord);
+				pointElement.appendChild(yCoord);
+				partElement.appendChild(pointElement);
+			}
+			
+			element.appendChild(partElement);
+		}
 	}
 
 	public void setConnectionLinesConfig(NodeList nodeList) {
