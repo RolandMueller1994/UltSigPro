@@ -10,6 +10,7 @@ import javax.annotation.Nonnull;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.sun.javafx.geom.Line2D;
@@ -20,6 +21,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import plugins.sigproplugins.SigproPlugin;
 
 /**
  * This class manages the drawing of lines between plugins. Each connection is
@@ -341,8 +343,6 @@ public class PluginConnection {
 		boolean redraw = false;
 
 		if (dividerCoordinatesPoint != null) {
-
-			System.out.println("Drag divider");
 
 			HashSet<LinkedList<USPPoint>> checkLists = new HashSet<>();
 
@@ -1046,7 +1046,267 @@ public class PluginConnection {
 	}
 
 	public void setConnectionLinesConfig(NodeList nodeList) {
+		
+		for(int i=0; i < nodeList.getLength(); i++) {
+			Node connection = nodeList.item(i);
+			
+			if(connection.getNodeType() == Node.ELEMENT_NODE) {
+				Element connectionEntry = (Element) connection;
+				String tagName = connectionEntry.getTagName();
+				
+				switch (tagName) {
+				case "dividerPoints":
+					dividerPoints = new HashSet<>();
+					
+					NodeList dividerNodes = connectionEntry.getChildNodes();
+					
+					for(int a=0; a < dividerNodes.getLength(); a++) {
+						Node dividerEntry = dividerNodes.item(a);
+						if(dividerEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element dividerElement = (Element) dividerEntry;
+							
+							if(dividerElement.getTagName().equals("divider")) {
+								NodeList coordinatesNodes = dividerElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < coordinatesNodes.getLength(); b++) {
+									Node coordinate = coordinatesNodes.item(b);
+									
+									if(coordinate.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) coordinate;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								dividerPoints.add(new USPPoint(xCoord, yCoord));
+							}
+						}
+					}
+					break;
+					
+				case "input":
+					NodeList inputNodes = connectionEntry.getChildNodes();
+					
+					for(int a=0; a < inputNodes.getLength(); a++) {
+						Node inputEntry = inputNodes.item(a);
+						if(inputEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element inputElement = (Element) inputEntry;
+							
+							if(inputElement.getTagName().equals("point")) {
+								NodeList pointNodes = inputElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < pointNodes.getLength(); b++) {
+									Node point = pointNodes.item(b);
+									
+									if(point.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) point;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								inputPoint = new USPPoint(xCoord, yCoord);
+							} else if(inputElement.getTagName().equals("plugin")) {
+								String name = null;
+								int number = 0;
+								
+								NodeList pluginNodes = inputElement.getChildNodes();
+								
+								for(int b=0; b<pluginNodes.getLength(); b++) {
+									Node pluginEntry = pluginNodes.item(b);
+									
+									if(pluginEntry.getNodeType() == Node.ELEMENT_NODE) {
+										Element pluginElement = (Element) pluginEntry;
+										
+										if(pluginElement.getTagName().equals("name")) {
+											name = pluginElement.getTextContent();
+										} else if(pluginElement.getTagName().equals("number")) {
+											number = new Integer(pluginElement.getTextContent());
+										}
+									}
+								}
+								
+								HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+								
+								for(SigproPlugin plugin : plugins) {
+									if(plugin.getNumber() == number) {
+										HashSet<Output> outputs = plugin.getOutputs();
+										
+										for(Output output : outputs) {
+											if(output.getName().equals(name)) {
+												output.addConnection(this);
+												input = output;
+												break;
+											}
+										}
+										break;
+									}
+								}
+							}
+						}
+					}
+					break;
+					
+				case "outputs":
+					NodeList outputsNodes = connectionEntry.getChildNodes();
+					
+					for(int c=0; c<outputsNodes.getLength(); c++) {
+						Node outputsNode = outputsNodes.item(c);
+						
+						if(outputsNode.getNodeType() == Node.ELEMENT_NODE) {
+							Element outputsElement = (Element) outputsNode;
+							
+							NodeList outputNodes = outputsElement.getChildNodes();
+							
+							double xCoord = 0;
+							double yCoord = 0;
+							String name = null;
+							int number = 0;
+							for(int a=0; a < outputNodes.getLength(); a++) {
+								Node outputEntry = outputNodes.item(a);
+								if(outputEntry.getNodeType() == Node.ELEMENT_NODE) {
+									Element outputElement = (Element) outputEntry;
+									
+									if(outputElement.getTagName().equals("point")) {
+										NodeList pointNodes = outputElement.getChildNodes();
+										
+										for(int b=0; b < pointNodes.getLength(); b++) {
+											Node point = pointNodes.item(b);
+											
+											if(point.getNodeType() == Node.ELEMENT_NODE) {
+												Element coordinateElement = (Element) point;
+												
+												if(coordinateElement.getTagName().equals("xCoord")) {
+													xCoord = new Double(coordinateElement.getTextContent());
+												} else if(coordinateElement.getTagName().equals("yCoord")) {
+													yCoord = new Double(coordinateElement.getTextContent());
+												}
+											}
+										}
+									} else if(outputElement.getTagName().equals("plugin")) {
+										
+										NodeList pluginNodes = outputElement.getChildNodes();
+										
+										for(int b=0; b<pluginNodes.getLength(); b++) {
+											Node pluginEntry = pluginNodes.item(b);
+											
+											if(pluginEntry.getNodeType() == Node.ELEMENT_NODE) {
+												Element pluginElement = (Element) pluginEntry;
+												
+												if(pluginElement.getTagName().equals("name")) {
+													name = pluginElement.getTextContent();
+												} else if(pluginElement.getTagName().equals("number")) {
+													number = new Integer(pluginElement.getTextContent());
+												}
+											}
+										}
+									}
+								}
+							}
+							
 
+							HashSet<SigproPlugin> plugins = configGroup.getPlugins();
+							
+							for(SigproPlugin plugin : plugins) {
+								if(plugin.getNumber() == number) {
+									HashSet<Input> inputs = plugin.getInputs();
+									
+									for(Input input : inputs) {
+										if(input.getName().equals(name)) {
+											input.addConnection(this);
+											outputs.put(input, new USPPoint(xCoord, yCoord));
+											break;
+										}
+									}
+									break;
+								}
+							}
+						}
+					}
+					
+					break;
+					
+				case "part":
+					NodeList partNodes = connectionEntry.getChildNodes();
+					LinkedList<USPPoint> part = new LinkedList<>();
+					
+					for(int a=0; a < partNodes.getLength(); a++) {
+						Node partEntry = partNodes.item(a);
+						if(partEntry.getNodeType() == Node.ELEMENT_NODE) {
+							Element partElement = (Element) partEntry;
+							
+							if(partElement.getTagName().equals("point")) {
+								NodeList pointNodes = partElement.getChildNodes();
+								
+								double xCoord = 0;
+								double yCoord = 0;
+								for(int b=0; b < pointNodes.getLength(); b++) {
+									Node point = pointNodes.item(b);
+									
+									if(point.getNodeType() == Node.ELEMENT_NODE) {
+										Element coordinateElement = (Element) point;
+										
+										if(coordinateElement.getTagName().equals("xCoord")) {
+											xCoord = new Double(coordinateElement.getTextContent());
+										} else if(coordinateElement.getTagName().equals("yCoord")) {
+											yCoord = new Double(coordinateElement.getTextContent());
+										}
+									}
+								}
+								
+								part.add(new USPPoint(xCoord, yCoord));
+							} 
+						}
+					}
+					
+					if(part.getFirst().equalCoordinates(inputPoint)) {
+						part.removeFirst();
+						part.add(0, inputPoint);
+					} else {
+						for(USPPoint point : outputs.values()) {
+							if(part.getFirst().equalCoordinates(point)) {
+								part.removeFirst();
+								part.add(0, point);
+								break;
+							}
+						}
+					}
+					
+					for(USPPoint point : dividerPoints) {
+						if(point.equalCoordinates(part.getFirst())) {
+							part.removeFirst();
+							part.add(0, point);
+							continue;
+						}
+						
+						if(point.equalCoordinates(part.getLast())) {
+							part.removeLast();
+							part.add(point);
+							continue;
+						}
+					}
+					
+					points.add(part);
+					break;
+				}
+			}
+		}
+		
+		drawingPoints = null;
+		redraw();
+		
 	}
 
 	public boolean unifyConnections(PluginConnection other) {
