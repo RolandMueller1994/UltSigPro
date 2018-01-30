@@ -5,6 +5,8 @@ import java.util.LinkedList;
 
 import channel.OutputDataWrapper;
 import channel.OutputInfoWrapper;
+import gui.guicomponents.ValueKnob;
+import gui.guicomponents.ValueKnob.ValueKnobListener;
 import guicomponents.AbstractNumberTextField.ValueChangedInterface;
 import guicomponents.DoubleTextField;
 import javafx.event.ActionEvent;
@@ -15,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -31,6 +34,9 @@ import plugins.sigproplugins.SigproPlugin;
  */
 public class GainBlock2 extends SigproPlugin {
 
+	private static final double MIN_GAIN = 0.0;
+	private static final double MAX_GAIN = 20.0;
+
 	private double gain = 1.0;
 
 	private String name = "Gain2";
@@ -39,9 +45,10 @@ public class GainBlock2 extends SigproPlugin {
 	private final int height = 100;
 
 	private Label gainLabel = new Label("", new ImageView(new Image("file:icons/gainIcon.png")));
-	private DoubleTextField gainTextField = new DoubleTextField(gain, 0.0, 20.0);
+	private DoubleTextField gainTextField = new DoubleTextField(gain, MIN_GAIN, MAX_GAIN);
 	private Button onOffButton = new Button();
 	private Circle onOffIndicator = new Circle(5);
+	private ValueKnob valueKnob = new ValueKnob();
 
 	private boolean on = false;
 
@@ -71,6 +78,10 @@ public class GainBlock2 extends SigproPlugin {
 			public void valueChanged(Number value) {
 
 				gain = ((Double) value).doubleValue();
+
+				double rotateValue = Math.log10(((gain / (MAX_GAIN - MIN_GAIN) * 9) + 1)) * 100;
+
+				valueKnob.setValue(rotateValue);
 			}
 
 		});
@@ -111,19 +122,34 @@ public class GainBlock2 extends SigproPlugin {
 			column2.setVgrow(Priority.ALWAYS);
 			grid.getRowConstraints().addAll(column1, column2);
 
+			valueKnob.registerValueKnobListener(new ValueKnobListener() {
+
+				@Override
+				public void valueChanged(double value) {
+
+					double gain = (Math.pow(10, value / 100) - 1) / 9 * (MAX_GAIN - MIN_GAIN) + MIN_GAIN;
+
+					gainTextField.setValue(gain);
+
+				}
+			});
+
 			grid.add(onOffButton, 0, 0);
 			grid.add(onOffIndicator, 1, 0);
-			grid.add(gainLabel, 0, 1);
+			// grid.add(gainLabel, 0, 1);
+			grid.add(valueKnob, 0, 1);
 			grid.add(gainTextField, 1, 1);
 
-			GridPane.setHalignment(gainLabel, HPos.CENTER);
+			// GridPane.setHalignment(gainLabel, HPos.CENTER);
+			GridPane.setHalignment(valueKnob, HPos.CENTER);
 			GridPane.setHalignment(onOffIndicator, HPos.CENTER);
 			GridPane.setHalignment(onOffButton, HPos.CENTER);
 			GridPane.setHalignment(gainTextField, HPos.CENTER);
 			grid.setPadding(new Insets(0));
 
 			gui.getChildren().add(grid);
-//			gui.setStyle("-fx-background-color: -usp-dark-grey; -fx-background-radius: 4; -fx-border-color: white;");
+			// gui.setStyle("-fx-background-color: -usp-dark-grey;
+			// -fx-background-radius: 4; -fx-border-color: white;");
 			gui.setStyle("-fx-padding: 1px; -fx-background-color: -usp-dark-grey; -fx-background-radius: 4;");
 		}
 
