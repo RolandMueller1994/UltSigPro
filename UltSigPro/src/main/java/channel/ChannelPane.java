@@ -3,6 +3,7 @@ package channel;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.annotation.Nonnull;
@@ -618,10 +619,14 @@ public class ChannelPane extends TitledPane {
 			if (input && add) {
 				inputAdmin.collectSoundInputDevices();
 				setTitle(lanHandler.getLocalizedText(AddRemoveDialog.class, INPUT_ADD_TITLE));
-				choiceBox.setItems(FXCollections.observableArrayList(inputAdmin.getInputDevices()));
-				ObservableList<String> list = FXCollections.observableArrayList();
-				list.add("Wave " + lanHandler.getLocalizedText("file"));
-				choiceBoxWave.setItems(list);
+				ObservableList<String> deviceList = FXCollections.observableArrayList();
+				deviceList.addAll(inputAdmin.getInputDevices());
+				deviceList.addAll(inputAdmin.getSoundInputDevices().keySet());
+				choiceBox.setItems(deviceList);
+				
+				ObservableList<String> waveList = FXCollections.observableArrayList();
+				waveList.add("Wave " + lanHandler.getLocalizedText("file"));
+				choiceBoxWave.setItems(waveList);
 
 				choiceBoxWave.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -634,8 +639,8 @@ public class ChannelPane extends TitledPane {
 									"Wave " + lanHandler.getLocalizedText("file"), "*.wav"));
 							File waveFile = fileChooser.showOpenDialog(USPGui.stage);
 							if (waveFile != null) {
-								list.add(waveFile.getName());
-								choiceBoxWave.setItems(list);
+								deviceList.add(waveFile.getName());
+								choiceBoxWave.setItems(deviceList);
 								choiceBoxWave.setValue(waveFile.getName());
 								selectedWave = waveFile;
 							}
@@ -753,7 +758,13 @@ public class ChannelPane extends TitledPane {
 						}
 
 						if (selected != null) {
-							inputAdmin.addDeviceToInputDataListener(channel, selected);
+							if (inputAdmin.getInputDevices().contains(selected)) {
+								inputAdmin.addDeviceToInputDataListener(channel, selected);
+							} else {
+								Collection<String> device = new HashSet<String>();
+								device.add(selected);
+								inputAdmin.createSignalSource(device, channel);
+							}
 							inputPane.addDevice(selected);
 							channel.addInputDevice(selected);
 							getChannelConfig().addInputDevice(selected);
@@ -813,7 +824,13 @@ public class ChannelPane extends TitledPane {
 				} else {
 					if (input) {
 						if (selected != null) {
-							inputAdmin.removeDeviceFromInputDataListener(channel, selected);
+							if (inputAdmin.getInputDevices().contains(selected)) {
+								inputAdmin.removeDeviceFromInputDataListener(channel, selected);
+							} else {
+								Collection<String> device = new HashSet<String>();
+								device.add(selected);
+								inputAdmin.removeSignalSources(device, channel);
+							}
 							inputPane.removeDevice(selected);
 							channel.removeInputDevice(selected);
 							getChannelConfig().removeInputDevice(selected);
