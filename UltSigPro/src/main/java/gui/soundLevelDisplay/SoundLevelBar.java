@@ -278,7 +278,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
 				channels.add(channelName);
-				createInputDeviceEntry(channelName);
+				createInputDeviceEntry(device);
 			}
 		} else {
 			if (outputDevicesList.containsKey(device)) {
@@ -288,7 +288,7 @@ public class SoundLevelBar extends GridPane implements SoundValueInterface {
 			} else {
 				LinkedList<String> channels = new LinkedList<>();
 				channels.add(channelName);
-				createOutputDeviceEntry(channelName);
+				createOutputDeviceEntry(device);
 			}
 		}
 	}
