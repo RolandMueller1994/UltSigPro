@@ -1308,10 +1308,27 @@ public class PluginConnection {
 		redraw();
 		
 	}
+	
+	public double getDrawingLength() {
+		
+		if(drawingPoints != null) {
+			if(drawingHorizontal) {
+				return Math.abs(drawingPoint.getX() - drawingPoints.getLast().getX());
+			} else {
+				return Math.abs(drawingPoint.getY() - drawingPoints.getLast().getY());
+			}
+		}
+		
+		return 0;
+	}
 
 	public boolean unifyConnections(PluginConnection other) {
 
 		if (other.hasInput() && hasInput()) {
+			return false;
+		}
+		
+		if(other.getDrawingLength() < MIN_LINE_LENGTH) {
 			return false;
 		}
 
