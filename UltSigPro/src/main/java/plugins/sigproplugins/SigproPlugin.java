@@ -1,9 +1,13 @@
 package plugins.sigproplugins;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.LinkedList;
 import javax.annotation.Nonnull;
 
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -63,17 +67,18 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			gui = new Pane();
 
 			contextMenu = new ContextMenu();
-			if(!(this instanceof PluginInput) && !(this instanceof PluginOutput) && !(this instanceof WaveChartProbe)) {
+			if (!(this instanceof PluginInput) && !(this instanceof PluginOutput)
+					&& !(this instanceof WaveChartProbe)) {
 				MenuItem deleteItem = new MenuItem("Löschen");
 				deleteItem.setOnAction(new EventHandler<ActionEvent>() {
-					
+
 					@Override
 					public void handle(ActionEvent event) {
-						
+
 						delete();
 					}
-					
-				});				
+
+				});
 				contextMenu.getItems().add(deleteItem);
 			}
 
@@ -165,7 +170,7 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		localPositionY = gui.getLayoutY();
 
 		double raster = coordinatesListener.getRaster();
-		
+
 		// Absolute position in scene
 		absolutPositionX = gui.localToScreen(gui.getLayoutBounds()).getMinX();
 		absolutPositionY = gui.localToScreen(gui.getLayoutBounds()).getMinY();
@@ -175,14 +180,14 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		offsetY = absolutPositionY - localPositionY;
 
 		// Calculate the local position
-		double xPosition = screenX - mouseOffsetX - offsetX + getWidth()/2;
-		double yPosition = screenY - mouseOffsetY - offsetY + getHeight()/2;
-		
-		xPosition = Math.round(xPosition/raster) * raster;
-		yPosition = Math.round(yPosition/raster) * raster;
-		
-		xPosition -= getWidth()/2;
-		yPosition -= getHeight()/2;
+		double xPosition = screenX - mouseOffsetX - offsetX + getWidth() / 2;
+		double yPosition = screenY - mouseOffsetY - offsetY + getHeight() / 2;
+
+		xPosition = Math.round(xPosition / raster) * raster;
+		yPosition = Math.round(yPosition / raster) * raster;
+
+		xPosition -= getWidth() / 2;
+		yPosition -= getHeight() / 2;
 
 		if (xPosition < 0) {
 			xPosition = 0;
@@ -191,18 +196,18 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 			yPosition = 0;
 		}
 
-		for(Input input : inputs) {
-			if(!input.checkUpdatePosition(xPosition, yPosition)) {
+		for (Input input : inputs) {
+			if (!input.checkUpdatePosition(xPosition, yPosition)) {
 				return;
 			}
 		}
-		
-		for(Output output : outputs) {
-			if(!output.checkUpdatePosition(xPosition, yPosition)) {
+
+		for (Output output : outputs) {
+			if (!output.checkUpdatePosition(xPosition, yPosition)) {
 				return;
 			}
 		}
-		
+
 		gui.setLayoutX(xPosition);
 		gui.setLayoutY(yPosition);
 
@@ -380,10 +385,15 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		this.number = number;
 	}
 
+	protected abstract String[] getParameterMetaData();
+
 	/**
 	 * Collects current plugins XML configuration. Used for project file.
-	 * @param doc the project file as {@link Document}. Must not be null. 
-	 * @param element the {@link Element} to append the config. Must not be null.
+	 * 
+	 * @param doc
+	 *            the project file as {@link Document}. Must not be null.
+	 * @param element
+	 *            the {@link Element} to append the config. Must not be null.
 	 */
 	public void collectedPluginInfo(@Nonnull Document doc, @Nonnull Element element) {
 		Element pluginConfig = doc.createElement("pluginConfig");
@@ -397,11 +407,88 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		pluginConfig.appendChild(layoutX);
 		pluginConfig.appendChild(layoutY);
 		element.appendChild(pluginConfig);
+
+		String[] metaData = getParameterMetaData();
+
+		if (metaData != null) {
+
+			Element valueElement = doc.createElement("values");
+
+			Class<?> clazz = getClass();
+
+			for (String field : metaData) {
+
+				Element fieldElement = doc.createElement("field");
+				Element fieldNameElement = doc.createElement("name");
+				Element fieldTypeElement = doc.createElement("type");
+				Element fieldValueElement = doc.createElement("value");
+
+				fieldElement.appendChild(fieldNameElement);
+				fieldElement.appendChild(fieldTypeElement);
+				fieldElement.appendChild(fieldValueElement);
+				try {
+					Field clazzField = clazz.getDeclaredField(field);
+					String methodName = "get" + field.substring(0, 1).toUpperCase() + field.substring(1);
+					Method clazzMethod = clazz.getMethod(methodName, new Class<?>[0]);
+
+					fieldNameElement.appendChild(doc.createTextNode(field));
+
+					String type = clazzField.getType().toString();
+					fieldTypeElement.appendChild(doc.createTextNode(type));
+
+					switch (type) {
+					case "byte":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Byte((byte) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "int":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Integer((int) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "long":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Long((long) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "double":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Double((double) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "float":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Float((float) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "boolean":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Boolean((boolean) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "char":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Character((char) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					case "short":
+						fieldValueElement.appendChild(doc.createTextNode(
+								new Short((short) clazzMethod.invoke(this, new Object[0])).toString()));
+						break;
+					}
+					valueElement.appendChild(fieldElement);
+					pluginConfig.appendChild(valueElement);
+				} catch (NoSuchFieldException | SecurityException | DOMException | IllegalArgumentException
+						| IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+
+		}
 	}
 
 	/**
-	 * Imports the config from project file to this plugin. 
-	 * @param config the {@link Node} which contains the configuration. Must not be null.
+	 * Imports the config from project file to this plugin.
+	 * 
+	 * @param config
+	 *            the {@link Node} which contains the configuration. Must not be
+	 *            null.
 	 */
 	public void setPluginInfo(@Nonnull Node config) {
 
@@ -426,6 +513,85 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 				} else if (tagName.equals("layoutY")) {
 					String layoutYStr = configElement.getTextContent();
 					layoutY = new Double(layoutYStr);
+				} else if (tagName.equals("values")) {
+					NodeList values = configElement.getChildNodes();
+					
+					for(int a = 0; a < values.getLength(); a++) {
+						Node field = values.item(a);
+						
+						if(field.getNodeType() == Node.ELEMENT_NODE) {
+							Element fieldElement = (Element) field;
+							String fieldTag = fieldElement.getTagName();
+							
+							if(fieldTag.equals("field")) {
+								
+								NodeList fieldNodes = fieldElement.getChildNodes();
+
+								String name = null;
+								String value = null;
+								String type = null;
+								
+								for(int j = 0; j < fieldNodes.getLength(); j++) {
+									
+									Node fieldNode = fieldNodes.item(j);
+									
+									if(fieldNode.getNodeType() == Node.ELEMENT_NODE) {
+										Element valueElement = (Element) fieldNode;
+										String valueTag = valueElement.getTagName();
+										
+										switch (valueTag) {
+										case "name":
+											name = valueElement.getTextContent();
+											break;
+										case "type":
+											type = valueElement.getTextContent();
+											break;
+										case "value":
+											value = valueElement.getTextContent();
+											break;
+										}
+									}
+								}	
+								
+								String methodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
+								Class<?> clazz = getClass();
+								
+								try {
+									Field clazzField = clazz.getDeclaredField(name);
+									Method clazzMethod = clazz.getMethod(methodName, clazzField.getType());
+									switch (type) {
+									case "byte":
+										clazzMethod.invoke(this, new Byte(value).byteValue());
+										break;
+									case "int":
+										clazzMethod.invoke(this, new Integer(value).intValue());
+										break;
+									case "long":
+										clazzMethod.invoke(this, new Long(value).longValue());
+										break;
+									case "double":
+										clazzMethod.invoke(this, new Double(value).doubleValue());
+										break;
+									case "float":
+										clazzMethod.invoke(this, new Float(value).floatValue());
+										break;
+									case "boolean":
+										clazzMethod.invoke(this, new Boolean(value).booleanValue());
+										break;
+									case "char":
+										clazzMethod.invoke(this, value.charAt(0));
+										break;
+									case "short":
+										clazzMethod.invoke(this, new Short(value).shortValue());
+										break;
+									}
+								} catch (NoSuchMethodException | SecurityException | NoSuchFieldException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}	
 				}
 			}
 

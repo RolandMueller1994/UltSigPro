@@ -227,4 +227,36 @@ public class GainBlock2 extends SigproPlugin {
 		return gui.getLayoutY() + height;
 	}
 
+	@Override
+	protected String[] getParameterMetaData() {
+		
+		String[] metaData = {"gain", "on"};
+		return metaData;
+	}
+	
+	public void setOn(boolean on) {
+		this.on = on;
+		
+		if (on) {
+			onOffIndicator.setStyle("-fx-fill: -usp-light-blue2; -fx-effect: -effect-highlight-light");
+		} else {
+			onOffIndicator.setStyle("-fx-fill: grey");
+		}
+	}
+	
+	public boolean getOn() {
+		return on;
+	}
+
+	public void setGain(double gain) {
+		this.gain = gain;
+		gainTextField.setValue(gain);
+		
+		double rotateValue = Math.log10(((gain / (MAX_GAIN - MIN_GAIN) * 9) + 1)) * 100;
+		valueKnob.setValue(rotateValue);
+	}
+	
+	public double getGain() {
+		return gain;
+	}
 }

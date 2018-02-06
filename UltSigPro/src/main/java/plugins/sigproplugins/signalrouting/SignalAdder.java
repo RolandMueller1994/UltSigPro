@@ -149,4 +149,10 @@ public class SignalAdder extends SigproPlugin {
 		return 0;
 	}
 
+	@Override
+	protected String[] getParameterMetaData() {
+		
+		return null;
+	}
+
 }

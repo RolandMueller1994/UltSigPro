@@ -130,4 +130,10 @@ public class WaveChartProbe extends SigproPlugin {
 		return height;
 	}
 
+	@Override
+	protected String[] getParameterMetaData() {
+		
+		return null;
+	}
+
 }

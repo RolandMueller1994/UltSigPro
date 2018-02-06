@@ -117,5 +117,11 @@ public class PluginOutput extends SigproPlugin {
 		
 		return gui.getLayoutY() + height;
 	}
+
+	@Override
+	protected String[] getParameterMetaData() {
+		
+		return null;
+	}
 	
 }
