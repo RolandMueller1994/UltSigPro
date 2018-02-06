@@ -385,6 +385,14 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 		this.number = number;
 	}
 
+	/**
+	 * Create and return a array of {@link String}s that contains the name of
+	 * fields which values shall be saved in the project file. There has to be a
+	 * setter and getter for each of this field. These methods will be called by
+	 * reflection.
+	 * 
+	 * @return a array of field names.
+	 */
 	protected abstract String[] getParameterMetaData();
 
 	/**
@@ -438,24 +446,24 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 
 					switch (type) {
 					case "byte":
-						fieldValueElement.appendChild(doc.createTextNode(
-								new Byte((byte) clazzMethod.invoke(this, new Object[0])).toString()));
+						fieldValueElement.appendChild(doc
+								.createTextNode(new Byte((byte) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "int":
-						fieldValueElement.appendChild(doc.createTextNode(
-								new Integer((int) clazzMethod.invoke(this, new Object[0])).toString()));
+						fieldValueElement.appendChild(doc
+								.createTextNode(new Integer((int) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "long":
-						fieldValueElement.appendChild(doc.createTextNode(
-								new Long((long) clazzMethod.invoke(this, new Object[0])).toString()));
+						fieldValueElement.appendChild(doc
+								.createTextNode(new Long((long) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "double":
 						fieldValueElement.appendChild(doc.createTextNode(
 								new Double((double) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "float":
-						fieldValueElement.appendChild(doc.createTextNode(
-								new Float((float) clazzMethod.invoke(this, new Object[0])).toString()));
+						fieldValueElement.appendChild(doc
+								.createTextNode(new Float((float) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "boolean":
 						fieldValueElement.appendChild(doc.createTextNode(
@@ -466,8 +474,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 								new Character((char) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					case "short":
-						fieldValueElement.appendChild(doc.createTextNode(
-								new Short((short) clazzMethod.invoke(this, new Object[0])).toString()));
+						fieldValueElement.appendChild(doc
+								.createTextNode(new Short((short) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
 					}
 					valueElement.appendChild(fieldElement);
@@ -515,30 +523,30 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 					layoutY = new Double(layoutYStr);
 				} else if (tagName.equals("values")) {
 					NodeList values = configElement.getChildNodes();
-					
-					for(int a = 0; a < values.getLength(); a++) {
+
+					for (int a = 0; a < values.getLength(); a++) {
 						Node field = values.item(a);
-						
-						if(field.getNodeType() == Node.ELEMENT_NODE) {
+
+						if (field.getNodeType() == Node.ELEMENT_NODE) {
 							Element fieldElement = (Element) field;
 							String fieldTag = fieldElement.getTagName();
-							
-							if(fieldTag.equals("field")) {
-								
+
+							if (fieldTag.equals("field")) {
+
 								NodeList fieldNodes = fieldElement.getChildNodes();
 
 								String name = null;
 								String value = null;
 								String type = null;
-								
-								for(int j = 0; j < fieldNodes.getLength(); j++) {
-									
+
+								for (int j = 0; j < fieldNodes.getLength(); j++) {
+
 									Node fieldNode = fieldNodes.item(j);
-									
-									if(fieldNode.getNodeType() == Node.ELEMENT_NODE) {
+
+									if (fieldNode.getNodeType() == Node.ELEMENT_NODE) {
 										Element valueElement = (Element) fieldNode;
 										String valueTag = valueElement.getTagName();
-										
+
 										switch (valueTag) {
 										case "name":
 											name = valueElement.getTextContent();
@@ -551,11 +559,11 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 											break;
 										}
 									}
-								}	
-								
+								}
+
 								String methodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
 								Class<?> clazz = getClass();
-								
+
 								try {
 									Field clazzField = clazz.getDeclaredField(name);
 									Method clazzMethod = clazz.getMethod(methodName, clazzField.getType());
@@ -585,13 +593,15 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 										clazzMethod.invoke(this, new Short(value).shortValue());
 										break;
 									}
-								} catch (NoSuchMethodException | SecurityException | NoSuchFieldException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+								} catch (NoSuchMethodException | SecurityException | NoSuchFieldException
+										| IllegalAccessException | IllegalArgumentException
+										| InvocationTargetException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
 								}
 							}
 						}
-					}	
+					}
 				}
 			}
 
