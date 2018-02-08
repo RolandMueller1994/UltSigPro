@@ -444,6 +444,8 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 					String type = clazzField.getType().toString();
 					fieldTypeElement.appendChild(doc.createTextNode(type));
 
+					boolean append = true;
+
 					switch (type) {
 					case "byte":
 						fieldValueElement.appendChild(doc
@@ -477,9 +479,162 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 						fieldValueElement.appendChild(doc
 								.createTextNode(new Short((short) clazzMethod.invoke(this, new Object[0])).toString()));
 						break;
+					case "class java.lang.String":
+						fieldValueElement
+								.appendChild(doc.createTextNode((String) clazzMethod.invoke(this, new Object[0])));
+						break;
+					case "class [B":
+						// byte array
+						byte[] byteArray = (byte[]) clazzMethod.invoke(this, new Object[0]);
+
+						String byteData = null;
+						for (int i = 0; i < byteArray.length; i++) {
+							if (i == 0) {
+								byteData = new Byte(byteArray[i]).toString() + ", ";
+							} else if (i == byteArray.length - 1) {
+								byteData += new Byte(byteArray[i]).toString();
+							} else {
+								byteData += new Byte(byteArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(byteData));
+						break;
+					case "class [I":
+						// int array
+						int[] intArray = (int[]) clazzMethod.invoke(this, new Object[0]);
+
+						String intData = null;
+						for (int i = 0; i < intArray.length; i++) {
+							if (i == 0) {
+								intData = new Integer(intArray[i]).toString() + ", ";
+							} else if (i == intArray.length - 1) {
+								intData += new Integer(intArray[i]).toString();
+							} else {
+								intData += new Integer(intArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(intData));
+						break;
+					case "class [J":
+						// long array
+						long[] longArray = (long[]) clazzMethod.invoke(this, new Object[0]);
+
+						String longData = null;
+						for (int i = 0; i < longArray.length; i++) {
+							if (i == 0) {
+								longData = new Long(longArray[i]).toString() + ", ";
+							} else if (i == longArray.length - 1) {
+								longData += new Long(longArray[i]).toString();
+							} else {
+								longData += new Long(longArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(longData));
+						break;
+					case "class [D":
+						// double array
+						double[] doubleArray = (double[]) clazzMethod.invoke(this, new Object[0]);
+
+						String doubleData = null;
+						for (int i = 0; i < doubleArray.length; i++) {
+							if (i == 0) {
+								doubleData = new Double(doubleArray[i]).toString() + ", ";
+							} else if (i == doubleArray.length - 1) {
+								doubleData += new Double(doubleArray[i]).toString();
+							} else {
+								doubleData += new Double(doubleArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(doubleData));
+						break;
+					case "class [F":
+						// float array
+						float[] floatArray = (float[]) clazzMethod.invoke(this, new Object[0]);
+
+						String floatData = null;
+						for (int i = 0; i < floatArray.length; i++) {
+							if (i == 0) {
+								floatData = new Float(floatArray[i]).toString() + ", ";
+							} else if (i == floatArray.length - 1) {
+								floatData += new Float(floatArray[i]).toString();
+							} else {
+								floatData += new Float(floatArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(floatData));
+						break;
+					case "class [Z":
+						// boolean array
+						boolean[] booleanArray = (boolean[]) clazzMethod.invoke(this, new Object[0]);
+
+						String booleanData = null;
+						for (int i = 0; i < booleanArray.length; i++) {
+							if (i == 0) {
+								booleanData = new Boolean(booleanArray[i]).toString() + ", ";
+							} else if (i == booleanArray.length - 1) {
+								booleanData += new Boolean(booleanArray[i]).toString();
+							} else {
+								booleanData += new Boolean(booleanArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(booleanData));
+						break;
+					case "class [C":
+						// char array
+						char[] charArray = (char[]) clazzMethod.invoke(this, new Object[0]);
+
+						String charData = null;
+						for (int i = 0; i < charArray.length; i++) {
+							if (i == 0) {
+								charData = new Character(charArray[i]).toString() + ", ";
+							} else if (i == charArray.length - 1) {
+								charData += new Character(charArray[i]).toString();
+							} else {
+								charData += new Character(charArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(charData));
+						break;
+					case "class [S":
+						// short array
+						short[] shortArray = (short[]) clazzMethod.invoke(this, new Object[0]);
+
+						String shortData = null;
+						for (int i = 0; i < shortArray.length; i++) {
+							if (i == 0) {
+								shortData = new Short(shortArray[i]).toString() + ", ";
+							} else if (i == shortArray.length - 1) {
+								shortData += new Short(shortArray[i]).toString();
+							} else {
+								shortData += new Short(shortArray[i]).toString() + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(shortData));
+						break;
+					case "class [Ljava.lang.String;":
+						// String array
+						String[] stringArray = (String[]) clazzMethod.invoke(this, new Object[0]);
+
+						String stringData = null;
+						for (int i = 0; i < stringArray.length; i++) {
+							if (i == 0) {
+								stringData = stringArray[i] + ", ";
+							} else if (i == stringArray.length - 1) {
+								stringData += stringArray[i];
+							} else {
+								stringData += stringArray[i] + ", ";
+							}
+						}
+						fieldValueElement.appendChild(doc.createTextNode(stringData));
+						break;
+					default:
+						append = false;
+						System.out.println(type);
 					}
-					valueElement.appendChild(fieldElement);
-					pluginConfig.appendChild(valueElement);
+					if (append) {
+						valueElement.appendChild(fieldElement);
+						pluginConfig.appendChild(valueElement);
+					}
 				} catch (NoSuchFieldException | SecurityException | DOMException | IllegalArgumentException
 						| IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
 					// TODO Auto-generated catch block
@@ -592,6 +747,104 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 									case "short":
 										clazzMethod.invoke(this, new Short(value).shortValue());
 										break;
+									case "class java.lang.String":
+										clazzMethod.invoke(this, value);
+										break;
+									case "class [B":
+										// byte array
+										String[] byteDataStrings = createArrayFromFileData(value);
+
+										byte[] byteData = new byte[byteDataStrings.length];
+										for (int count = 0; count < byteDataStrings.length; count++) {
+											byteData[count] = new Byte(byteDataStrings[count]).byteValue();
+										}
+										clazzMethod.invoke(this, byteData);
+										break;
+									case "class [I":
+										// int array
+										String[] intDataStrings = createArrayFromFileData(value);
+
+										int[] intData = new int[intDataStrings.length];
+										for (int count = 0; count < intDataStrings.length; count++) {
+											intData[count] = new Integer(intDataStrings[count]).intValue();
+										}
+										clazzMethod.invoke(this, intData);
+										break;
+									case "class [J":
+										// long array
+										String[] longDataStrings = createArrayFromFileData(value);
+
+										long[] longData = new long[longDataStrings.length];
+										for (int count = 0; count < longDataStrings.length; count++) {
+											longData[count] = new Long(longDataStrings[count]).longValue();
+										}
+										clazzMethod.invoke(this, longData);
+										break;
+									case "class [D":
+										// double array
+										String[] doubleDataStrings = createArrayFromFileData(value);
+
+										double[] doubleData = new double[doubleDataStrings.length];
+										for (int count = 0; count < doubleDataStrings.length; count++) {
+											doubleData[count] = new Double(doubleDataStrings[count]).doubleValue();
+										}
+										clazzMethod.invoke(this, doubleData);
+										break;
+									case "class [F":
+										// float array
+										String[] floatDataStrings = createArrayFromFileData(value);
+
+										float[] floatData = new float[floatDataStrings.length];
+										for (int count = 0; count < floatDataStrings.length; count++) {
+											floatData[count] = new Float(floatDataStrings[count]).floatValue();
+										}
+										clazzMethod.invoke(this, floatData);
+										break;
+									case "class [Z":
+										// boolean array
+										String[] booleanDataStrings = createArrayFromFileData(value);
+
+										boolean[] booleanData = new boolean[booleanDataStrings.length];
+										for (int count = 0; count < booleanDataStrings.length; count++) {
+											booleanData[count] = new Boolean(booleanDataStrings[count]).booleanValue();
+										}
+										clazzMethod.invoke(this, booleanData);
+										break;
+									case "class [C":
+										// char array
+										String[] charDataStrings = createArrayFromFileData(value);
+
+										char[] charData = new char[charDataStrings.length];
+										for (int count = 0; count < charDataStrings.length; count++) {
+											charData[count] = charDataStrings[count].charAt(0);
+										}
+										clazzMethod.invoke(this, charData);
+										break;
+									case "class [S":
+										// short array
+										String[] shortDataStrings = createArrayFromFileData(value);
+
+										short[] shortData = new short[shortDataStrings.length];
+										for (int count = 0; count < shortDataStrings.length; count++) {
+											shortData[count] = new Short(shortDataStrings[count]).shortValue();
+										}
+										clazzMethod.invoke(this, shortData);
+										break;
+									case "class [Ljava.lang.String;":
+										// String array
+										String[] stringDataStrings = createArrayFromFileData(value);
+
+										String[] stringData = new String[stringDataStrings.length];
+										for (int count = 0; count < stringDataStrings.length; count++) {
+											stringData[count] = stringDataStrings[count];
+										}
+										// Cast the String[] to Object is
+										// necessary because invoke() has
+										// Object... as parameter and this will
+										// pass each array object itself not as
+										// a complete array.
+										clazzMethod.invoke(this, (Object) stringData);
+										break;
 									}
 								} catch (NoSuchMethodException | SecurityException | NoSuchFieldException
 										| IllegalAccessException | IllegalArgumentException
@@ -607,6 +860,24 @@ public abstract class SigproPlugin implements PluginInterface, MaxCoordinatesInt
 
 		}
 		dragLocal(layoutX, layoutY);
+	}
+
+	private String[] createArrayFromFileData(String data) {
+
+		LinkedList<String> list = new LinkedList<>();
+
+		while (data.contains(",")) {
+			list.add(data.substring(0, data.indexOf(",")));
+			data = data.substring(data.indexOf(",") + 2);
+		}
+
+		if (data.length() > 0) {
+			list.add(data);
+		}
+
+		String[] retArray = new String[list.size()];
+
+		return list.toArray(retArray);
 	}
 
 }
